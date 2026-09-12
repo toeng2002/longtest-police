@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — ระบบจัดการข้อสอบตำรวจ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F5F3;--surface:#FFFFFF;--surface2:#F0F0EE;
+  --border:#E2E2DE;--border2:#C8C8C4;
+  --text:#1C1C1A;--text2:#6A6A66;--text3:#9A9A96;
+  --accent:#2563EB;--accent-bg:#EFF6FF;--accent-bd:#BFDBFE;
+  --success:#16A34A;--success-bg:#F0FDF4;--success-bd:#BBF7D0;
+  --danger:#DC2626;--danger-bg:#FEF2F2;--danger-bd:#FECACA;
+  --warning:#D97706;--warning-bg:#FFFBEB;--warning-bd:#FDE68A;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-bd:#DDD6FE;
+  --r:8px;--rl:12px;
+}
+body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:14px;color:var(--text);min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+
+/* --- Login --- */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .badge{display:inline-block;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-bd);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em;margin-bottom:10px}
+.login-logo h1{font-size:18px;font-weight:600;color:var(--text)}
+.login-logo p{font-size:13px;color:var(--text2);margin-top:4px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.field input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--accent)}
+.err-msg{background:var(--danger-bg);border:1px solid var(--danger-bd);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none}
+.btn-login{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-login:hover{opacity:.9}
+
+/* --- Layout --- */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sidebar-logo .name{font-size:14px;font-weight:600;color:var(--text)}
+.sidebar-logo .role{font-size:11px;color:var(--text3);margin-top:2px}
+.sidebar-logo .badge-admin{display:inline-block;background:var(--danger-bg);color:var(--danger);font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;margin-top:4px}
+.sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:2px;transition:background .1s,color .1s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-sep{font-size:10px;font-weight:500;color:var(--text3);padding:10px 10px 4px;letter-spacing:.05em}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border)}
+.main{margin-left:220px;flex:1;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple)}
+.page{padding:24px;display:none}
+.page.active{display:block}
+
+/* --- Buttons --- */
+.btn{border:1px solid var(--border2);border-radius:var(--r);padding:8px 14px;font-size:13px;cursor:pointer;background:var(--surface);color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:background .1s,border-color .1s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn-primary:hover{opacity:.9;background:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff;border-color:transparent}
+.btn-danger:hover{opacity:.9;background:var(--danger)}
+.btn-danger:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r)}
+
+/* --- Stats --- */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px}
+.stat-val{font-size:26px;font-weight:600;color:var(--text);line-height:1.1}
+.stat-lbl{font-size:12px;color:var(--text2);margin-top:4px}
+.stat-sub{font-size:11px;margin-top:5px}
+
+/* --- Cards --- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:500;color:var(--text)}
+
+/* --- Table --- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 14px;font-size:11px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+tr.sel-row td{background:var(--accent-bg)}
+
+/* --- Tags --- */
+.tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;gap:3px;white-space:nowrap}
+.tag-blue{background:var(--accent-bg);color:var(--accent)}
+.tag-green{background:var(--success-bg);color:var(--success)}
+.tag-yellow{background:var(--warning-bg);color:var(--warning)}
+.tag-red{background:var(--danger-bg);color:var(--danger)}
+.tag-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.tag-purple{background:var(--purple-bg);color:var(--purple)}
+
+/* --- Form --- */
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:14px}
+.form-section-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;gap:14px}
+.form-grid.col2{grid-template-columns:1fr 1fr}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;font-weight:500;color:var(--text2)}
+.required{color:var(--danger)}
+input[type=text],input[type=password],input[type=email],select,textarea{font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:72px}
+.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.check-chip{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--r);padding:6px 11px;cursor:pointer;font-size:13px;color:var(--text);background:var(--surface);transition:all .1s;user-select:none}
+.check-chip:hover{border-color:var(--border2);background:var(--surface2)}
+.check-chip.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.check-chip input{accent-color:var(--accent)}
+.choice-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.choice-radio{width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0}
+.choice-lbl{font-size:12px;font-weight:500;color:var(--text2);min-width:16px}
+.img-zone{border:1px dashed var(--border2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text3);cursor:pointer;text-align:center;background:var(--surface2);min-width:90px;flex-shrink:0;transition:all .1s}
+.img-zone:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.ans-ok{background:var(--success-bg);border:1px solid var(--success-bd);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--success);margin-top:6px}
+
+/* --- Toolbar --- */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:180px;max-width:260px}
+.search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.search-box input{padding-left:32px}
+.bulk-bar{background:var(--accent-bg);border:1px solid var(--accent-bd);border-radius:var(--r);padding:8px 14px;display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--accent)}
+
+/* --- Modal / overlay --- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.del-list{background:var(--danger-bg);border:1px solid var(--danger-bd);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;max-height:140px;overflow-y:auto}
+.del-item{font-size:12px;color:var(--danger);padding:3px 0;border-bottom:1px solid var(--danger-bd);display:flex;gap:6px;align-items:flex-start}
+.del-item:last-child{border-bottom:none}
+.pin-wrap{margin:14px 0}
+.pin-wrap label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:8px}
+.pin-inputs{display:flex;gap:8px;justify-content:center}
+.pin-inputs input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:600;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--text);outline:none;transition:border-color .15s}
+.pin-inputs input:focus{border-color:var(--accent);background:var(--accent-bg)}
+.pin-inputs input.pin-err{border-color:var(--danger);background:var(--danger-bg)}
+.pin-err-msg{font-size:12px;color:var(--danger);text-align:center;margin-top:6px;min-height:18px}
+.notice{border-radius:var(--r);padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.notice svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
+.notice.info{background:var(--accent-bg);border:1px solid var(--accent-bd);color:var(--accent)}
+.notice.warn{background:var(--warning-bg);border:1px solid var(--warning-bd);color:var(--warning)}
+.notice.danger{background:var(--danger-bg);border:1px solid var(--danger-bd);color:var(--danger)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* --- CSV --- */
+.csv-steps{display:flex;gap:0;margin-bottom:20px}
+.csv-step{display:flex;align-items:center;gap:6px}
+.csv-step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.csv-step.done .csv-step-dot{background:var(--success);color:#fff}
+.csv-step.active .csv-step-dot{background:var(--accent);color:#fff}
+.csv-step.wait .csv-step-dot{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.csv-step-lbl{font-size:12px}
+.csv-step.done .csv-step-lbl{color:var(--success)}
+.csv-step.active .csv-step-lbl{color:var(--accent);font-weight:500}
+.csv-step.wait .csv-step-lbl{color:var(--text3)}
+.csv-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.upload-zone{border:1px dashed var(--border2);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;color:var(--text3);background:var(--surface2);transition:all .15s;margin-bottom:14px}
+.upload-zone:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.upload-zone svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin-bottom:8px}
+.col-tbl{font-size:12px}
+.col-tbl th{font-size:11px}
+.col-tbl td{font-size:12px;padding:8px 12px}
+.mono{font-family:monospace;font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px}
+
+/* --- Activity --- */
+.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.act-text{font-size:13px;color:var(--text)}
+.act-time{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* --- Toast --- */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;z-index:200;transform:translateY(100px);opacity:0;transition:all .25s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--success)}
+.toast.danger{background:var(--danger)}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-page" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="badge">ADMIN</div>
+      <h1>ระบบจัดการข้อสอบตำรวจ</h1>
+      <p>เข้าสู่ระบบเพื่อจัดการข้อสอบ</p>
+    </div>
+    <div class="err-msg" id="login-err">UserID หรือ Password ไม่ถูกต้อง กรุณาลองใหม่</div>
+    <div class="field">
+      <label>UserID</label>
+      <input type="text" id="inp-user" placeholder="กรอก UserID" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="inp-pass" placeholder="กรอก Password" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ===== ADMIN LAYOUT ===== -->
+<div id="admin-layout" class="layout" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="name">ระบบข้อสอบตำรวจ</div>
+      <div class="role">ผู้ดูแลระบบ — admin</div>
+      <div class="badge-admin">ADMIN</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-sep">หลัก</div>
+      <div class="nav-item active" onclick="goPage('dashboard',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-sep">จัดการข้อสอบ</div>
+      <div class="nav-item" onclick="goPage('questions',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
+        ข้อสอบทั้งหมด
+      </div>
+      <div class="nav-item" onclick="goPage('add-question',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        เพิ่มข้อสอบ
+      </div>
+      <div class="nav-item" onclick="goPage('import-csv',this)">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        นำเข้า CSV
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" onclick="doLogout()" style="color:var(--danger)">
+        <svg viewBox="0 0 24 24" style="stroke:var(--danger)"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--text2)">admin</span>
+        <div class="avatar">AD</div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent)">1,248</div>
+          <div class="stat-lbl">ข้อสอบทั้งหมด</div>
+          <div class="stat-sub" style="color:var(--success)">+24 สัปดาห์นี้</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">6</div>
+          <div class="stat-lbl">หน่วยงาน</div>
+          <div class="stat-sub" style="color:var(--text2)">ตม. สส. จร. ปป. อก. พยาบาล</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">18</div>
+          <div class="stat-lbl">วิชาทั้งหมด</div>
+          <div class="stat-sub" style="color:var(--text2)">ประทวน 10 / สัญญาบัตร 8</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--warning)">12</div>
+          <div class="stat-lbl">รอตรวจสอบ</div>
+          <div class="stat-sub" style="color:var(--warning)">ยังไม่เผยแพร่</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">ข้อสอบตามหน่วยงาน</span></div>
+          <div style="padding:14px 16px">
+            <div id="unit-bars"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">กิจกรรมล่าสุด</span></div>
+          <div style="padding:4px 16px" id="activity-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions list -->
+    <div id="page-questions" class="page">
+      <div class="bulk-bar" id="bulk-bar">
+        <span id="bulk-count">เลือก 0 รายการ</span>
+        <button class="btn btn-sm" onclick="clearSel()">ยกเลิก</button>
+        <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd)" onclick="openDeleteModal()">
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          ลบที่เลือก
+        </button>
+      </div>
+      <div class="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="ค้นหาข้อสอบ..." id="q-search" oninput="filterQ()">
+        </div>
+        <select id="q-unit" onchange="filterQ()">
+          <option value="">ทุกหน่วย</option>
+          <option value="ตม.">ตม.</option>
+          <option value="สส.">สส.</option>
+          <option value="จร.">จร.</option>
+          <option value="ปป.">ปป.</option>
+        </select>
+        <select id="q-level" onchange="filterQ()">
+          <option value="">ทุกระดับ</option>
+          <option value="ประทวน">ชั้นประทวน</option>
+          <option value="สัญญาบัตร">ชั้นสัญญาบัตร</option>
+        </select>
+        <select id="q-status" onchange="filterQ()">
+          <option value="">ทุกสถานะ</option>
+          <option value="เผยแพร่">เผยแพร่</option>
+          <option value="รอตรวจสอบ">รอตรวจสอบ</option>
+        </select>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" onclick="goPage('add-question',null)">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          เพิ่มข้อสอบ
+        </button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table id="q-table">
+            <thead>
+              <tr>
+                <th style="width:36px"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+                <th style="width:56px">ID</th>
+                <th>คำถาม</th>
+                <th style="width:110px">หน่วย</th>
+                <th style="width:90px">วิชา</th>
+                <th style="width:80px">ประเภท</th>
+                <th style="width:90px">สถานะ</th>
+                <th style="width:90px">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="q-tbody"></tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--text2)" id="q-count-label"></span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" id="btn-prev" onclick="changePage(-1)">← ก่อนหน้า</button>
+            <button class="btn btn-sm" id="btn-next" onclick="changePage(1)">ถัดไป →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit question -->
+    <div id="page-add-question" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--text)" id="form-title">เพิ่มข้อสอบใหม่</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">กรอกข้อมูลให้ครบถ้วนแล้วกดบันทึก</div>
+        </div>
+        <button class="btn" onclick="goPage('questions',null)">← กลับ</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">ข้อมูลทั่วไป</div>
+        <div class="form-grid col2" style="margin-bottom:14px">
+          <div class="form-group">
+            <label class="form-label">หน่วยงาน <span class="required">*</span> <span style="font-weight:400;color:var(--text3)">เลือกได้หลายหน่วย</span></label>
+            <div class="check-group" id="unit-checks">
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> ✈️ ตม.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🔍 สส.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🚦 จร.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🛡️ ปป.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🏢 อก.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> ⚕️ พยาบาล</label>
+            </div>
+            <div id="unit-notice" class="notice info" style="margin-top:8px;font-size:12px">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
+              ข้อสอบนี้จะปรากฏใน: ✈️ ตม.
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ระดับชั้น <span class="required">*</span> <span style="font-weight:400;color:var(--text3)">เลือกได้หลายระดับ</span></label>
+            <div class="check-group">
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> 🛡️ ชั้นประทวน</label>
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> ⭐ ชั้นสัญญาบัตร</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid col3">
+          <div class="form-group">
+            <label class="form-label">วิชา <span class="required">*</span></label>
+            <select><option>กฎหมาย ตม.</option><option>ภาษาไทย</option><option>ภาษาอังกฤษ</option><option>กฎหมายอาญา</option><option>ความรู้ทั่วไป</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ระดับความยาก</label>
+            <select><option>ง่าย</option><option selected>ปานกลาง</option><option>ยาก</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ที่มา / ปีที่ออกสอบ</label>
+            <input type="text" placeholder="เช่น ข้อสอบปี 2565 รอบ 1">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">คำถาม</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">ข้อความคำถาม <span class="required">*</span></label>
+          <textarea id="q-text-input" placeholder="พิมพ์คำถามที่นี่..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รูปภาพประกอบคำถาม (ถ้ามี)</label>
+          <div class="upload-zone" style="padding:14px">
+            <svg style="width:22px;height:22px;margin-bottom:5px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div style="font-size:12px">คลิกเพื่ออัปโหลด หรือวาง URL รูปภาพ / SVG code</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">ตัวเลือก — คลิกวงกลมด้านซ้ายเพื่อเลือกเฉลยที่ถูกต้อง</div>
+        <div id="choices-form"></div>
+        <div class="ans-ok" id="ans-ok-msg" style="display:none"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">คำอธิบายเฉลย</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">คำอธิบาย <span class="required">*</span></label>
+          <textarea placeholder="อธิบายเหตุผลของเฉลย..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รูปภาพประกอบคำอธิบาย (ถ้ามี)</label>
+          <div class="upload-zone" style="padding:10px">
+            <svg style="width:18px;height:18px;margin-bottom:3px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <div style="font-size:11px">อัปโหลดรูปประกอบคำอธิบาย</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="publish-chk" checked style="width:16px;height:16px;accent-color:var(--accent)">
+          เผยแพร่ทันทีหลังบันทึก
+        </label>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="goPage('questions',null)">ยกเลิก</button>
+          <button class="btn" onclick="showToast('ดูตัวอย่าง','info')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            ตัวอย่าง
+          </button>
+          <button class="btn btn-primary" onclick="saveQuestion()">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            บันทึก
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import CSV -->
+    <div id="page-import-csv" class="page">
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:18px">นำเข้าข้อสอบจากไฟล์ CSV</div>
+
+      <div class="csv-steps">
+        <div class="csv-step done"><div class="csv-step-dot">✓</div><span class="csv-step-lbl">ดาวน์โหลด template</span></div>
+        <div class="csv-line"></div>
+        <div class="csv-step active"><div class="csv-step-dot">2</div><span class="csv-step-lbl">อัปโหลดไฟล์</span></div>
+        <div class="csv-line"></div>
+        <div class="csv-step wait"><div class="csv-step-dot">3</div><span class="csv-step-lbl">ตรวจสอบข้อมูล</span></div>
+        <div class="csv-line"></div>
+        <div class="csv-step wait"><div class="csv-step-dot">4</div><span class="csv-step-lbl">นำเข้า</span></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">ขั้นตอนที่ 1 — ดาวน์โหลด Template</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">ดาวน์โหลดไฟล์ตัวอย่างก่อนเพื่อให้กรอกข้อมูลได้ถูกรูปแบบ ไฟล์มีหัวคอลัมน์ครบและข้อมูลตัวอย่าง 3 แถว</p>
+        <div style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="btn btn-primary" onclick="showToast('ดาวน์โหลด template.csv แล้ว','success')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            template.csv
+          </button>
+          <button class="btn" onclick="showToast('เปิดคู่มือ...','info')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            คู่มือการกรอกข้อมูล
+          </button>
+        </div>
+
+        <div class="form-section-title">โครงสร้างคอลัมน์</div>
+        <div style="overflow-x:auto">
+          <table class="col-tbl">
+            <thead><tr><th>คอลัมน์</th><th>ตัวอย่าง</th><th>หมายเหตุ</th><th>จำเป็น</th></tr></thead>
+            <tbody>
+              <tr><td><span class="mono">unit</span></td><td>tm,jr</td><td style="color:var(--text2)">รหัสหน่วย คั่นด้วย , สำหรับหลายหน่วย</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">level</span></td><td>p,s</td><td style="color:var(--text2)">p=ประทวน s=สัญญาบัตร ใส่ทั้งคู่ได้</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">subject</span></td><td>กฎหมาย ตม.</td><td style="color:var(--text2)">ชื่อวิชา</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">question</span></td><td>พ.ร.บ. คนเข้าเมือง...</td><td style="color:var(--text2)">ข้อความคำถาม</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">choice_a … choice_d</span></td><td>27 กุมภาพันธ์ 2523</td><td style="color:var(--text2)">ตัวเลือก ก–ง</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">answer</span></td><td>a</td><td style="color:var(--text2)">เฉลย: a/b/c/d (ตัวพิมพ์เล็ก)</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">explanation</span></td><td>พ.ร.บ. มีผลบังคับใช้...</td><td style="color:var(--text2)">คำอธิบายเฉลย</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">difficulty</span></td><td>easy/medium/hard</td><td style="color:var(--text2)">ระดับความยาก</td><td><span class="tag tag-gray">ไม่บังคับ</span></td></tr>
+              <tr><td><span class="mono">source</span></td><td>ข้อสอบปี 2565 รอบ 1</td><td style="color:var(--text2)">ที่มาของข้อสอบ</td><td><span class="tag tag-gray">ไม่บังคับ</span></td></tr>
+              <tr><td><span class="mono">question_image_url</span></td><td>https://... หรือ SVG</td><td style="color:var(--text2)">URL รูปภาพคำถาม</td><td><span class="tag tag-gray">ไม่บังคับ</span></td></tr>
+              <tr><td><span class="mono">choice_a_image_url</span></td><td>https://...</td><td style="color:var(--text2)">รูปภาพตัวเลือก ก (ทำแบบนี้ทุกตัวเลือก)</td><td><span class="tag tag-gray">ไม่บังคับ</span></td></tr>
+              <tr><td><span class="mono">publish</span></td><td>true/false</td><td style="color:var(--text2)">เผยแพร่ทันที (default: false)</td><td><span class="tag tag-gray">ไม่บังคับ</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="notice info" style="margin-top:12px">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
+          <div>คอลัมน์ <strong>unit</strong> และ <strong>level</strong> รองรับหลายค่าในแถวเดียว เช่น <span class="mono">unit = tm,jr</span> ข้อสอบจะปรากฏในทั้ง ตม. และ จร. พร้อมกัน</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">ขั้นตอนที่ 2 — อัปโหลดไฟล์ CSV (UTF-8)</div>
+        <div class="upload-zone" onclick="showToast('เลือกไฟล์ CSV...','info')">
+          <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-size:13px;font-weight:500;margin-bottom:3px">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+          <div style="font-size:11px">รองรับเฉพาะ .csv — encoding UTF-8</div>
+        </div>
+        <div class="notice warn">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
+          <div>แถวที่มีข้อผิดพลาดจะถูกข้ามโดยอัตโนมัติ ระบบจะแสดงรายละเอียดก่อนนำเข้า</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="overlay" id="delete-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+      <div>
+        <div class="modal-title">ยืนยันการลบข้อสอบ</div>
+        <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
+      </div>
+    </div>
+    <div class="del-list" id="del-list"></div>
+    <div class="notice danger">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
+      <div>ข้อสอบที่เชื่อมกับหลายหน่วยจะถูกลบออกจากทุกหน่วยพร้อมกัน</div>
+    </div>
+    <div class="pin-wrap">
+      <label>ใส่รหัสผ่าน Admin 6 หลักเพื่อยืนยัน <span class="required">*</span></label>
+      <div class="pin-inputs" id="pin-inputs"></div>
+      <div class="pin-err-msg" id="pin-err"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeDeleteModal()">ยกเลิก</button>
+      <button class="btn btn-danger" id="btn-confirm-del" onclick="confirmDelete()" disabled>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        <span id="del-btn-label">ลบ 0 รายการ</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const ADMIN_USER='admin', ADMIN_PASS='123456', DELETE_PIN='123456';
+
+let questions=[
+  {id:1001,question:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',unit:'ตม.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1002,question:'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',unit:'ตม.',level:'ประทวน',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1003,question:'เมื่อพบป้ายจราจรในภาพ ผู้ขับขี่ต้องปฏิบัติอย่างไร?',unit:'จร.',level:'ประทวน',subject:'กฎหมายจราจร',type:'มีรูป',status:'เผยแพร่',answer:'ข'},
+  {id:1004,question:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',unit:'ตม.',level:'สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ค'},
+  {id:1005,question:'What does "immigration" mean?',unit:'ตม.',level:'สัญญาบัตร',subject:'ภาษาอังกฤษ',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1006,question:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษอย่างไร?',unit:'ตม.,จร.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1007,question:'ประเทศไทยมีกี่จังหวัด?',unit:'ตม.,สส.,จร.',level:'ประทวน,สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1008,question:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',unit:'ตม.',level:'สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ข'},
+];
+
+let selectedIds=new Set(), curPage=1, pageSize=5, filtered=[];
+let pinVal='';
+
+function doLogin(){
+  const u=document.getElementById('inp-user').value.trim();
+  const p=document.getElementById('inp-pass').value;
+  const err=document.getElementById('login-err');
+  if(u===ADMIN_USER&&p===ADMIN_PASS){
+    err.style.display='none';
+    document.getElementById('login-page').style.display='none';
+    document.getElementById('admin-layout').style.display='flex';
+    initDashboard();
+    initQuestions();
+    initChoicesForm();
+  } else {
+    err.style.display='block';
+    document.getElementById('inp-pass').value='';
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-page').style.display!=='none')doLogin();});
+
+function doLogout(){
+  document.getElementById('admin-layout').style.display='none';
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('inp-user').value='';
+  document.getElementById('inp-pass').value='';
+}
+
+function goPage(id,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(navEl){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  const titles={'dashboard':'Dashboard','questions':'ข้อสอบทั้งหมด','add-question':'เพิ่มข้อสอบ','import-csv':'นำเข้า CSV'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+}
+
+function initDashboard(){
+  const units=[{n:'ตม.',v:328},{n:'สส.',v:252},{n:'จร.',v:196},{n:'ปป.',v:160},{n:'อก.+พยาบาล',v:112}];
+  const max=328;
+  document.getElementById('unit-bars').innerHTML=units.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${u.n}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:100px;height:5px;background:var(--surface2);border-radius:2px">
+          <div style="width:${Math.round(u.v/max*100)}%;height:5px;background:var(--accent);border-radius:2px"></div>
+        </div>
+        <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
+      </div>
+    </div>`).join('');
+  const acts=[
+    {color:'var(--success)',text:'เพิ่มข้อสอบ กฎหมาย ตม. 15 ข้อ',time:'10 นาทีที่แล้ว'},
+    {color:'var(--accent)',text:'แก้ไขเฉลยข้อสอบ ภาษาไทย ประทวน',time:'1 ชั่วโมงที่แล้ว'},
+    {color:'var(--warning)',text:'นำเข้า CSV จร. 48 ข้อ',time:'เมื่อวาน'},
+    {color:'var(--danger)',text:'ลบข้อสอบซ้ำ สส. 3 ข้อ',time:'2 วันที่แล้ว'},
+  ];
+  document.getElementById('activity-log').innerHTML=acts.map(a=>`
+    <div class="activity-item">
+      <div class="act-dot" style="background:${a.color}"></div>
+      <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+function initQuestions(){
+  filtered=[...questions];
+  renderTable();
+}
+
+function filterQ(){
+  const s=document.getElementById('q-search').value.toLowerCase();
+  const u=document.getElementById('q-unit').value;
+  const lv=document.getElementById('q-level').value;
+  const st=document.getElementById('q-status').value;
+  filtered=questions.filter(q=>{
+    if(s&&!q.question.toLowerCase().includes(s))return false;
+    if(u&&!q.unit.includes(u))return false;
+    if(lv&&!q.level.includes(lv))return false;
+    if(st&&q.status!==st)return false;
+    return true;
+  });
+  curPage=1;selectedIds.clear();updateBulkBar();
+  renderTable();
+}
+
+function renderTable(){
+  const start=(curPage-1)*pageSize, end=start+pageSize;
+  const rows=filtered.slice(start,end);
+  const tbody=document.getElementById('q-tbody');
+  const labels={'เผยแพร่':'tag-green','รอตรวจสอบ':'tag-yellow'};
+  const types={'ข้อความ':'tag-gray','มีรูป':'tag-blue'};
+  tbody.innerHTML=rows.map(q=>`
+    <tr class="${selectedIds.has(q.id)?'sel-row':''}" id="row-${q.id}">
+      <td><input type="checkbox" ${selectedIds.has(q.id)?'checked':''} onchange="toggleSel(${q.id},this)"></td>
+      <td style="font-size:12px;color:var(--text2)">#${q.id}</td>
+      <td>
+        <div style="font-size:13px">${q.question.length>55?q.question.slice(0,55)+'...':q.question}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${q.level}</div>
+      </td>
+      <td>
+        <span class="tag tag-blue" style="font-size:11px">${q.unit}</span>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${q.subject}</td>
+      <td><span class="tag ${types[q.type]||'tag-gray'}">${q.type}</span></td>
+      <td><span class="tag ${labels[q.status]||'tag-gray'}">${q.status}</span></td>
+      <td>
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-icon btn-sm" title="แก้ไข" onclick="editQ(${q.id})" style="color:var(--accent)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-sm" title="ลบ" onclick="quickDel(${q.id})" style="color:var(--danger)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+  document.getElementById('q-count-label').textContent=`แสดง ${rows.length} จาก ${filtered.length} ข้อ`;
+  document.getElementById('btn-prev').disabled=curPage===1;
+  document.getElementById('btn-next').disabled=end>=filtered.length;
+  document.getElementById('chk-all').checked=rows.length>0&&rows.every(q=>selectedIds.has(q.id));
+}
+
+function changePage(d){curPage+=d;renderTable();}
+
+function toggleSel(id,chk){
+  if(chk.checked)selectedIds.add(id);else selectedIds.delete(id);
+  document.getElementById(`row-${id}`)?.classList.toggle('sel-row',chk.checked);
+  updateBulkBar();
+}
+
+function toggleAll(chk){
+  const start=(curPage-1)*pageSize,end=start+pageSize;
+  filtered.slice(start,end).forEach(q=>{
+    if(chk.checked)selectedIds.add(q.id);else selectedIds.delete(q.id);
+    document.getElementById(`row-${q.id}`)?.classList.toggle('sel-row',chk.checked);
+  });
+  updateBulkBar();
+}
+
+function clearSel(){selectedIds.clear();updateBulkBar();renderTable();}
+
+function updateBulkBar(){
+  const bar=document.getElementById('bulk-bar');
+  const n=selectedIds.size;
+  bar.style.display=n>0?'flex':'none';
+  document.getElementById('bulk-count').textContent=`เลือก ${n} รายการ`;
+}
+
+function quickDel(id){selectedIds.clear();selectedIds.add(id);openDeleteModal();}
+
+function editQ(id){
+  document.getElementById('form-title').textContent='แก้ไขข้อสอบ #'+id;
+  goPage('add-question',null);
+}
+
+function openDeleteModal(){
+  const ids=[...selectedIds];
+  if(ids.length===0){showToast('กรุณาเลือกข้อสอบก่อน','danger');return;}
+  const items=questions.filter(q=>ids.includes(q.id));
+  document.getElementById('del-list').innerHTML=`
+    <div style="font-size:11px;font-weight:500;color:var(--danger);margin-bottom:6px">รายการที่จะถูกลบ (${items.length} รายการ)</div>
+    ${items.map(q=>`<div class="del-item"><span style="flex-shrink:0">—</span><span>#${q.id} ${q.question.length>50?q.question.slice(0,50)+'...':q.question}</span></div>`).join('')}`;
+  document.getElementById('del-btn-label').textContent=`ลบ ${items.length} รายการ`;
+  document.getElementById('btn-confirm-del').disabled=true;
+  document.getElementById('pin-err').textContent='';
+  pinVal='';
+  const container=document.getElementById('pin-inputs');
+  container.innerHTML='';
+  for(let i=0;i<6;i++){
+    const inp=document.createElement('input');
+    inp.type='password';inp.maxLength=1;inp.dataset.idx=i;
+    inp.addEventListener('input',onPinInput);
+    inp.addEventListener('keydown',onPinKey);
+    container.appendChild(inp);
+  }
+  document.getElementById('delete-modal').classList.add('open');
+  setTimeout(()=>container.children[0]?.focus(),100);
+}
+
+function onPinInput(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  inp.classList.remove('pin-err');
+  if(inp.value){
+    const next=inp.parentElement.children[idx+1];
+    if(next)next.focus();
+  }
+  updatePin();
+}
+
+function onPinKey(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  if(e.key==='Backspace'&&!inp.value&&idx>0){
+    inp.parentElement.children[idx-1].focus();
+  }
+}
+
+function updatePin(){
+  const inputs=[...document.getElementById('pin-inputs').children];
+  pinVal=inputs.map(i=>i.value).join('');
+  if(pinVal.length===6){
+    if(pinVal===DELETE_PIN){
+      document.getElementById('btn-confirm-del').disabled=false;
+      document.getElementById('pin-err').textContent='';
+      inputs.forEach(i=>i.classList.remove('pin-err'));
+    } else {
+      document.getElementById('btn-confirm-del').disabled=true;
+      document.getElementById('pin-err').textContent='รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
+      inputs.forEach(i=>i.classList.add('pin-err'));
+      setTimeout(()=>{
+        inputs.forEach(i=>{i.value='';i.classList.remove('pin-err');});
+        inputs[0].focus();pinVal='';
+        document.getElementById('pin-err').textContent='';
+      },800);
+    }
+  } else {
+    document.getElementById('btn-confirm-del').disabled=true;
+  }
+}
+
+function closeDeleteModal(){
+  document.getElementById('delete-modal').classList.remove('open');
+  pinVal='';
+}
+
+function confirmDelete(){
+  const ids=[...selectedIds];
+  questions=questions.filter(q=>!ids.includes(q.id));
+  filtered=filtered.filter(q=>!ids.includes(q.id));
+  selectedIds.clear();
+  updateBulkBar();
+  renderTable();
+  closeDeleteModal();
+  showToast(`ลบ ${ids.length} ข้อสอบแล้ว`,'success');
+}
+
+function initChoicesForm(){
+  const labels=['ก','ข','ค','ง'];
+  let selAns=null;
+  const wrap=document.getElementById('choices-form');
+  wrap.innerHTML=labels.map((lbl,i)=>`
+    <div class="choice-row">
+      <input type="radio" name="ans-radio" class="choice-radio" value="${i}" id="radio-${i}" onchange="updateAnsMsg(${i},'${lbl}')">
+      <span class="choice-lbl">${lbl}</span>
+      <input type="text" placeholder="ตัวเลือก ${lbl}..." style="flex:1" id="c-${i}">
+      <div class="img-zone">📷 รูปตัวเลือก</div>
+    </div>`).join('');
+}
+
+function updateAnsMsg(idx,lbl){
+  const val=document.getElementById(`c-${idx}`)?.value||'(ยังไม่ได้กรอก)';
+  const msg=document.getElementById('ans-ok-msg');
+  msg.style.display='block';
+  msg.textContent=`✓ เฉลยที่เลือก: ${lbl}. ${val}`;
+}
+
+function toggleChip(el,e){
+  e.preventDefault();
+  e.stopPropagation();
+  el.classList.toggle('on');
+  const chk=el.querySelector('input[type=checkbox]');
+  if(chk) chk.checked=el.classList.contains('on');
+  updateChipNotice();
+}
+
+function updateChipNotice(){
+  const units=[...document.querySelectorAll('#unit-checks .check-chip.on')].map(c=>c.textContent.trim());
+  const notice=document.getElementById('unit-notice');
+  if(notice){
+    if(units.length>0){notice.textContent='ข้อสอบนี้จะปรากฏใน: '+units.join(', ');notice.style.display='flex';}
+    else notice.style.display='none';
+  }
+}
+
+function saveQuestion(){
+  showToast('บันทึกข้อสอบแล้ว','success');
+  setTimeout(()=>goPage('questions',null),600);
+}
+
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.className='toast',3000);
+}
+</script>
+</body>
+</html>
