@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/",        "destination": "/police_exam.html" },
+    { "source": "/admin",   "destination": "/police_exam_admin.html" }
+  ]
+}
