@@ -191,14 +191,14 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px}
 .login-logo{text-align:center;margin-bottom:24px}
-.login-logo .badge{display:inline-block;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-bd);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em;margin-bottom:10px}
+.login-logo .badge{display:inline-block;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em;margin-bottom:10px}
 .login-logo h1{font-size:18px;font-weight:600;color:var(--text)}
 .login-logo p{font-size:13px;color:var(--text2);margin-top:4px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
 .field input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
 .field input:focus{border-color:var(--accent)}
-.err-msg{background:var(--danger-bg);border:1px solid var(--danger-bd);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none}
+.err-msg{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none}
 .btn-login{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
 .btn-login:hover{opacity:.9}
 
@@ -220,7 +220,7 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
 .topbar-title{font-size:15px;font-weight:600;color:var(--text)}
 .topbar-right{display:flex;align-items:center;gap:10px}
-.avatar{width:32px;height:32px;border-radius:50%;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple)}
+.avatar{width:32px;height:32px;border-radius:50%;background:#F5F3FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#7C3AED}
 .page{padding:24px;display:none}
 .page.active{display:block}
 
@@ -264,7 +264,7 @@ tr.sel-row td{background:var(--accent-bg)}
 .tag-yellow{background:var(--warning-bg);color:var(--warning)}
 .tag-red{background:var(--danger-bg);color:var(--danger)}
 .tag-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.tag-purple{background:#F5F3FF;color:#7C3AED}
 
 /* --- Form --- */
 .form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:14px}
@@ -296,7 +296,7 @@ textarea{resize:vertical;min-height:72px}
 .search-box{position:relative;flex:1;min-width:180px;max-width:260px}
 .search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .search-box input{padding-left:32px}
-.bulk-bar{background:var(--accent-bg);border:1px solid var(--accent-bd);border-radius:var(--r);padding:8px 14px;display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--accent)}
+.bulk-bar{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:8px 14px;display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--accent)}
 
 /* --- Modal / overlay --- */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none;padding:20px}
@@ -304,8 +304,8 @@ textarea{resize:vertical;min-height:72px}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.15)}
 .modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
 .modal-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
-.del-list{background:var(--danger-bg);border:1px solid var(--danger-bd);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;max-height:140px;overflow-y:auto}
-.del-item{font-size:12px;color:var(--danger);padding:3px 0;border-bottom:1px solid var(--danger-bd);display:flex;gap:6px;align-items:flex-start}
+.del-list{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;max-height:140px;overflow-y:auto}
+.del-item{font-size:12px;color:var(--danger);padding:3px 0;border-bottom:1px solid var(--danger-border);display:flex;gap:6px;align-items:flex-start}
 .del-item:last-child{border-bottom:none}
 .pin-wrap{margin:14px 0}
 .pin-wrap label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:8px}
@@ -316,9 +316,9 @@ textarea{resize:vertical;min-height:72px}
 .pin-err-msg{font-size:12px;color:var(--danger);text-align:center;margin-top:6px;min-height:18px}
 .notice{border-radius:var(--r);padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
 .notice svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
-.notice.info{background:var(--accent-bg);border:1px solid var(--accent-bd);color:var(--accent)}
+.notice.info{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
 .notice.warn{background:var(--warning-bg);border:1px solid var(--warning-bd);color:var(--warning)}
-.notice.danger{background:var(--danger-bg);border:1px solid var(--danger-bd);color:var(--danger)}
+.notice.danger{background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger)}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end}
 
 /* --- CSV --- */
@@ -366,7 +366,7 @@ textarea{resize:vertical;min-height:72px}
       <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:4px">เข้าสู่ระบบ</div>
       <div style="font-size:13px;color:var(--text2)">กรอก Username และ Password เพื่อเริ่มใช้งาน</div>
     </div>
-    <div id="login-err" style="background:var(--danger-bg);border:1px solid var(--danger-bd);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none">Username หรือ Password ไม่ถูกต้อง</div>
+    <div id="login-err" style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none">Username หรือ Password ไม่ถูกต้อง</div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username</label>
       <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username">
@@ -383,11 +383,11 @@ textarea{resize:vertical;min-height:72px}
 <!-- SCREEN: เลือก Role (สำหรับ role=both) -->
 <div id="s-pick-role" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:400px;text-align:center">
-    <div id="role-avatar" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;margin:0 auto 12px;background:var(--purple-bg);color:var(--purple)">AD</div>
+    <div id="role-avatar" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;margin:0 auto 12px;background:#F5F3FF;color:#7C3AED">AD</div>
     <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px" id="role-greeting">สวัสดี</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:20px">เลือกโหมดที่ต้องการใช้งาน</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div onclick="enterUser()" style="background:var(--accent-bg);border:1.5px solid var(--accent-bd);border-radius:12px;padding:16px;cursor:pointer">
+      <div onclick="enterUser()" style="background:var(--accent-bg);border:1.5px solid var(--accent-border);border-radius:12px;padding:16px;cursor:pointer">
         <div style="font-size:28px;margin-bottom:8px">👤</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">โหมดผู้ใช้</div>
         <div style="font-size:11px;color:var(--text2)">ทำข้อสอบและดูประวัติ</div>
@@ -407,7 +407,7 @@ textarea{resize:vertical;min-height:72px}
   <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
     <div style="font-size:14px;font-weight:600;color:var(--text)">ระบบข้อสอบตำรวจ</div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-bd);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--accent);cursor:pointer">⚙️ Admin</button>
+      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--accent);cursor:pointer">⚙️ Admin</button>
       <span id="user-topbar-name" style="font-size:12px;color:var(--text2)"></span>
       <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer">ออกจากระบบ</button>
     </div>
@@ -1201,28 +1201,6 @@ async function clearHistory(){
 </script>
 </div>
 
-<div id="admin-layout" style="display:none"><!-- ===== LOGIN ===== -->
-<div id="login-page" class="login-wrap">
-  <div class="login-box">
-    <div class="login-logo">
-      <div class="badge">ADMIN</div>
-      <h1>ระบบจัดการข้อสอบตำรวจ</h1>
-      <p>เข้าสู่ระบบเพื่อจัดการข้อสอบ</p>
-    </div>
-    <div class="err-msg" id="login-err">UserID หรือ Password ไม่ถูกต้อง กรุณาลองใหม่</div>
-    <div class="field">
-      <label>UserID</label>
-      <input type="text" id="inp-user" placeholder="กรอก UserID" autocomplete="username">
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="inp-pass" placeholder="กรอก Password" autocomplete="current-password">
-    </div>
-    <button class="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
-  </div>
-</div>
-
-<!-- ===== ADMIN LAYOUT ===== -->
 <div id="admin-layout" class="layout" style="display:none">
   <aside class="sidebar">
     <div class="sidebar-logo">
@@ -1314,7 +1292,7 @@ async function clearHistory(){
       <div class="bulk-bar" id="bulk-bar">
         <span id="bulk-count">เลือก 0 รายการ</span>
         <button class="btn btn-sm" onclick="clearSel()">ยกเลิก</button>
-        <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bd)" onclick="openDeleteModal()">
+        <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)" onclick="openDeleteModal()">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
           ลบที่เลือก
         </button>
@@ -1659,30 +1637,7 @@ let questions=[
 let selectedIds=new Set(), curPage=1, pageSize=5, filtered=[];
 let pinVal='';
 
-async function doLogin(){
-  const u=document.getElementById('inp-user').value.trim();
-  const p=document.getElementById('inp-pass').value;
-  const err=document.getElementById('login-err');
-  if(u===ADMIN_USER&&p===ADMIN_PASS){
-    err.style.display='none';
-    document.getElementById('login-page').style.display='none';
-    document.getElementById('admin-layout').style.display='flex';
-    initDashboard();
-    await initQuestions();
-    initChoicesForm();
-  } else {
-    err.style.display='block';
-    document.getElementById('inp-pass').value='';
-  }
-}
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-page').style.display!=='none')doLogin();});
-
-function doLogout(){
-  document.getElementById('admin-layout').style.display='none';
-  document.getElementById('login-page').style.display='flex';
-  document.getElementById('inp-user').value='';
-  document.getElementById('inp-pass').value='';
-}
+/* auth handled by unified login above */
 
 function goPage(id,navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2048,7 +2003,7 @@ async function doLogin(){
   if(!u||!p){err.style.display='block';err.textContent='กรุณากรอก Username และ Password';return;}
   btn.textContent='กำลังตรวจสอบ...';btn.disabled=true;
   try{
-    const {data,error}=await supa.from('users').select('*').eq('username',u).eq('password',p).single();
+    const {data,error}=await supa.from('users').select('*').eq('username',u).eq('password',p).maybeSingle();
     if(error||!data){err.style.display='block';err.textContent='Username หรือ Password ไม่ถูกต้อง';}
     else{
       err.style.display='none';
@@ -2093,7 +2048,7 @@ function enterAdmin(){
   const name=currentUser?.display_name||currentUser?.username||'admin';
   const an=document.getElementById('admin-username');
   if(an) an.textContent=name;
-  initAdminDashboard();
+  if(typeof initAdminDashboard==="function") initAdminDashboard(); else if(typeof initDashboard==="function") initDashboard();
   initQuestions();
   initChoicesForm();
 }
