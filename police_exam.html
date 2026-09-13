@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <title>ระบบจำลองข้อสอบตำรวจ</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -456,12 +457,134 @@ const DB = {
   }
 };
 
+// ===== Supabase Config =====
+const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
+const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// session id สำหรับ track history ของ user นี้ (ไม่ต้อง login)
+const SESSION_ID=(()=>{let s=localStorage.getItem('exam_session');if(!s){s=crypto.randomUUID();localStorage.setItem('exam_session',s);}return s;})();
+
 let state = {
   unit:'', unitName:'', unitShort:'',
   level:'', examType:'', selSubj:'', quizMode:'',
   questions:[], cur:0, ans:[], done:[],
-  history: JSON.parse(localStorage.getItem('examHistory')||'[]')
+  history:[]
 };
+
+// โหลดข้อสอบจาก Supabase
+async function loadQuestions(unitId, level, subjId=null){
+  try {
+    let q = supa
+      .from('question_units')
+      .select(`
+        level,
+        questions (
+          id, question, choice_a, choice_b, choice_c, choice_d,
+          choice_a_image, choice_b_image, choice_c_image, choice_d_image,
+          answer, explanation, question_image,
+          subjects ( name, icon )
+        )
+      `)
+      .eq('unit_id', unitId)
+      .eq('published', true);
+
+    if(level!=='both') q=q.in('level',[level,'both']);
+    if(subjId) q=q.eq('questions.subject_id', subjId);
+
+    const {data,error}=await q;
+    if(error) throw error;
+
+    // แปลงให้ตรงกับ format เดิม
+    return (data||[]).map(row=>{
+      const qq=row.questions;
+      if(!qq) return null;
+      const choices=[qq.choice_a,qq.choice_b,qq.choice_c,qq.choice_d];
+      const images=[qq.choice_a_image,qq.choice_b_image,qq.choice_c_image,qq.choice_d_image];
+      const ansIdx={'a':0,'b':1,'c':2,'d':3}[qq.answer]??0;
+      return {
+        id:qq.id, q:qq.question,
+        c:choices, cImg:images,
+        a:ansIdx, e:qq.explanation||'',
+        img:qq.question_image||null,
+        subj:qq.subjects?.name||'', subjIcon:qq.subjects?.icon||''
+      };
+    }).filter(Boolean);
+  } catch(err){
+    console.error('loadQuestions error:',err);
+    return [];
+  }
+}
+
+// โหลดหน่วยงานและวิชาจาก Supabase
+async function loadUnits(){
+  try {
+    const {data,error}=await supa.from('units').select('*');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+async function loadSubjects(unitId, level){
+  try {
+    const lv=level==='p'?['p','both']:['s','both'];
+    const {data,error}=await supa
+      .from('subjects')
+      .select('*')
+      .eq('unit_id',unitId)
+      .in('level',lv)
+      .order('id');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+// บันทึก history ลง Supabase + localStorage (fallback)
+async function saveHistory(rec){
+  // localStorage fallback
+  state.history.unshift(rec);
+  if(state.history.length>100) state.history=state.history.slice(0,100);
+  localStorage.setItem('examHistory',JSON.stringify(state.history));
+  // Supabase
+  try {
+    await supa.from('exam_history').insert({
+      session_id: SESSION_ID,
+      unit_id: rec.unit,
+      level: rec.level,
+      exam_type: rec.examType,
+      quiz_mode: rec.quizMode,
+      subject_name: rec.subjName,
+      score: rec.score,
+      total: rec.total,
+      pct: rec.pct
+    });
+  } catch(e){ console.warn('saveHistory Supabase error:',e); }
+}
+
+// โหลด history จาก Supabase
+async function loadHistory(){
+  try {
+    const {data,error}=await supa
+      .from('exam_history')
+      .select('*')
+      .eq('session_id',SESSION_ID)
+      .order('created_at',{ascending:false})
+      .limit(100);
+    if(error) throw error;
+    return (data||[]).map(h=>({
+      id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
+      unit:h.unit_id, unitShort:h.unit_id?.toUpperCase(),
+      unitName:h.unit_id, level:h.level,
+      lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+      examType:h.exam_type, quizMode:h.quiz_mode,
+      subj:'', subjName:h.subject_name,
+      score:h.score, total:h.total, pct:h.pct
+    }));
+  } catch(e){
+    // fallback localStorage
+    return JSON.parse(localStorage.getItem('examHistory')||'[]');
+  }
+}
 
 function shuffle(arr){
   const a=[...arr];
@@ -703,7 +826,7 @@ function pickAns(i){
 function qPrev(){if(state.cur>0){state.cur--;renderQ();}}
 function qNext(){if(state.cur<state.questions.length-1){state.cur++;renderQ();}}
 
-function showResult(){
+async function showResult(){
   const score=state.ans.filter((a,i)=>a===state.questions[i].a).length;
   const total=state.questions.length;
   const pct=Math.round((score/total)*100);
@@ -755,9 +878,7 @@ function showResult(){
     subj:state.selSubj||'all', subjName,
     score, total, pct
   };
-  state.history.unshift(rec);
-  if(state.history.length>100) state.history=state.history.slice(0,100);
-  localStorage.setItem('examHistory',JSON.stringify(state.history));
+  await saveHistory(rec);
 
   goScreen('s-result');
 }
@@ -766,9 +887,11 @@ function restartSame(){
   startQuiz();
 }
 
-function goHistory(){
-  renderHistory('all');
+async function goHistory(){
+  document.getElementById('h-list').innerHTML='<div class="empty-hist"><div class="big">⏳</div><p>กำลังโหลด...</p></div>';
   goScreen('s-history');
+  state.history=await loadHistory();
+  renderHistory('all');
 }
 
 function renderHistory(filterUnit){
@@ -824,10 +947,13 @@ function renderHistory(filterUnit){
   list.innerHTML+='</div>';
 }
 
-function clearHistory(){
+async function clearHistory(){
   if(!confirm('ลบประวัติการสอบทั้งหมด?')) return;
   state.history=[];
   localStorage.removeItem('examHistory');
+  try{
+    await supa.from('exam_history').delete().eq('session_id',SESSION_ID);
+  }catch(e){console.warn(e);}
   renderHistory('all');
 }
 </script>
