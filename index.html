@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -359,7 +359,7 @@ textarea{resize:vertical;min-height:72px}
 <body>
 
 <!-- SCREEN: LOGIN -->
-<div id="s-login" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
+<div id="s-login" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px">
     <div style="text-align:center;margin-bottom:24px">
       <div style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:600;padding:3px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.04em">ระบบข้อสอบตำรวจ</div>
@@ -634,6 +634,571 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
+<script>
+const DB = {
+  tm: {
+    name:'ตรวจคนเข้าเมือง', short:'ตม.',
+    p: {
+      subjects: [
+        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:40,qs:[
+          {q:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',c:['1 มกราคม 2522','27 กุมภาพันธ์ 2523','1 มีนาคม 2522','31 ธันวาคม 2522'],a:1,e:'พ.ร.บ. คนเข้าเมือง มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523 ครับ'},
+          {q:'คนต่างด้าวที่เข้ามาในราชอาณาจักรโดยไม่ได้รับอนุญาต มีความผิดตาม พ.ร.บ. คนเข้าเมือง มาตราใด?',c:['มาตรา 11','มาตรา 54','มาตรา 81','มาตรา 101'],a:2,e:'มาตรา 81 บัญญัติโทษจำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 20,000 บาท หรือทั้งจำทั้งปรับ'},
+          {q:'ช่องทางที่คนต่างด้าวเข้า-ออกราชอาณาจักรได้ เรียกว่าอะไร?',c:['ด่านศุลกากร','ช่องทางอนุญาต','ด่านตรวจคนเข้าเมือง','จุดผ่านแดน'],a:1,e:'"ช่องทางอนุญาต" คือทางบก ทางน้ำ หรือทางอากาศที่อธิบดีกำหนด'},
+          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'ตาม พ.ร.บ. คนเข้าเมือง รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศ'},
+          {q:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษตามกฎหมายอย่างไร?',c:['ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท','จำคุกไม่เกิน 1 ปี','ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี','เนรเทศออกทันที'],a:2,e:'มาตรา 81 ปรับวันละ 500 บาท สูงสุดไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี หรือทั้งจำทั้งปรับ'},
+          {q:'พนักงานเจ้าหน้าที่ตาม พ.ร.บ. คนเข้าเมือง หมายถึงบุคคลใด?',c:['เจ้าหน้าที่ตำรวจทุกคน','เจ้าหน้าที่ที่รัฐมนตรีแต่งตั้งเพื่อปฏิบัติการตามพระราชบัญญัตินี้','ข้าราชการพลเรือนระดับ 5 ขึ้นไป','อธิบดีกรมตรวจคนเข้าเมืองเท่านั้น'],a:1,e:'"พนักงานเจ้าหน้าที่" หมายถึงบุคคลซึ่งรัฐมนตรีแต่งตั้งให้ปฏิบัติการตามพระราชบัญญัตินี้'},
+        ]},
+        {id:'thai',name:'ภาษาไทย',icon:'📖',ratio:30,qs:[
+          {q:'ข้อใดเขียนถูกต้อง?',c:['กระเพราะ','กระเพาะ','กะเพราะ','กะเพาะ'],a:1,e:'"กระเพาะ" เป็นการสะกดที่ถูกต้องตามพจนานุกรมฉบับราชบัณฑิตยสถาน'},
+          {q:'คำว่า "วิสุทธิ์" มีความหมายว่าอะไร?',c:['สะอาด บริสุทธิ์','ฉลาดเฉลียว','แข็งแกร่ง','สูงส่ง'],a:0,e:'"วิสุทธิ์" หมายถึง บริสุทธิ์ สะอาด ปราศจากมลทิน'},
+          {q:'ประโยคใดใช้คำราชาศัพท์ถูกต้อง?',c:['พระองค์เสด็จไปวัด','พระองค์ไปวัด','พระองค์เสด็จวัด','พระองค์ทรงเสด็จวัด'],a:0,e:'"เสด็จ" เป็นคำราชาศัพท์ของ "ไป" ใช้กับพระมหากษัตริย์'},
+          {q:'ข้อใดใช้วรรณยุกต์ถูกต้อง?',c:['เขาไปซื้ออาหารที่ตลาด (ตลาด ออกเสียง โท)','ฉันชอบกินข้าว (ข้าว ออกเสียง โท)','เธอนั่งอยู่บนเก้าอี้ (เก้าอี้ ออกเสียง เอก)','หมาไล่แมว (หมา ออกเสียง สามัญ)'],a:1,e:'"ข้าว" ออกเสียงวรรณยุกต์โท ถูกต้อง'},
+          {q:'สำนวน "น้ำขึ้นให้รีบตัก" หมายความว่าอย่างไร?',c:['ควรรีบตักน้ำก่อนน้ำลด','ฉวยโอกาสทำสิ่งที่เป็นประโยชน์เมื่อมีโอกาส','อย่ารอช้าเมื่อมีงานเร่งด่วน','รีบทำงานให้เสร็จก่อนเวลา'],a:1,e:'"น้ำขึ้นให้รีบตัก" หมายถึง เมื่อมีโอกาสดีควรรีบฉวยโอกาสนั้น'},
+          {q:'คำใดไม่ใช่คำยืมจากภาษาบาลี-สันสกฤต?',c:['วิทยา','กษัตริย์','สมุทร','กะทิ'],a:3,e:'"กะทิ" เป็นคำไทยแท้ ส่วนวิทยา กษัตริย์ สมุทร มาจากภาษาบาลี-สันสกฤต'},
+        ]},
+        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:30,qs:[
+          {q:'ประเทศไทยมีกี่จังหวัด?',c:['75 จังหวัด','76 จังหวัด','77 จังหวัด','78 จังหวัด'],a:2,e:'ประเทศไทยมีทั้งหมด 77 จังหวัด'},
+          {q:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่าอะไร?',c:['ผบ.ตร.','ผช.ผบ.ตร.','จตช.','สตช.'],a:0,e:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่า "ผบ.ตร."'},
+          {q:'ASEAN มีสมาชิกกี่ประเทศ?',c:['8 ประเทศ','9 ประเทศ','10 ประเทศ','11 ประเทศ'],a:2,e:'อาเซียนมีสมาชิกทั้งหมด 10 ประเทศ ก่อตั้งในปี 2510'},
+          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
+          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา','ลียง ฝรั่งเศส','กรุงเฮก','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
+          {q:'กฎหมายอาญาของไทยใช้หลักใดในการบังคับใช้กับบุคคล?',c:['หลักดินแดน','หลักสัญชาติ','หลักดินแดนและหลักสัญชาติ','หลักความยุติธรรมสากล'],a:2,e:'กฎหมายอาญาไทยใช้ทั้งหลักดินแดน (บังคับในราชอาณาจักร) และหลักสัญชาติ (บังคับกับคนไทย)'},
+        ]}
+      ]
+    },
+    s: {
+      subjects: [
+        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:35,qs:[
+          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร'},
+          {q:'คนต่างด้าวที่อยู่เกินกำหนด มีโทษปรับวันละเท่าไหร่?',c:['200 บาท','300 บาท','500 บาท','1,000 บาท'],a:2,e:'โทษปรับ 500 บาทต่อวัน สูงสุดไม่เกิน 20,000 บาท ตามมาตรา 81'},
+          {q:'วีซ่าประเภทใดอนุญาตให้ทำงานในประเทศไทย?',c:['Non-O','Non-B','Tourist Visa','Transit Visa'],a:1,e:'Non-Immigrant Visa ประเภท B (Business) อนุญาตให้ทำงานในประเทศไทย'},
+          {q:'ข้อใดเป็นช่องทางอนุญาตตาม พ.ร.บ. คนเข้าเมือง?',c:['ทางบก ทางน้ำ ทางอากาศ','ทางบกเท่านั้น','ทางบกและทางน้ำ','ทางอากาศเท่านั้น'],a:0,e:'ช่องทางอนุญาตได้แก่ ทางบก ทางน้ำ และทางอากาศ ตามที่อธิบดีกำหนด'},
+          {q:'คนต่างด้าวที่ถูกเนรเทศสามารถขอเข้ามาใหม่ได้เมื่อใด?',c:['ไม่มีระยะเวลา สามารถขอได้ทันที','ภายหลัง 1 ปี','ภายหลัง 5 ปี','ตามที่รัฐมนตรีกำหนดเป็นรายกรณี'],a:3,e:'ขึ้นอยู่กับดุลพินิจของรัฐมนตรีเป็นรายกรณี'},
+        ]},
+        {id:'eng',name:'ภาษาอังกฤษ',icon:'🔤',ratio:25,qs:[
+          {q:'What does "immigration" mean?',c:['การเดินทางท่องเที่ยว','การเข้าเมือง/การย้ายถิ่นฐาน','การส่งออกสินค้า','การติดต่อสื่อสาร'],a:1,e:'"Immigration" หมายถึง การเข้าเมือง หรือการย้ายถิ่นฐานเข้ามาอยู่ในประเทศ'},
+          {q:'Choose the correct sentence.',c:['He don\'t have a visa.','He doesn\'t have a visa.','He not have a visa.','He haven\'t a visa.'],a:1,e:'ประธานเป็นบุรุษที่ 3 เอกพจน์ (He) ต้องใช้ "doesn\'t" ในประโยคปฏิเสธ Present Simple'},
+          {q:'What is a "passport"?',c:['เอกสารการเดินทางระหว่างประเทศ','ใบอนุญาตทำงาน','วีซ่าท่องเที่ยว','บัตรประจำตัวประชาชน'],a:0,e:'"Passport" คือหนังสือเดินทาง เป็นเอกสารที่ใช้เดินทางระหว่างประเทศ'},
+          {q:'The officer asked the tourist to "declare" the items. What does "declare" mean?',c:['ซ่อน','แจ้ง/ประกาศ','ทิ้ง','ซื้อ'],a:1,e:'"Declare" ในบริบทศุลกากร หมายถึง การแจ้งหรือประกาศรายการสินค้าต่อเจ้าหน้าที่'},
+          {q:'Fill in: "The visa _____ on 31 December."',c:['expire','expires','expired','expiring'],a:1,e:'ประธาน "visa" เป็นเอกพจน์ ใช้ "expires" ในรูป Present Simple'},
+        ]},
+        {id:'crim',name:'กฎหมายอาญา',icon:'🏛️',ratio:25,qs:[
+          {q:'ความผิดอาญาแผ่นดิน คือความผิดประเภทใด?',c:['ความผิดที่ยอมความได้','ความผิดที่รัฐเป็นผู้เสียหาย ยอมความไม่ได้','ความผิดเกี่ยวกับทรัพย์','ความผิดลหุโทษ'],a:1,e:'ความผิดอาญาแผ่นดิน คือความผิดที่กระทบต่อความสงบเรียบร้อย รัฐเป็นผู้เสียหาย ยอมความไม่ได้'},
+          {q:'เจตนาในทางอาญา แบ่งออกเป็นกี่ประเภท?',c:['1 ประเภท','2 ประเภท','3 ประเภท','4 ประเภท'],a:1,e:'เจตนาในทางอาญาแบ่งเป็น 2 ประเภท คือ เจตนาประสงค์ต่อผล และเจตนาเล็งเห็นผล'},
+          {q:'อายุความในคดีอาญาเริ่มนับจากวันใด?',c:['วันที่จับกุมผู้ต้องหา','วันที่กระทำความผิด','วันที่ฟ้องคดี','วันที่ศาลมีคำพิพากษา'],a:1,e:'อายุความในคดีอาญาเริ่มนับตั้งแต่วันที่กระทำความผิด'},
+          {q:'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',c:['3 สถาน','4 สถาน','5 สถาน','6 สถาน'],a:2,e:'โทษทางอาญามี 5 สถาน ได้แก่ ประหารชีวิต จำคุก กักขัง ปรับ และริบทรัพย์สิน'},
+          {q:'การกระทำใดเป็น "ความผิดลหุโทษ"?',c:['ลักทรัพย์','ชิงทรัพย์','เมาแล้วขับ','ทำร้ายร่างกาย'],a:2,e:'เมาแล้วขับ (ขับรถในขณะเมาสุรา) เป็นความผิดลหุโทษตาม พ.ร.บ. จราจรทางบก'},
+        ]},
+        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:15,qs:[
+          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา สวิตเซอร์แลนด์','ลียง ฝรั่งเศส','กรุงเฮก เนเธอร์แลนด์','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
+          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
+          {q:'ICPO ย่อมาจากอะไร?',c:['International Criminal Police Organization','International Control Police Office','Interpol Criminal Police Operations','International Cooperation Police Organization'],a:0,e:'ICPO ย่อมาจาก International Criminal Police Organization หรือที่รู้จักกันในชื่อ Interpol'},
+        ]}
+      ]
+    }
+  }
+};
+
+// ===== Supabase Config =====
+const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
+const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// session id สำหรับ track history ของ user นี้ (ไม่ต้อง login)
+const SESSION_ID=(()=>{let s=localStorage.getItem('exam_session');if(!s){s=crypto.randomUUID();localStorage.setItem('exam_session',s);}return s;})();
+
+let state = {
+  unit:'', unitName:'', unitShort:'',
+  level:'', examType:'', selSubj:'', quizMode:'',
+  questions:[], cur:0, ans:[], done:[],
+  history:[]
+};
+
+// โหลดข้อสอบจาก Supabase
+async function loadQuestions(unitId, level, subjId=null){
+  try {
+    let q = supa
+      .from('question_units')
+      .select(`
+        level,
+        questions (
+          id, question, choice_a, choice_b, choice_c, choice_d,
+          choice_a_image, choice_b_image, choice_c_image, choice_d_image,
+          answer, explanation, question_image,
+          subjects ( name, icon )
+        )
+      `)
+      .eq('unit_id', unitId)
+      .eq('published', true);
+
+    if(level!=='both') q=q.in('level',[level,'both']);
+    if(subjId) q=q.eq('questions.subject_id', subjId);
+
+    const {data,error}=await q;
+    if(error) throw error;
+
+    // แปลงให้ตรงกับ format เดิม
+    return (data||[]).map(row=>{
+      const qq=row.questions;
+      if(!qq) return null;
+      const choices=[qq.choice_a,qq.choice_b,qq.choice_c,qq.choice_d];
+      const images=[qq.choice_a_image,qq.choice_b_image,qq.choice_c_image,qq.choice_d_image];
+      const ansIdx={'a':0,'b':1,'c':2,'d':3}[qq.answer]??0;
+      return {
+        id:qq.id, q:qq.question,
+        c:choices, cImg:images,
+        a:ansIdx, e:qq.explanation||'',
+        img:qq.question_image||null,
+        subj:qq.subjects?.name||'', subjIcon:qq.subjects?.icon||''
+      };
+    }).filter(Boolean);
+  } catch(err){
+    console.error('loadQuestions error:',err);
+    return [];
+  }
+}
+
+// โหลดหน่วยงานและวิชาจาก Supabase
+async function loadUnits(){
+  try {
+    const {data,error}=await supa.from('units').select('*');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+async function loadSubjects(unitId, level){
+  try {
+    const lv=level==='p'?['p','both']:['s','both'];
+    const {data,error}=await supa
+      .from('subjects')
+      .select('*')
+      .eq('unit_id',unitId)
+      .in('level',lv)
+      .order('id');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+// บันทึก history ลง Supabase + localStorage (fallback)
+async function saveHistory(rec){
+  // localStorage fallback
+  state.history.unshift(rec);
+  if(state.history.length>100) state.history=state.history.slice(0,100);
+  localStorage.setItem('examHistory',JSON.stringify(state.history));
+  // Supabase
+  try {
+    await supa.from('exam_history').insert({
+      session_id: SESSION_ID,
+      unit_id: rec.unit,
+      level: rec.level,
+      exam_type: rec.examType,
+      quiz_mode: rec.quizMode,
+      subject_name: rec.subjName,
+      score: rec.score,
+      total: rec.total,
+      pct: rec.pct
+    });
+  } catch(e){ console.warn('saveHistory Supabase error:',e); }
+}
+
+// โหลด history จาก Supabase
+async function loadHistory(){
+  try {
+    const {data,error}=await supa
+      .from('exam_history')
+      .select('*')
+      .eq('session_id',SESSION_ID)
+      .order('created_at',{ascending:false})
+      .limit(100);
+    if(error) throw error;
+    return (data||[]).map(h=>({
+      id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
+      unit:h.unit_id, unitShort:h.unit_id?.toUpperCase(),
+      unitName:h.unit_id, level:h.level,
+      lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+      examType:h.exam_type, quizMode:h.quiz_mode,
+      subj:'', subjName:h.subject_name,
+      score:h.score, total:h.total, pct:h.pct
+    }));
+  } catch(e){
+    // fallback localStorage
+    return JSON.parse(localStorage.getItem('examHistory')||'[]');
+  }
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function makeBc(items){
+  return items.map((it,i)=>`<span class="${i===items.length-1?'cur':''}">${it}</span>${i<items.length-1?'<span class="bc-sep">›</span>':''}`).join('');
+}
+
+function goHome(){
+  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('btn-home').disabled=true;
+  state.unit='';
+  goScreen('s-home');
+}
+
+function pickUnit(id,name,short){
+  state.unit=id; state.unitName=name; state.unitShort=short;
+  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('u-'+id).classList.add('sel');
+  document.getElementById('btn-home').disabled=false;
+}
+
+function goLevel(){
+  if(!state.unit) return;
+  document.getElementById('bc-level').innerHTML=makeBc([state.unitShort,'เลือกระดับ']);
+  document.getElementById('sub-level').textContent=state.unitName;
+  ['lv-p','lv-s'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-level').disabled=true;
+  state.level='';
+  goScreen('s-level');
+}
+
+function pickLevel(lv){
+  state.level=lv;
+  document.getElementById('lv-p').classList.toggle('sel',lv==='p');
+  document.getElementById('lv-s').classList.toggle('sel',lv==='s');
+  document.getElementById('btn-level').disabled=false;
+}
+
+function goType(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-type').innerHTML=makeBc([state.unitShort,lvLabel,'รูปแบบ']);
+  document.getElementById('sub-type').textContent=state.unitName+' — '+lvLabel;
+  ['tp-sub','tp-full'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-type').disabled=true;
+  state.examType='';
+  goScreen('s-type');
+}
+
+function pickType(t){
+  state.examType=t;
+  document.getElementById('tp-sub').classList.toggle('sel',t==='sub');
+  document.getElementById('tp-full').classList.toggle('sel',t==='full');
+  document.getElementById('btn-type').disabled=false;
+}
+
+function goSubjOrRatio(){
+  if(state.examType==='sub') goSubj();
+  else goRatio();
+}
+
+function goSubj(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-subj').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา','เลือกวิชา']);
+  document.getElementById('sub-subj').textContent=state.unitName+' — '+lvLabel+' — เลือกวิชาที่ต้องการฝึก';
+  const data=DB[state.unit]?.[state.level];
+  const list=document.getElementById('subj-list');
+  list.innerHTML='';
+  state.selSubj='';
+  document.getElementById('btn-subj').disabled=true;
+  data.subjects.forEach(subj=>{
+    const row=document.createElement('div');
+    row.className='subj-row';
+    row.id='srow-'+subj.id;
+    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${subj.qs.length} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">เลือก</span>`;
+    row.onclick=()=>{
+      state.selSubj=subj.id;
+      data.subjects.forEach(s=>{
+        const t=document.getElementById('stag-'+s.id);
+        if(t){t.className='tag tag-gray';t.textContent='เลือก';}
+      });
+      const tsel=document.getElementById('stag-'+subj.id);
+      if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
+      document.getElementById('btn-subj').disabled=false;
+    };
+    list.appendChild(row);
+  });
+  goScreen('s-subj');
+}
+
+function goRatio(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-ratio').innerHTML=makeBc([state.unitShort,lvLabel,'จำลองสอบ','โหมด']);
+  document.getElementById('sub-ratio').textContent=state.unitName+' — '+lvLabel;
+  const data=DB[state.unit]?.[state.level];
+  const rl=document.getElementById('ratio-list');
+  rl.innerHTML='';
+  data.subjects.forEach(s=>{
+    const row=document.createElement('div');
+    row.className='ratio-row';
+    row.innerHTML=`<span style="font-size:13px;color:var(--text)">${s.icon} ${s.name}</span><div style="display:flex;align-items:center;gap:8px"><div class="ratio-bar-track"><div class="ratio-bar-fill" style="width:${s.ratio}%"></div></div><span style="font-size:12px;color:var(--text2);min-width:30px;text-align:right">${s.ratio}%</span></div>`;
+    rl.appendChild(row);
+  });
+  ['fm-i','fm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-ratio').disabled=true;
+  state.quizMode='';
+  goScreen('s-ratio');
+}
+
+function pickFMode(m){
+  state.quizMode=m;
+  document.getElementById('fm-i').classList.toggle('sel',m==='instant');
+  document.getElementById('fm-e').classList.toggle('sel',m==='exam');
+  document.getElementById('btn-ratio').disabled=false;
+}
+
+function goMode(from){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  const data=DB[state.unit]?.[state.level];
+  const subj=data.subjects.find(s=>s.id===state.selSubj);
+  document.getElementById('bc-mode').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา',subj.name,'โหมด']);
+  document.getElementById('sub-mode').textContent=state.unitName+' — '+subj.name;
+  ['sm-i','sm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-mode').disabled=true;
+  state.quizMode='';
+  goScreen('s-mode');
+}
+
+function pickSMode(m){
+  state.quizMode=m;
+  document.getElementById('sm-i').classList.toggle('sel',m==='instant');
+  document.getElementById('sm-e').classList.toggle('sel',m==='exam');
+  document.getElementById('btn-mode').disabled=false;
+}
+
+// สุ่มตัวเลือกและจำตำแหน่งเฉลยใหม่ต่อ 1 ข้อ
+function shuffleChoices(q){
+  const indexed=q.c.map((text,i)=>({text,isAnswer:i===q.a}));
+  const shuffled=shuffle(indexed);
+  return {
+    ...q,
+    c: shuffled.map(x=>x.text),
+    a: shuffled.findIndex(x=>x.isAnswer)
+  };
+}
+
+function startQuiz(){
+  const data=DB[state.unit]?.[state.level];
+  let rawQs=[];
+  if(state.examType==='full'){
+    data.subjects.forEach(s=>s.qs.forEach(q=>rawQs.push({...q,subj:s.name,subjIcon:s.icon})));
+  } else {
+    const subj=data.subjects.find(s=>s.id===state.selSubj);
+    rawQs=subj.qs.map(q=>({...q,subj:subj.name,subjIcon:subj.icon}));
+  }
+  // สุ่มลำดับข้อ + สุ่มตัวเลือกแต่ละข้อ
+  state.questions=shuffle(rawQs).map(q=>shuffleChoices(q));
+  state.cur=0;
+  state.ans=Array(state.questions.length).fill(null);
+  state.done=Array(state.questions.length).fill(false);
+  renderQ();
+  goScreen('s-quiz');
+}
+
+const labels=['ก','ข','ค','ง'];
+
+function renderQ(){
+  const q=state.questions[state.cur];
+  const total=state.questions.length;
+  const pct=Math.round((state.cur/total)*100);
+  document.getElementById('pbar-fill').style.width=pct+'%';
+  document.getElementById('q-num').textContent='ข้อ '+(state.cur+1)+' / '+total;
+
+  const modeTag=state.quizMode==='instant'
+    ?'<span class="tag tag-blue">💡 ฝึกซ้อม</span>'
+    :'<span class="tag tag-yellow">📋 จำลองสอบ</span>';
+  const shuffleTag='<span class="tag" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border)">🔀 สุ่มแล้ว</span>';
+  document.getElementById('q-tags').innerHTML=`<span class="tag" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)">${q.subjIcon||''} ${q.subj||''}</span>${modeTag}${shuffleTag}`;
+  document.getElementById('q-text').textContent=q.q;
+
+  const imgWrap=document.getElementById('q-img-wrap');
+  if(q.img){imgWrap.style.display='block';document.getElementById('q-img').src=q.img;}
+  else imgWrap.style.display='none';
+
+  const ch=document.getElementById('q-choices');
+  ch.innerHTML='';
+  q.c.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    let cls='';
+    if(state.ans[state.cur]===i){
+      if(state.quizMode==='instant'&&state.done[state.cur]) cls=i===q.a?'ok':'ng';
+      else cls='sel';
+    } else if(state.quizMode==='instant'&&state.done[state.cur]&&i===q.a) cls='ok';
+    if(cls) btn.classList.add(cls);
+    if(state.quizMode==='instant'&&state.done[state.cur]) btn.disabled=true;
+    btn.innerHTML=`<span class="choice-lbl">${labels[i]}</span><span>${c}</span>`;
+    btn.onclick=()=>pickAns(i);
+    ch.appendChild(btn);
+  });
+
+  const fb=document.getElementById('q-feedback');
+  if(state.quizMode==='instant'&&state.done[state.cur]){
+    const ok=state.ans[state.cur]===q.a;
+    fb.className='feedback '+(ok?'ok':'ng');
+    document.getElementById('fb-title').textContent=ok?'✓ ถูกต้อง':'✗ ไม่ถูกต้อง';
+    document.getElementById('fb-body').textContent=q.e;
+    fb.style.display='block';
+  } else fb.style.display='none';
+
+  const prev=document.getElementById('qb-prev');
+  const next=document.getElementById('qb-next');
+  const sub=document.getElementById('qb-submit');
+  prev.style.display=state.cur>0?'block':'none';
+  if(state.quizMode==='exam'){
+    next.style.display=state.cur<total-1?'block':'none';
+    sub.style.display=state.cur===total-1&&state.ans.every(a=>a!==null)?'block':'none';
+  } else {
+    next.style.display=state.done[state.cur]&&state.cur<total-1?'block':'none';
+    sub.style.display=state.done[state.cur]&&state.cur===total-1?'block':'none';
+  }
+}
+
+function pickAns(i){
+  if(state.quizMode==='instant'&&state.done[state.cur]) return;
+  state.ans[state.cur]=i;
+  if(state.quizMode==='instant') state.done[state.cur]=true;
+  renderQ();
+}
+function qPrev(){if(state.cur>0){state.cur--;renderQ();}}
+function qNext(){if(state.cur<state.questions.length-1){state.cur++;renderQ();}}
+
+async function showResult(){
+  const score=state.ans.filter((a,i)=>a===state.questions[i].a).length;
+  const total=state.questions.length;
+  const pct=Math.round((score/total)*100);
+  document.getElementById('r-score').textContent=score+' / '+total;
+  document.getElementById('r-pct').textContent='คะแนน '+pct+'% — '+state.unitShort+' '+(state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร');
+
+  const prevScores=state.history.filter(h=>h.unit===state.unit&&h.level===state.level&&h.subj===(state.selSubj||'all')).map(h=>h.pct);
+  const avg=prevScores.length>0?Math.round(prevScores.reduce((a,b)=>a+b,0)/prevScores.length):null;
+  const best=prevScores.length>0?Math.max(...prevScores):null;
+  const diff=avg!==null?pct-avg:null;
+
+  document.getElementById('r-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val" style="color:${pct>=70?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</div><div class="stat-lbl">ครั้งนี้</div></div>
+    <div class="stat-box"><div class="stat-val">${avg!==null?avg+'%':'—'}</div><div class="stat-lbl">เฉลี่ย</div></div>
+    <div class="stat-box"><div class="stat-val">${best!==null?best+'%':'—'}</div><div class="stat-lbl">สูงสุด</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:${diff===null?'var(--text)':diff>=0?'var(--success)':'var(--danger)'}">${diff===null?'—':(diff>=0?'+':'')+diff+'%'}</div><div class="stat-lbl">จากเฉลี่ย</div></div>`;
+
+  const dots=document.getElementById('r-dots');
+  dots.innerHTML='';
+  state.questions.forEach((_,i)=>{
+    const ok=state.ans[i]===state.questions[i].a;
+    const d=document.createElement('div');
+    d.className='rdot '+(ok?'ok':'ng');
+    d.textContent=i+1;
+    dots.appendChild(d);
+  });
+
+  const rev=document.getElementById('r-review');
+  rev.innerHTML='';
+  state.questions.forEach((q,i)=>{
+    const ok=state.ans[i]===q.a;
+    const d=document.createElement('div');
+    d.className='review-item';
+    d.innerHTML=`<div class="review-q">ข้อ ${i+1}: ${q.q}</div>
+    <div class="review-ans" style="color:${ok?'var(--success)':'var(--danger)'}">คำตอบของคุณ: ${labels[state.ans[i]]}. ${q.c[state.ans[i]]} ${ok?'✓':'✗'}</div>
+    ${!ok?`<div class="review-ans" style="color:var(--success)">เฉลย: ${labels[q.a]}. ${q.c[q.a]}</div>`:''}
+    <div class="review-explain">${q.e}</div>`;
+    rev.appendChild(d);
+  });
+
+  const data=DB[state.unit]?.[state.level];
+  const subjName=state.examType==='full'?'จำลองสอบจริง (รวมทุกวิชา)':(data.subjects.find(s=>s.id===state.selSubj)?.name||'');
+  const rec={
+    id:Date.now(),
+    date:new Date().toLocaleString('th-TH'),
+    unit:state.unit, unitShort:state.unitShort, unitName:state.unitName,
+    level:state.level, lvLabel:state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+    examType:state.examType, quizMode:state.quizMode,
+    subj:state.selSubj||'all', subjName,
+    score, total, pct
+  };
+  await saveHistory(rec);
+
+  goScreen('s-result');
+}
+
+function restartSame(){
+  startQuiz();
+}
+
+async function goHistory(){
+  document.getElementById('h-list').innerHTML='<div class="empty-hist"><div class="big">⏳</div><p>กำลังโหลด...</p></div>';
+  goScreen('s-history');
+  state.history=await loadHistory();
+  renderHistory('all');
+}
+
+function renderHistory(filterUnit){
+  const hist=state.history;
+  const units=[...new Set(hist.map(h=>h.unit))];
+
+  const stats=document.getElementById('h-stats');
+  if(hist.length===0){
+    stats.innerHTML='';
+  } else {
+    const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
+    const avg=filtered.length?Math.round(filtered.reduce((a,b)=>a+b.pct,0)/filtered.length):0;
+    const best=filtered.length?Math.max(...filtered.map(h=>h.pct)):0;
+    const subjCount=[...new Set(filtered.map(h=>h.subjName))].length;
+    stats.innerHTML=`
+      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--accent)">${filtered.length}</div><div class="hist-stat-lbl">ครั้งที่สอบ</div></div>
+      <div class="hist-stat"><div class="hist-stat-val" style="color:${avg>=70?'var(--success)':avg>=50?'var(--warning)':'var(--danger)'}">${avg}%</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
+      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--success)">${best}%</div><div class="hist-stat-lbl">สูงสุด</div></div>
+      <div class="hist-stat"><div class="hist-stat-val">${subjCount}</div><div class="hist-stat-lbl">รูปแบบ</div></div>`;
+  }
+
+  const filters=document.getElementById('h-filters');
+  filters.innerHTML=`<button class="filter-btn ${filterUnit==='all'?'active':''}" onclick="renderHistory('all')">ทั้งหมด</button>`;
+  units.forEach(u=>{
+    const s=hist.find(h=>h.unit===u);
+    if(s) filters.innerHTML+=`<button class="filter-btn ${filterUnit===u?'active':''}" onclick="renderHistory('${u}')">${s.unitShort}</button>`;
+  });
+
+  const list=document.getElementById('h-list');
+  const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
+  if(filtered.length===0){
+    list.innerHTML=`<div class="empty-hist"><div class="big">📋</div><p>ยังไม่มีประวัติการสอบ<br>เริ่มทำข้อสอบแล้วผลจะปรากฏที่นี่</p></div>`;
+    return;
+  }
+  list.innerHTML='<div class="hlist">';
+  filtered.forEach(h=>{
+    const color=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
+    const dotColor=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
+    const modeLabel=h.quizMode==='instant'?'ฝึกซ้อม':'จำลองสอบ';
+    list.innerHTML+=`<div class="hitem">
+      <div class="hdot" style="background:${dotColor}"></div>
+      <div class="hitem-body">
+        <div class="hitem-title">${h.unitShort} — ${h.lvLabel}</div>
+        <div class="hitem-sub">${h.subjName} · ${modeLabel}</div>
+        <div class="hitem-time">${h.date}</div>
+      </div>
+      <div class="hitem-right">
+        <div class="hitem-score" style="color:${color}">${h.pct}%</div>
+        <div style="font-size:11px;color:var(--text3)">${h.score}/${h.total}</div>
+      </div>
+    </div>`;
+  });
+  list.innerHTML+='</div>';
+}
+
+async function clearHistory(){
+  if(!confirm('ลบประวัติการสอบทั้งหมด?')) return;
+  state.history=[];
+  localStorage.removeItem('examHistory');
+  try{
+    await supa.from('exam_history').delete().eq('session_id',SESSION_ID);
+  }catch(e){console.warn(e);}
+  renderHistory('all');
+}
+</script>
 </div>
 
 <div id="admin-layout" class="layout" style="display:none">
@@ -654,18 +1219,13 @@ textarea{resize:vertical;min-height:72px}
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
         ข้อสอบทั้งหมด
       </div>
-      <div class="nav-item" onclick="goPage('add-question',this)">
+      <div class="nav-item" onclick="editingId=null;resetForm();goPage('add-question',this)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         เพิ่มข้อสอบ
       </div>
       <div class="nav-item" onclick="goPage('import-csv',this)">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         นำเข้า CSV
-      </div>
-      <div class="nav-sep">ระบบ</div>
-      <div class="nav-item" onclick="goPage('settings',this)">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.09 4.6h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 9v.09a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        ตั้งค่า
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -685,7 +1245,7 @@ textarea{resize:vertical;min-height:72px}
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-right">
         <span style="font-size:12px;color:var(--text2)">admin</span>
-        <span id="admin-username" style="font-size:12px;color:var(--text2)">admin</span><div class="avatar" id="admin-avatar">AD</div>
+        <span id="admin-username" style="font-size:12px;color:var(--text2)">admin</span><div class="avatar">AD</div>
       </div>
     </div>
 
@@ -693,22 +1253,22 @@ textarea{resize:vertical;min-height:72px}
     <div id="page-dashboard" class="page active">
       <div class="stat-grid">
         <div class="stat-card">
-          <div class="stat-val" style="color:var(--accent)" id="stat-total">—</div>
+          <div class="stat-val" style="color:var(--accent)">1,248</div>
           <div class="stat-lbl">ข้อสอบทั้งหมด</div>
-          <div class="stat-sub" style="color:var(--text2)">นับจากฐานข้อมูลจริง</div>
+          <div class="stat-sub" style="color:var(--success)">+24 สัปดาห์นี้</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val" id="stat-units">—</div>
-          <div class="stat-lbl">หน่วยงานที่มีข้อสอบ</div>
+          <div class="stat-val">6</div>
+          <div class="stat-lbl">หน่วยงาน</div>
           <div class="stat-sub" style="color:var(--text2)">ตม. สส. จร. ปป. อก. พยาบาล</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val" id="stat-subjects">—</div>
-          <div class="stat-lbl">วิชาที่มีข้อสอบ</div>
-          <div class="stat-sub" style="color:var(--text2)">ตามข้อมูลจริง</div>
+          <div class="stat-val">18</div>
+          <div class="stat-lbl">วิชาทั้งหมด</div>
+          <div class="stat-sub" style="color:var(--text2)">ประทวน 10 / สัญญาบัตร 8</div>
         </div>
         <div class="stat-card">
-          <div class="stat-val" style="color:var(--warning)" id="stat-draft">—</div>
+          <div class="stat-val" style="color:var(--warning)">12</div>
           <div class="stat-lbl">รอตรวจสอบ</div>
           <div class="stat-sub" style="color:var(--warning)">ยังไม่เผยแพร่</div>
         </div>
@@ -804,44 +1364,44 @@ textarea{resize:vertical;min-height:72px}
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">1. เลือกหน่วยงาน <span class="required">*</span>
-          <span style="font-weight:400;color:var(--text3);font-size:11px">— เลือกได้หลายหน่วย</span></div>
-        <div class="check-group" id="unit-checks">
-          <span style="font-size:12px;color:var(--text3)">กำลังโหลดหน่วยงาน...</span>
-        </div>
-        <div id="unit-notice" class="notice info" style="margin-top:10px;font-size:12px">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
-          <span>ข้อสอบนี้จะปรากฏใน: —</span>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">2. เลือกระดับชั้น <span class="required">*</span>
-          <span style="font-weight:400;color:var(--text3);font-size:11px">— เลือกได้หลายระดับ</span></div>
-        <div class="check-group" id="level-checks">
-          <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" value="p" checked style="display:none"> 🛡️ ชั้นประทวน</label>
-          <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" value="s" checked style="display:none"> ⭐ ชั้นสัญญาบัตร</label>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">3. วิชาและรายละเอียด</div>
+        <div class="form-section-title">ข้อมูลทั่วไป</div>
         <div class="form-grid col2" style="margin-bottom:14px">
           <div class="form-group">
-            <label class="form-label">วิชา <span class="required">*</span></label>
-            <select id="q-subject" onchange="updateSubjectHint()"><option value="">-- กำลังโหลด --</option></select>
-            <div style="font-size:11px;color:var(--text3);margin-top:3px" id="q-subject-hint">
-              เลือกจากรายวิชาที่มีในระบบ
+            <label class="form-label">หน่วยงาน <span class="required">*</span> <span style="font-weight:400;color:var(--text3)">เลือกได้หลายหน่วย</span></label>
+            <div class="check-group" id="unit-checks">
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> ✈️ ตม.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🔍 สส.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🚦 จร.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🛡️ ปป.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> 🏢 อก.</label>
+              <label class="check-chip" onclick="toggleChip(this,event)"><input type="checkbox" style="display:none"> ⚕️ พยาบาล</label>
+            </div>
+            <div id="unit-notice" class="notice info" style="margin-top:8px;font-size:12px">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
+              ข้อสอบนี้จะปรากฏใน: ✈️ ตม.
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">ระดับความยาก</label>
-            <select id="q-difficulty"><option value="easy">ง่าย</option><option value="medium" selected>ปานกลาง</option><option value="hard">ยาก</option></select>
+            <label class="form-label">ระดับชั้น <span class="required">*</span> <span style="font-weight:400;color:var(--text3)">เลือกได้หลายระดับ</span></label>
+            <div class="check-group">
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> 🛡️ ชั้นประทวน</label>
+              <label class="check-chip on" onclick="toggleChip(this,event)"><input type="checkbox" checked style="display:none"> ⭐ ชั้นสัญญาบัตร</label>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">ที่มา / ปีที่ออกสอบ</label>
-          <input type="text" id="q-source" placeholder="เช่น ข้อสอบปี 2565 รอบ 1">
+        <div class="form-grid col3">
+          <div class="form-group">
+            <label class="form-label">วิชา <span class="required">*</span></label>
+            <select><option>กฎหมาย ตม.</option><option>ภาษาไทย</option><option>ภาษาอังกฤษ</option><option>กฎหมายอาญา</option><option>ความรู้ทั่วไป</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ระดับความยาก</label>
+            <select><option>ง่าย</option><option selected>ปานกลาง</option><option>ยาก</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ที่มา / ปีที่ออกสอบ</label>
+            <input type="text" placeholder="เช่น ข้อสอบปี 2565 รอบ 1">
+          </div>
         </div>
       </div>
 
@@ -870,7 +1430,7 @@ textarea{resize:vertical;min-height:72px}
         <div class="form-section-title">คำอธิบายเฉลย</div>
         <div class="form-group" style="margin-bottom:12px">
           <label class="form-label">คำอธิบาย <span class="required">*</span></label>
-          <textarea id="q-explain" placeholder="อธิบายเหตุผลของเฉลย..."></textarea>
+          <textarea placeholder="อธิบายเหตุผลของเฉลย..."></textarea>
         </div>
         <div class="form-group">
           <label class="form-label">รูปภาพประกอบคำอธิบาย (ถ้ามี)</label>
@@ -904,31 +1464,27 @@ textarea{resize:vertical;min-height:72px}
     <div id="page-import-csv" class="page">
       <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:18px">นำเข้าข้อสอบจากไฟล์ CSV</div>
 
-      <div class="csv-steps" id="csv-steps">
-        <div class="csv-step active" data-step="1"><div class="csv-step-dot">1</div><span class="csv-step-lbl">ดาวน์โหลด template</span></div>
+      <div class="csv-steps">
+        <div class="csv-step done"><div class="csv-step-dot">✓</div><span class="csv-step-lbl">ดาวน์โหลด template</span></div>
         <div class="csv-line"></div>
-        <div class="csv-step wait" data-step="2"><div class="csv-step-dot">2</div><span class="csv-step-lbl">อัปโหลดไฟล์</span></div>
+        <div class="csv-step active"><div class="csv-step-dot">2</div><span class="csv-step-lbl">อัปโหลดไฟล์</span></div>
         <div class="csv-line"></div>
-        <div class="csv-step wait" data-step="3"><div class="csv-step-dot">3</div><span class="csv-step-lbl">ตรวจสอบข้อมูล</span></div>
+        <div class="csv-step wait"><div class="csv-step-dot">3</div><span class="csv-step-lbl">ตรวจสอบข้อมูล</span></div>
         <div class="csv-line"></div>
-        <div class="csv-step wait" data-step="4"><div class="csv-step-dot">4</div><span class="csv-step-lbl">นำเข้า</span></div>
+        <div class="csv-step wait"><div class="csv-step-dot">4</div><span class="csv-step-lbl">นำเข้า</span></div>
       </div>
 
       <div class="form-section">
         <div class="form-section-title">ขั้นตอนที่ 1 — ดาวน์โหลด Template</div>
         <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">ดาวน์โหลดไฟล์ตัวอย่างก่อนเพื่อให้กรอกข้อมูลได้ถูกรูปแบบ ไฟล์มีหัวคอลัมน์ครบและข้อมูลตัวอย่าง 3 แถว</p>
-        <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="downloadCsvTemplate()">
+        <div style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="btn btn-primary" onclick="showToast('ดาวน์โหลด template.csv แล้ว','success')">
             <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            ดาวน์โหลด template.csv
+            template.csv
           </button>
-          <button class="btn" onclick="downloadCsvSample()">
-            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            ตัวอย่างเต็ม (5 ข้อ)
-          </button>
-          <button class="btn" onclick="downloadCsvSubjects()">
-            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            รายชื่อหน่วย+วิชาที่มี
+          <button class="btn" onclick="showToast('เปิดคู่มือ...','info')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            คู่มือการกรอกข้อมูล
           </button>
         </div>
 
@@ -960,8 +1516,7 @@ textarea{resize:vertical;min-height:72px}
 
       <div class="form-section">
         <div class="form-section-title">ขั้นตอนที่ 2 — อัปโหลดไฟล์ CSV (UTF-8)</div>
-        <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="onCsvPicked(this)">
-        <div class="upload-zone" id="csv-zone" onclick="document.getElementById('csv-file').click()">
+        <div class="upload-zone" onclick="showToast('เลือกไฟล์ CSV...','info')">
           <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <div style="font-size:13px;font-weight:500;margin-bottom:3px">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
           <div style="font-size:11px">รองรับเฉพาะ .csv — encoding UTF-8</div>
@@ -971,259 +1526,1592 @@ textarea{resize:vertical;min-height:72px}
           <div>แถวที่มีข้อผิดพลาดจะถูกข้ามโดยอัตโนมัติ ระบบจะแสดงรายละเอียดก่อนนำเข้า</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <!-- ขั้นตอนที่ 3: ตรวจสอบข้อมูล -->
-      <div class="form-section" id="csv-review" style="display:none">
-        <div class="form-section-title">ขั้นตอนที่ 3 — ตรวจสอบข้อมูลก่อนนำเข้า</div>
-        <div id="csv-summary" style="margin-bottom:14px"></div>
-        <div id="csv-errors"></div>
-        <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
-          <table class="col-tbl" id="csv-preview"></table>
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
-          <button class="btn" onclick="resetCsvImport()">ยกเลิก</button>
-          <button class="btn btn-primary" id="csv-import-btn" onclick="runCsvImport()">นำเข้าข้อมูล</button>
-        </div>
+<!-- Delete Modal -->
+<div class="overlay" id="delete-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
       </div>
-
-      <!-- ขั้นตอนที่ 4: ผลการนำเข้า -->
-      <div class="form-section" id="csv-done" style="display:none">
-        <div class="form-section-title">ขั้นตอนที่ 4 — ผลการนำเข้า</div>
-        <div id="csv-result"></div>
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="btn" onclick="resetCsvImport()">นำเข้าไฟล์อื่น</button>
-          <button class="btn btn-primary" onclick="goPage('questions',null)">ดูข้อสอบทั้งหมด</button>
-        </div>
+      <div>
+        <div class="modal-title">ยืนยันการลบข้อสอบ</div>
+        <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
       </div>
     </div>
-
-    <!-- Settings -->
-    <div id="page-settings" class="page">
-      <div style="margin-bottom:18px">
-        <div style="font-size:16px;font-weight:600;color:var(--text)">ตั้งค่าระบบ</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:2px">จัดการหน่วยงาน วิชา ระดับความยาก และผู้ใช้งาน</div>
-      </div>
-
-      <!-- แท็บ -->
-      <div class="filter-row" id="set-tabs" style="margin-bottom:16px">
-        <button class="filter-btn active" data-tab="units" onclick="switchSetTab('units')">🏢 หน่วยงาน</button>
-        <button class="filter-btn" data-tab="subjects" onclick="switchSetTab('subjects')">📄 วิชา</button>
-        <button class="filter-btn" data-tab="difficulty" onclick="switchSetTab('difficulty')">📊 ระดับความยาก</button>
-        <button class="filter-btn" data-tab="users" onclick="switchSetTab('users')">👥 ผู้ใช้งาน</button>
-      </div>
-
-      <!-- แท็บ: หน่วยงาน -->
-      <div id="set-tab-units" class="set-pane">
-        <div class="toolbar">
-          <div style="font-size:13px;color:var(--text2)">รายการหน่วยงานที่ใช้ในระบบ</div>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openSetForm('units')">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            เพิ่มหน่วยงาน
-          </button>
-        </div>
-        <div class="card"><div class="tbl-wrap">
-          <table>
-            <thead><tr><th style="width:90px">รหัส</th><th>ชื่อหน่วยงาน</th><th style="width:110px">ชื่อย่อ</th><th style="width:70px">ไอคอน</th><th style="width:100px">ข้อสอบ</th><th style="width:110px">จัดการ</th></tr></thead>
-            <tbody id="set-units-body"></tbody>
-          </table>
-        </div></div>
-      </div>
-
-      <!-- แท็บ: วิชา -->
-      <div id="set-tab-subjects" class="set-pane" style="display:none">
-        <div class="toolbar">
-          <select id="set-subj-unit" onchange="loadSetSubjects()" style="max-width:200px"></select>
-          <select id="set-subj-level" onchange="loadSetSubjects()" style="max-width:170px">
-            <option value="">ทุกระดับ</option>
-            <option value="p">ชั้นประทวน</option>
-            <option value="s">ชั้นสัญญาบัตร</option>
-          </select>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openSetForm('subjects')">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            เพิ่มวิชา
-          </button>
-        </div>
-        <div class="card"><div class="tbl-wrap">
-          <table>
-            <thead><tr><th>ชื่อวิชา</th><th style="width:150px">หน่วยงาน</th><th style="width:110px">ระดับชั้น</th><th style="width:90px">สัดส่วน</th><th style="width:100px">ข้อสอบ</th><th style="width:110px">จัดการ</th></tr></thead>
-            <tbody id="set-subjects-body"></tbody>
-          </table>
-        </div></div>
-      </div>
-
-      <!-- แท็บ: ระดับความยาก -->
-      <div id="set-tab-difficulty" class="set-pane" style="display:none">
-        <div id="set-diff-warning" class="notice warn" style="display:none"></div>
-        <div class="toolbar">
-          <div style="font-size:13px;color:var(--text2)">ระดับความยากที่เลือกได้ตอนเพิ่มข้อสอบ</div>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openSetForm('difficulty')">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            เพิ่มระดับความยาก
-          </button>
-        </div>
-        <div class="card"><div class="tbl-wrap">
-          <table>
-            <thead><tr><th style="width:110px">รหัส</th><th>ชื่อที่แสดง</th><th style="width:120px">สี</th><th style="width:90px">ลำดับ</th><th style="width:130px">ข้อสอบที่ใช้</th><th style="width:110px">จัดการ</th></tr></thead>
-            <tbody id="set-diff-body"></tbody>
-          </table>
-        </div></div>
-      </div>
-
-      <!-- แท็บ: ผู้ใช้งาน -->
-      <div id="set-tab-users" class="set-pane" style="display:none">
-        <div class="notice danger" style="margin-bottom:14px">
-          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
-          <div>รหัสผ่านยังถูกเก็บเป็นข้อความธรรมดาในฐานข้อมูล — ควรเปลี่ยนเป็น bcrypt hash ก่อนใช้งานจริง (ดู <b>setup_users.sql</b>)</div>
-        </div>
-        <div class="toolbar">
-          <div style="font-size:13px;color:var(--text2)">บัญชีผู้ใช้ที่เข้าใช้งานระบบได้</div>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openSetForm('users')">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            เพิ่มผู้ใช้
-          </button>
-        </div>
-        <div class="card"><div class="tbl-wrap">
-          <table>
-            <thead><tr><th>ชื่อผู้ใช้</th><th style="width:170px">ชื่อที่แสดง</th><th style="width:150px">สิทธิ์</th><th style="width:160px">สร้างเมื่อ</th><th style="width:110px">จัดการ</th></tr></thead>
-            <tbody id="set-users-body"></tbody>
-          </table>
-        </div></div>
-      </div>
+    <div class="del-list" id="del-list"></div>
+    <div class="notice danger">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
+      <div>ข้อสอบที่เชื่อมกับหลายหน่วยจะถูกลบออกจากทุกหน่วยพร้อมกัน</div>
     </div>
-   </div>
- </div>
-
-  <!-- Modal: เพิ่ม/แก้ไขข้อมูลในหน้าตั้งค่า -->
- <div class="overlay" id="set-modal">
-    <div class="modal">
-      <div class="modal-title" id="set-modal-title">เพิ่มข้อมูล</div>
-      <div class="modal-sub" id="set-modal-sub"></div>
-      <div id="set-modal-error" class="err-msg" style="display:none"></div>
-      <div id="set-modal-fields"></div>
-      <div class="modal-btns" style="margin-top:18px">
-        <button class="btn" onclick="closeSetModal()">ยกเลิก</button>
-        <button class="btn btn-primary" id="set-modal-save" onclick="saveSetForm()">บันทึก</button>
-      </div>
+    <div class="pin-wrap">
+      <label>ใส่รหัสผ่าน Admin 6 หลักเพื่อยืนยัน <span class="required">*</span></label>
+      <div class="pin-inputs" id="pin-inputs"></div>
+      <div class="pin-err-msg" id="pin-err"></div>
     </div>
- </div>
-
-  <!-- Modal: ยืนยันการลบข้อมูลในหน้าตั้งค่า -->
- <div class="overlay" id="set-del-modal">
-    <div class="modal">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        </div>
-        <div>
-          <div class="modal-title">ยืนยันการลบ</div>
-          <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
-        </div>
-      </div>
-      <div class="del-list" id="set-del-list"></div>
-      <div class="pin-wrap">
-        <label>ใส่รหัสผ่าน Admin 6 หลักเพื่อยืนยัน <span class="required">*</span></label>
-        <div class="pin-inputs" id="set-pin-inputs"></div>
-        <div class="pin-err-msg" id="set-pin-err"></div>
-      </div>
-      <div class="modal-btns">
-        <button class="btn" onclick="closeSetDelModal()">ยกเลิก</button>
-        <button class="btn btn-danger" id="set-btn-confirm-del" onclick="confirmSetDelete()" disabled>ลบ</button>
-      </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeDeleteModal()">ยกเลิก</button>
+      <button class="btn btn-danger" id="btn-confirm-del" onclick="confirmDelete()" disabled>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        <span id="del-btn-label">ลบ 0 รายการ</span>
+      </button>
     </div>
- </div>
+  </div>
+</div>
 
-    <!-- Delete Modal (ใช้ร่วมกันทั้งโหมด admin) -->
-    <div class="overlay" id="delete-modal">
-     <div class="modal">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-          </div>
-          <div>
-            <div class="modal-title">ยืนยันการลบข้อสอบ</div>
-            <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
-          </div>
-        </div>
-        <div class="del-list" id="del-list"></div>
-        <div class="notice danger">
-          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
-          <div>ข้อสอบที่เชื่อมกับหลายหน่วยจะถูกลบออกจากทุกหน่วยพร้อมกัน</div>
-        </div>
-        <div class="pin-wrap">
-          <label>ใส่รหัสผ่าน Admin 6 หลักเพื่อยืนยัน <span class="required">*</span></label>
-          <div class="pin-inputs" id="pin-inputs"></div>
-            <div class="pin-err-msg" id="pin-err"></div>
-          </div>
-          <div class="modal-btns">
-          <button class="btn" onclick="closeDeleteModal()">ยกเลิก</button>
-          <button class="btn btn-danger" id="btn-confirm-del" onclick="confirmDelete()" disabled>
-            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-            <span id="del-btn-label">ลบ 0 รายการ</span>
-          </button>
-        </div>
-     </div>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-<script src="js/exam-db.js"></script>
-<script src="js/app-quiz.js"></script>
-<script src="js/app-admin.js"></script>
-<script src="js/app-settings.js"></script>
-<script src="js/app-csv.js"></script>
-<script src="js/app-auth.js"></script>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   ระบบกันหน้าขาว (failsafe)
-   ถ้าสคริปต์ใดโหลดไม่สำเร็จ หรือเกิด error → แสดงข้อความแทนหน้าขาว
-   ============================================================ */
-(function () {
-  function showProblem(title, detail) {
-    // ถ้าหน้า login แสดงได้อยู่แล้ว ไม่ต้องทับ
-    var login = document.getElementById('s-login');
-    if (login && login.style.display !== 'none' && login.style.display !== '') return;
+// ===== Supabase Config =====
+const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
+const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-    document.body.innerHTML =
-      '<div style="max-width:560px;margin:60px auto;padding:24px;font-family:Sarabun,system-ui,sans-serif;' +
-      'background:#fff;border:1px solid #E4E4E0;border-radius:14px;color:#1A1A18;line-height:1.7">' +
-      '<div style="font-size:18px;font-weight:600;margin-bottom:8px">⚠️ ' + title + '</div>' +
-      '<div style="font-size:14px;color:#6B6B66;margin-bottom:16px">' + detail + '</div>' +
-      '<div style="font-size:13px;color:#6B6B66">' +
-      '<b>วิธีแก้:</b><br>' +
-      '1. ตรวจว่าเปิดผ่าน <code>http://localhost:8080</code> ไม่ใช่ไฟล์ตรง ๆ<br>' +
-      '2. กด F12 ดูแท็บ Console เพื่อดู error<br>' +
-      '3. ลองรีเฟรชหน้า (Ctrl+F5)<br>' +
-      '4. ตรวจว่ามีอินเทอร์เน็ต (ต้องโหลด Supabase จาก CDN)' +
-      '</div></div>';
+const ADMIN_USER='admin', ADMIN_PASS='123456', DELETE_PIN='123456';
+
+// ===== Supabase CRUD =====
+
+async function dbLoadQuestions(){
+  const {data,error}=await supa
+    .from('questions')
+    .select(`id, question, answer, difficulty, source, published, created_at,
+             subjects(name),
+             question_units(unit_id, level)`)
+    .order('id',{ascending:false});
+  if(error){console.error(error);return[];}
+  return (data||[]).map(q=>({
+    id:q.id,
+    question:q.question,
+    unit:[...new Set((q.question_units||[]).map(u=>u.unit_id))].join(','),
+    level:[...new Set((q.question_units||[]).map(u=>u.level))].join(','),
+    subject:q.subjects?.name||'',
+    type:q.question_image?'มีรูป':'ข้อความ',
+    status:q.published?'เผยแพร่':'รอตรวจสอบ',
+    answer:q.answer
+  }));
+}
+
+async function dbSaveQuestion(formData){
+  const {units,levels,subject_id,question,choice_a,choice_b,choice_c,choice_d,
+         answer,explanation,difficulty,source,published}=formData;
+  // insert question
+  const {data:q,error:e1}=await supa.from('questions').insert({
+    question,choice_a,choice_b,choice_c,choice_d,
+    answer,explanation,difficulty,source,published,subject_id
+  }).select().single();
+  if(e1){console.error(e1);return false;}
+  // insert question_units (หลายหน่วย x หลายระดับ)
+  const rows=[];
+  units.forEach(u=>levels.forEach(lv=>rows.push({question_id:q.id,unit_id:u,level:lv})));
+  if(rows.length){
+    const {error:e2}=await supa.from('question_units').insert(rows);
+    if(e2) console.error(e2);
+  }
+  return true;
+}
+
+async function dbUpdateQuestion(id, formData){
+  const {question,choice_a,choice_b,choice_c,choice_d,
+         answer,explanation,difficulty,source,published,units,levels}=formData;
+  // update ข้อมูลหลัก
+  const {error:e1}=await supa.from('questions').update({
+    question,choice_a,choice_b,choice_c,choice_d,
+    answer,explanation,difficulty,source,published
+  }).eq('id',id);
+  if(e1){console.error(e1);return false;}
+  // ลบ question_units เดิมแล้วใส่ใหม่
+  await supa.from('question_units').delete().eq('question_id',id);
+  const rows=[];
+  units.forEach(u=>levels.forEach(lv=>rows.push({question_id:id,unit_id:u,level:lv})));
+  if(rows.length){
+    const {error:e2}=await supa.from('question_units').insert(rows);
+    if(e2) console.error(e2);
+  }
+  return true;
+}
+
+async function dbDeleteQuestions(ids){
+  const {error}=await supa.from('questions').delete().in('id',ids);
+  return !error;
+}
+
+async function dbTogglePublish(id,published){
+  await supa.from('questions').update({published}).eq('id',id);
+}
+
+let questions=[
+  {id:1001,question:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',unit:'ตม.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1002,question:'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',unit:'ตม.',level:'ประทวน',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1003,question:'เมื่อพบป้ายจราจรในภาพ ผู้ขับขี่ต้องปฏิบัติอย่างไร?',unit:'จร.',level:'ประทวน',subject:'กฎหมายจราจร',type:'มีรูป',status:'เผยแพร่',answer:'ข'},
+  {id:1004,question:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',unit:'ตม.',level:'สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ค'},
+  {id:1005,question:'What does "immigration" mean?',unit:'ตม.',level:'สัญญาบัตร',subject:'ภาษาอังกฤษ',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1006,question:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษอย่างไร?',unit:'ตม.,จร.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1007,question:'ประเทศไทยมีกี่จังหวัด?',unit:'ตม.,สส.,จร.',level:'ประทวน,สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1008,question:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',unit:'ตม.',level:'สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ข'},
+];
+
+let selectedIds=new Set(), curPage=1, pageSize=5, filtered=[];
+let pinVal='';
+
+/* auth handled by unified login above */
+
+function goPage(id,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(navEl){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  const titles={'dashboard':'Dashboard','questions':'ข้อสอบทั้งหมด','add-question':'เพิ่มข้อสอบ','import-csv':'นำเข้า CSV'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+}
+
+function initDashboard(){
+  const units=[{n:'ตม.',v:328},{n:'สส.',v:252},{n:'จร.',v:196},{n:'ปป.',v:160},{n:'อก.+พยาบาล',v:112}];
+  const max=328;
+  document.getElementById('unit-bars').innerHTML=units.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${u.n}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:100px;height:5px;background:var(--surface2);border-radius:2px">
+          <div style="width:${Math.round(u.v/max*100)}%;height:5px;background:var(--accent);border-radius:2px"></div>
+        </div>
+        <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
+      </div>
+    </div>`).join('');
+  const acts=[
+    {color:'var(--success)',text:'เพิ่มข้อสอบ กฎหมาย ตม. 15 ข้อ',time:'10 นาทีที่แล้ว'},
+    {color:'var(--accent)',text:'แก้ไขเฉลยข้อสอบ ภาษาไทย ประทวน',time:'1 ชั่วโมงที่แล้ว'},
+    {color:'var(--warning)',text:'นำเข้า CSV จร. 48 ข้อ',time:'เมื่อวาน'},
+    {color:'var(--danger)',text:'ลบข้อสอบซ้ำ สส. 3 ข้อ',time:'2 วันที่แล้ว'},
+  ];
+  document.getElementById('activity-log').innerHTML=acts.map(a=>`
+    <div class="activity-item">
+      <div class="act-dot" style="background:${a.color}"></div>
+      <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+async function initQuestions(){
+  // แสดง loading
+  document.getElementById('q-tbody').innerHTML=
+    '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text2)">⏳ กำลังโหลดข้อสอบ...</td></tr>';
+  questions=await dbLoadQuestions();
+  filtered=[...questions];
+  renderTable();
+}
+
+function filterQ(){
+  const s=document.getElementById('q-search').value.toLowerCase();
+  const u=document.getElementById('q-unit').value;
+  const lv=document.getElementById('q-level').value;
+  const st=document.getElementById('q-status').value;
+  filtered=questions.filter(q=>{
+    if(s&&!q.question.toLowerCase().includes(s))return false;
+    if(u&&!q.unit.includes(u))return false;
+    if(lv&&!q.level.includes(lv))return false;
+    if(st&&q.status!==st)return false;
+    return true;
+  });
+  curPage=1;selectedIds.clear();updateBulkBar();
+  renderTable();
+}
+
+function renderTable(){
+  const start=(curPage-1)*pageSize, end=start+pageSize;
+  const rows=filtered.slice(start,end);
+  const tbody=document.getElementById('q-tbody');
+  const labels={'เผยแพร่':'tag-green','รอตรวจสอบ':'tag-yellow'};
+  const types={'ข้อความ':'tag-gray','มีรูป':'tag-blue'};
+  tbody.innerHTML=rows.map(q=>`
+    <tr class="${selectedIds.has(q.id)?'sel-row':''}" id="row-${q.id}">
+      <td><input type="checkbox" ${selectedIds.has(q.id)?'checked':''} onchange="toggleSel(${q.id},this)"></td>
+      <td style="font-size:12px;color:var(--text2)">#${q.id}</td>
+      <td>
+        <div style="font-size:13px">${q.question.length>55?q.question.slice(0,55)+'...':q.question}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${q.level}</div>
+      </td>
+      <td>
+        <span class="tag tag-blue" style="font-size:11px">${q.unit}</span>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${q.subject}</td>
+      <td><span class="tag ${types[q.type]||'tag-gray'}">${q.type}</span></td>
+      <td><span class="tag ${labels[q.status]||'tag-gray'}">${q.status}</span></td>
+      <td>
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-icon btn-sm" title="แก้ไข" onclick="editQ(${q.id})" style="color:var(--accent)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-sm" title="ลบ" onclick="quickDel(${q.id})" style="color:var(--danger)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+  document.getElementById('q-count-label').textContent=`แสดง ${rows.length} จาก ${filtered.length} ข้อ`;
+  document.getElementById('btn-prev').disabled=curPage===1;
+  document.getElementById('btn-next').disabled=end>=filtered.length;
+  document.getElementById('chk-all').checked=rows.length>0&&rows.every(q=>selectedIds.has(q.id));
+}
+
+function changePage(d){curPage+=d;renderTable();}
+
+function toggleSel(id,chk){
+  if(chk.checked)selectedIds.add(id);else selectedIds.delete(id);
+  document.getElementById(`row-${id}`)?.classList.toggle('sel-row',chk.checked);
+  updateBulkBar();
+}
+
+function toggleAll(chk){
+  const start=(curPage-1)*pageSize,end=start+pageSize;
+  filtered.slice(start,end).forEach(q=>{
+    if(chk.checked)selectedIds.add(q.id);else selectedIds.delete(q.id);
+    document.getElementById(`row-${q.id}`)?.classList.toggle('sel-row',chk.checked);
+  });
+  updateBulkBar();
+}
+
+function clearSel(){selectedIds.clear();updateBulkBar();renderTable();}
+
+function updateBulkBar(){
+  const bar=document.getElementById('bulk-bar');
+  const n=selectedIds.size;
+  bar.style.display=n>0?'flex':'none';
+  document.getElementById('bulk-count').textContent=`เลือก ${n} รายการ`;
+}
+
+function quickDel(id){selectedIds.clear();selectedIds.add(id);openDeleteModal();}
+
+let editingId = null; // เก็บ id ที่กำลังแก้ไข
+
+async function editQ(id){
+  editingId = id;
+  document.getElementById('form-title').textContent = 'แก้ไขข้อสอบ #' + id;
+  document.getElementById('form-title').nextElementSibling.textContent = 'แก้ไขข้อมูลแล้วกดบันทึก';
+  goPage('add-question', null);
+
+  // โหลดข้อมูลจาก Supabase
+  showToast('กำลังโหลดข้อมูล...', '');
+  try {
+    const {data, error} = await supa
+      .from('questions')
+      .select(`*, subjects(name), question_units(unit_id, level)`)
+      .eq('id', id)
+      .single();
+    if(error || !data){ showToast('โหลดข้อมูลไม่ได้', 'danger'); return; }
+
+    // ใส่คำถาม
+    const qtxt = document.getElementById('q-text-input');
+    if(qtxt) qtxt.value = data.question || '';
+
+    // ใส่ตัวเลือก ก-ง
+    const choiceKeys = ['choice_a','choice_b','choice_c','choice_d'];
+    choiceKeys.forEach((key, i) => {
+      const el = document.getElementById('c-' + i);
+      if(el) el.value = data[key] || '';
+    });
+
+    // เลือกเฉลย
+    const ansMap = {a:0, b:1, c:2, d:3};
+    const ansIdx = ansMap[data.answer] ?? 0;
+    const radio = document.getElementById('radio-' + ansIdx);
+    if(radio){ radio.checked = true; updateAnsMsg(ansIdx, ['ก','ข','ค','ง'][ansIdx]); }
+
+    // เลือกหน่วยงาน
+    const units = (data.question_units || []).map(u => u.unit_id);
+    const unitMap = {'tm':'✈️ ตม.','ss':'🔍 สส.','jr':'🚦 จร.','pp':'🛡️ ปป.','ak':'🏢 อก.','nr':'⚕️ พยาบาล'};
+    document.querySelectorAll('#unit-checks .check-chip').forEach(chip => {
+      const txt = chip.textContent.trim();
+      const matched = Object.entries(unitMap).some(([k,v]) => txt.includes(v.split(' ')[1]) && units.includes(k));
+      chip.classList.toggle('on', matched);
+    });
+
+    // เลือกระดับ
+    const levels = (data.question_units || []).map(u => u.level);
+    document.querySelectorAll('.check-chip').forEach(chip => {
+      const txt = chip.textContent.trim();
+      if(txt.includes('ประทวน')) chip.classList.toggle('on', levels.includes('p') || levels.includes('both'));
+      if(txt.includes('สัญญาบัตร')) chip.classList.toggle('on', levels.includes('s') || levels.includes('both'));
+    });
+
+    // publish checkbox
+    const pub = document.getElementById('publish-chk');
+    if(pub) pub.checked = data.published || false;
+
+    showToast('โหลดข้อมูลแล้ว', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('เกิดข้อผิดพลาด', 'danger');
+  }
+}
+
+function openDeleteModal(){
+  const ids=[...selectedIds];
+  if(ids.length===0){showToast('กรุณาเลือกข้อสอบก่อน','danger');return;}
+  const items=questions.filter(q=>ids.includes(q.id));
+  document.getElementById('del-list').innerHTML=`
+    <div style="font-size:11px;font-weight:500;color:var(--danger);margin-bottom:6px">รายการที่จะถูกลบ (${items.length} รายการ)</div>
+    ${items.map(q=>`<div class="del-item"><span style="flex-shrink:0">—</span><span>#${q.id} ${q.question.length>50?q.question.slice(0,50)+'...':q.question}</span></div>`).join('')}`;
+  document.getElementById('del-btn-label').textContent=`ลบ ${items.length} รายการ`;
+  document.getElementById('btn-confirm-del').disabled=true;
+  document.getElementById('pin-err').textContent='';
+  pinVal='';
+  const container=document.getElementById('pin-inputs');
+  container.innerHTML='';
+  for(let i=0;i<6;i++){
+    const inp=document.createElement('input');
+    inp.type='password';inp.maxLength=1;inp.dataset.idx=i;
+    inp.addEventListener('input',onPinInput);
+    inp.addEventListener('keydown',onPinKey);
+    container.appendChild(inp);
+  }
+  document.getElementById('delete-modal').classList.add('open');
+  setTimeout(()=>container.children[0]?.focus(),100);
+}
+
+function onPinInput(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  inp.classList.remove('pin-err');
+  if(inp.value){
+    const next=inp.parentElement.children[idx+1];
+    if(next)next.focus();
+  }
+  updatePin();
+}
+
+function onPinKey(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  if(e.key==='Backspace'&&!inp.value&&idx>0){
+    inp.parentElement.children[idx-1].focus();
+  }
+}
+
+function updatePin(){
+  const inputs=[...document.getElementById('pin-inputs').children];
+  pinVal=inputs.map(i=>i.value).join('');
+  if(pinVal.length===6){
+    if(pinVal===DELETE_PIN){
+      document.getElementById('btn-confirm-del').disabled=false;
+      document.getElementById('pin-err').textContent='';
+      inputs.forEach(i=>i.classList.remove('pin-err'));
+    } else {
+      document.getElementById('btn-confirm-del').disabled=true;
+      document.getElementById('pin-err').textContent='รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
+      inputs.forEach(i=>i.classList.add('pin-err'));
+      setTimeout(()=>{
+        inputs.forEach(i=>{i.value='';i.classList.remove('pin-err');});
+        inputs[0].focus();pinVal='';
+        document.getElementById('pin-err').textContent='';
+      },800);
+    }
+  } else {
+    document.getElementById('btn-confirm-del').disabled=true;
+  }
+}
+
+function closeDeleteModal(){
+  document.getElementById('delete-modal').classList.remove('open');
+  pinVal='';
+}
+
+async function confirmDelete(){
+  const ids=[...selectedIds];
+  const ok=await dbDeleteQuestions(ids);
+  if(ok){
+    questions=questions.filter(q=>!ids.includes(q.id));
+    filtered=filtered.filter(q=>!ids.includes(q.id));
+    selectedIds.clear();
+    updateBulkBar();
+    renderTable();
+    closeDeleteModal();
+    showToast(`ลบ ${ids.length} ข้อสอบแล้ว`,'success');
+  } else {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่','danger');
+  }
+}
+
+function initChoicesForm(){
+  const labels=['ก','ข','ค','ง'];
+  let selAns=null;
+  const wrap=document.getElementById('choices-form');
+  wrap.innerHTML=labels.map((lbl,i)=>`
+    <div class="choice-row">
+      <input type="radio" name="ans-radio" class="choice-radio" value="${i}" id="radio-${i}" onchange="updateAnsMsg(${i},'${lbl}')">
+      <span class="choice-lbl">${lbl}</span>
+      <input type="text" placeholder="ตัวเลือก ${lbl}..." style="flex:1" id="c-${i}">
+      <div class="img-zone">📷 รูปตัวเลือก</div>
+    </div>`).join('');
+}
+
+function updateAnsMsg(idx,lbl){
+  const val=document.getElementById(`c-${idx}`)?.value||'(ยังไม่ได้กรอก)';
+  const msg=document.getElementById('ans-ok-msg');
+  msg.style.display='block';
+  msg.textContent=`✓ เฉลยที่เลือก: ${lbl}. ${val}`;
+}
+
+function toggleChip(el,e){
+  e.preventDefault();
+  e.stopPropagation();
+  el.classList.toggle('on');
+  const chk=el.querySelector('input[type=checkbox]');
+  if(chk) chk.checked=el.classList.contains('on');
+  updateChipNotice();
+}
+
+function updateChipNotice(){
+  const units=[...document.querySelectorAll('#unit-checks .check-chip.on')].map(c=>c.textContent.trim());
+  const notice=document.getElementById('unit-notice');
+  if(notice){
+    if(units.length>0){notice.textContent='ข้อสอบนี้จะปรากฏใน: '+units.join(', ');notice.style.display='flex';}
+    else notice.style.display='none';
+  }
+}
+
+function resetForm(){
+  document.getElementById('form-title').textContent = 'เพิ่มข้อสอบใหม่';
+  const qtxt = document.getElementById('q-text-input');
+  if(qtxt) qtxt.value = '';
+  ['c-0','c-1','c-2','c-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.querySelectorAll('input[name="ans-radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('#unit-checks .check-chip').forEach((c,i) => c.classList.toggle('on', i===0));
+  const pub = document.getElementById('publish-chk');
+  if(pub) pub.checked = true;
+  const msg = document.getElementById('ans-ok-msg');
+  if(msg) msg.style.display = 'none';
+}
+
+async function saveQuestion(){
+  // รวบรวมข้อมูลจากฟอร์ม
+  const unitMap={'ตม.':'tm','สส.':'ss','จร.':'jr','ปป.':'pp','อก.':'ak','พยาบาล':'nr'};
+  const units=[...document.querySelectorAll('#unit-checks .check-chip.on')]
+    .map(c=>{
+      const txt=c.textContent.trim();
+      for(const [k,v] of Object.entries(unitMap)){ if(txt.includes(k)) return v; }
+      return '';
+    }).filter(Boolean);
+  const levels=[...document.querySelectorAll('.check-chip.on')]
+    .map(c=>c.textContent.trim())
+    .filter(t=>t.includes('ประทวน')||t.includes('สัญญาบัตร'))
+    .map(t=>t.includes('ประทวน')?'p':'s');
+
+  const question=document.getElementById('q-text-input')?.value?.trim()||'';
+  if(!question){showToast('กรุณากรอกคำถาม','danger');return;}
+  if(units.length===0){showToast('กรุณาเลือกหน่วยงาน','danger');return;}
+  if(levels.length===0){showToast('กรุณาเลือกระดับชั้น','danger');return;}
+
+  const radioEl=document.querySelector('input[name="ans-radio"]:checked');
+  const answerMap=['a','b','c','d'];
+  const answer=radioEl?answerMap[+radioEl.value]:'a';
+  const choices=['a','b','c','d'].map((_,i)=>document.getElementById('c-'+i)?.value?.trim()||'');
+
+  const formData={
+    units, levels, subject_id:1, question,
+    choice_a:choices[0], choice_b:choices[1],
+    choice_c:choices[2], choice_d:choices[3],
+    answer, explanation:'',
+    difficulty:'medium', source:'',
+    published:document.getElementById('publish-chk')?.checked||false
+  };
+
+  showToast('กำลังบันทึก...','');
+  // ถ้ามี editingId = แก้ไข, ถ้าไม่มี = เพิ่มใหม่
+  const ok = editingId
+    ? await dbUpdateQuestion(editingId, formData)
+    : await dbSaveQuestion(formData);
+
+  if(ok){
+    editingId = null; // reset
+    showToast(editingId ? 'แก้ไขข้อสอบแล้ว' : 'บันทึกข้อสอบแล้ว', 'success');
+    await initQuestions();
+    setTimeout(()=>goPage('questions',null), 600);
+  } else {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่','danger');
+  }
+}
+
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.className='toast',3000);
+}
+</script></div>
+
+<!-- Delete Modal (admin) -->
+<!-- Delete Modal -->
+<div class="overlay" id="delete-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+      <div>
+        <div class="modal-title">ยืนยันการลบข้อสอบ</div>
+        <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
+      </div>
+    </div>
+    <div class="del-list" id="del-list"></div>
+    <div class="notice danger">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>
+      <div>ข้อสอบที่เชื่อมกับหลายหน่วยจะถูกลบออกจากทุกหน่วยพร้อมกัน</div>
+    </div>
+    <div class="pin-wrap">
+      <label>ใส่รหัสผ่าน Admin 6 หลักเพื่อยืนยัน <span class="required">*</span></label>
+      <div class="pin-inputs" id="pin-inputs"></div>
+      <div class="pin-err-msg" id="pin-err"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeDeleteModal()">ยกเลิก</button>
+      <button class="btn btn-danger" id="btn-confirm-del" onclick="confirmDelete()" disabled>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        <span id="del-btn-label">ลบ 0 รายการ</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ===== Supabase Config =====
+const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
+const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+const DELETE_PIN='123456';
+
+// session
+const SESSION_ID=(()=>{let s=localStorage.getItem('exam_session');if(!s){s=crypto.randomUUID();localStorage.setItem('exam_session',s);}return s;})();
+let currentUser=null;
+
+// ===== AUTH =====
+async function doLogin(){
+  const u=document.getElementById('inp-user').value.trim();
+  const p=document.getElementById('inp-pass').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('btn-login');
+  if(!u||!p){err.style.display='block';err.textContent='กรุณากรอก Username และ Password';return;}
+  btn.textContent='กำลังตรวจสอบ...';btn.disabled=true;
+  try{
+    const {data,error}=await supa.from('users').select('*').eq('username',u).eq('password',p).maybeSingle();
+    if(error||!data){err.style.display='block';err.textContent='Username หรือ Password ไม่ถูกต้อง';}
+    else{
+      err.style.display='none';
+      currentUser=data;
+      if(data.role==='both'){showPickRole(data);}
+      else if(data.role==='admin'){enterAdmin();}
+      else{enterUser();}
+    }
+  }catch(e){err.style.display='block';err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';}
+  finally{btn.textContent='เข้าสู่ระบบ';btn.disabled=false;}
+}
+
+function showPickRole(user){
+  document.getElementById('s-login').style.display='none';
+  const pr=document.getElementById('s-pick-role');
+  pr.style.display='flex';
+  const name=user.display_name||user.username;
+  document.getElementById('role-greeting').textContent='สวัสดี, '+name;
+  document.getElementById('role-avatar').textContent=name.charAt(0).toUpperCase();
+}
+
+function enterUser(){
+  document.getElementById('s-login').style.display='none';
+  document.getElementById('s-pick-role').style.display='none';
+  document.getElementById('admin-layout').style.display='none';
+  document.getElementById('user-layout').style.display='block';
+  // set topbar
+  const name=currentUser?.display_name||currentUser?.username||'';
+  const tb=document.getElementById('user-topbar-name');
+  if(tb) tb.textContent=name;
+  const sw=document.getElementById('switch-to-admin');
+  if(sw) sw.style.display=currentUser?.role==='both'?'inline-flex':'none';
+  initDashboard && initDashboard();
+  goScreen('s-home');
+}
+
+function enterAdmin(){
+  document.getElementById('s-login').style.display='none';
+  document.getElementById('s-pick-role').style.display='none';
+  document.getElementById('user-layout').style.display='none';
+  document.getElementById('admin-layout').style.display='flex';
+  const name=currentUser?.display_name||currentUser?.username||'admin';
+  const an=document.getElementById('admin-username');
+  if(an) an.textContent=name;
+  if(typeof initAdminDashboard==="function") initAdminDashboard(); else if(typeof initDashboard==="function") initDashboard();
+  initQuestions();
+  initChoicesForm();
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('s-pick-role').style.display='none';
+  document.getElementById('user-layout').style.display='none';
+  document.getElementById('admin-layout').style.display='none';
+  document.getElementById('s-login').style.display='flex';
+  document.getElementById('inp-user').value='';
+  document.getElementById('inp-pass').value='';
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('s-login').style.display!=='none') doLogin();
+});
+
+
+/* ===== USER JS ===== */
+
+const DB = {
+  tm: {
+    name:'ตรวจคนเข้าเมือง', short:'ตม.',
+    p: {
+      subjects: [
+        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:40,qs:[
+          {q:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',c:['1 มกราคม 2522','27 กุมภาพันธ์ 2523','1 มีนาคม 2522','31 ธันวาคม 2522'],a:1,e:'พ.ร.บ. คนเข้าเมือง มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523 ครับ'},
+          {q:'คนต่างด้าวที่เข้ามาในราชอาณาจักรโดยไม่ได้รับอนุญาต มีความผิดตาม พ.ร.บ. คนเข้าเมือง มาตราใด?',c:['มาตรา 11','มาตรา 54','มาตรา 81','มาตรา 101'],a:2,e:'มาตรา 81 บัญญัติโทษจำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 20,000 บาท หรือทั้งจำทั้งปรับ'},
+          {q:'ช่องทางที่คนต่างด้าวเข้า-ออกราชอาณาจักรได้ เรียกว่าอะไร?',c:['ด่านศุลกากร','ช่องทางอนุญาต','ด่านตรวจคนเข้าเมือง','จุดผ่านแดน'],a:1,e:'"ช่องทางอนุญาต" คือทางบก ทางน้ำ หรือทางอากาศที่อธิบดีกำหนด'},
+          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'ตาม พ.ร.บ. คนเข้าเมือง รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศ'},
+          {q:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษตามกฎหมายอย่างไร?',c:['ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท','จำคุกไม่เกิน 1 ปี','ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี','เนรเทศออกทันที'],a:2,e:'มาตรา 81 ปรับวันละ 500 บาท สูงสุดไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี หรือทั้งจำทั้งปรับ'},
+          {q:'พนักงานเจ้าหน้าที่ตาม พ.ร.บ. คนเข้าเมือง หมายถึงบุคคลใด?',c:['เจ้าหน้าที่ตำรวจทุกคน','เจ้าหน้าที่ที่รัฐมนตรีแต่งตั้งเพื่อปฏิบัติการตามพระราชบัญญัตินี้','ข้าราชการพลเรือนระดับ 5 ขึ้นไป','อธิบดีกรมตรวจคนเข้าเมืองเท่านั้น'],a:1,e:'"พนักงานเจ้าหน้าที่" หมายถึงบุคคลซึ่งรัฐมนตรีแต่งตั้งให้ปฏิบัติการตามพระราชบัญญัตินี้'},
+        ]},
+        {id:'thai',name:'ภาษาไทย',icon:'📖',ratio:30,qs:[
+          {q:'ข้อใดเขียนถูกต้อง?',c:['กระเพราะ','กระเพาะ','กะเพราะ','กะเพาะ'],a:1,e:'"กระเพาะ" เป็นการสะกดที่ถูกต้องตามพจนานุกรมฉบับราชบัณฑิตยสถาน'},
+          {q:'คำว่า "วิสุทธิ์" มีความหมายว่าอะไร?',c:['สะอาด บริสุทธิ์','ฉลาดเฉลียว','แข็งแกร่ง','สูงส่ง'],a:0,e:'"วิสุทธิ์" หมายถึง บริสุทธิ์ สะอาด ปราศจากมลทิน'},
+          {q:'ประโยคใดใช้คำราชาศัพท์ถูกต้อง?',c:['พระองค์เสด็จไปวัด','พระองค์ไปวัด','พระองค์เสด็จวัด','พระองค์ทรงเสด็จวัด'],a:0,e:'"เสด็จ" เป็นคำราชาศัพท์ของ "ไป" ใช้กับพระมหากษัตริย์'},
+          {q:'ข้อใดใช้วรรณยุกต์ถูกต้อง?',c:['เขาไปซื้ออาหารที่ตลาด (ตลาด ออกเสียง โท)','ฉันชอบกินข้าว (ข้าว ออกเสียง โท)','เธอนั่งอยู่บนเก้าอี้ (เก้าอี้ ออกเสียง เอก)','หมาไล่แมว (หมา ออกเสียง สามัญ)'],a:1,e:'"ข้าว" ออกเสียงวรรณยุกต์โท ถูกต้อง'},
+          {q:'สำนวน "น้ำขึ้นให้รีบตัก" หมายความว่าอย่างไร?',c:['ควรรีบตักน้ำก่อนน้ำลด','ฉวยโอกาสทำสิ่งที่เป็นประโยชน์เมื่อมีโอกาส','อย่ารอช้าเมื่อมีงานเร่งด่วน','รีบทำงานให้เสร็จก่อนเวลา'],a:1,e:'"น้ำขึ้นให้รีบตัก" หมายถึง เมื่อมีโอกาสดีควรรีบฉวยโอกาสนั้น'},
+          {q:'คำใดไม่ใช่คำยืมจากภาษาบาลี-สันสกฤต?',c:['วิทยา','กษัตริย์','สมุทร','กะทิ'],a:3,e:'"กะทิ" เป็นคำไทยแท้ ส่วนวิทยา กษัตริย์ สมุทร มาจากภาษาบาลี-สันสกฤต'},
+        ]},
+        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:30,qs:[
+          {q:'ประเทศไทยมีกี่จังหวัด?',c:['75 จังหวัด','76 จังหวัด','77 จังหวัด','78 จังหวัด'],a:2,e:'ประเทศไทยมีทั้งหมด 77 จังหวัด'},
+          {q:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่าอะไร?',c:['ผบ.ตร.','ผช.ผบ.ตร.','จตช.','สตช.'],a:0,e:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่า "ผบ.ตร."'},
+          {q:'ASEAN มีสมาชิกกี่ประเทศ?',c:['8 ประเทศ','9 ประเทศ','10 ประเทศ','11 ประเทศ'],a:2,e:'อาเซียนมีสมาชิกทั้งหมด 10 ประเทศ ก่อตั้งในปี 2510'},
+          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
+          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา','ลียง ฝรั่งเศส','กรุงเฮก','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
+          {q:'กฎหมายอาญาของไทยใช้หลักใดในการบังคับใช้กับบุคคล?',c:['หลักดินแดน','หลักสัญชาติ','หลักดินแดนและหลักสัญชาติ','หลักความยุติธรรมสากล'],a:2,e:'กฎหมายอาญาไทยใช้ทั้งหลักดินแดน (บังคับในราชอาณาจักร) และหลักสัญชาติ (บังคับกับคนไทย)'},
+        ]}
+      ]
+    },
+    s: {
+      subjects: [
+        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:35,qs:[
+          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร'},
+          {q:'คนต่างด้าวที่อยู่เกินกำหนด มีโทษปรับวันละเท่าไหร่?',c:['200 บาท','300 บาท','500 บาท','1,000 บาท'],a:2,e:'โทษปรับ 500 บาทต่อวัน สูงสุดไม่เกิน 20,000 บาท ตามมาตรา 81'},
+          {q:'วีซ่าประเภทใดอนุญาตให้ทำงานในประเทศไทย?',c:['Non-O','Non-B','Tourist Visa','Transit Visa'],a:1,e:'Non-Immigrant Visa ประเภท B (Business) อนุญาตให้ทำงานในประเทศไทย'},
+          {q:'ข้อใดเป็นช่องทางอนุญาตตาม พ.ร.บ. คนเข้าเมือง?',c:['ทางบก ทางน้ำ ทางอากาศ','ทางบกเท่านั้น','ทางบกและทางน้ำ','ทางอากาศเท่านั้น'],a:0,e:'ช่องทางอนุญาตได้แก่ ทางบก ทางน้ำ และทางอากาศ ตามที่อธิบดีกำหนด'},
+          {q:'คนต่างด้าวที่ถูกเนรเทศสามารถขอเข้ามาใหม่ได้เมื่อใด?',c:['ไม่มีระยะเวลา สามารถขอได้ทันที','ภายหลัง 1 ปี','ภายหลัง 5 ปี','ตามที่รัฐมนตรีกำหนดเป็นรายกรณี'],a:3,e:'ขึ้นอยู่กับดุลพินิจของรัฐมนตรีเป็นรายกรณี'},
+        ]},
+        {id:'eng',name:'ภาษาอังกฤษ',icon:'🔤',ratio:25,qs:[
+          {q:'What does "immigration" mean?',c:['การเดินทางท่องเที่ยว','การเข้าเมือง/การย้ายถิ่นฐาน','การส่งออกสินค้า','การติดต่อสื่อสาร'],a:1,e:'"Immigration" หมายถึง การเข้าเมือง หรือการย้ายถิ่นฐานเข้ามาอยู่ในประเทศ'},
+          {q:'Choose the correct sentence.',c:['He don\'t have a visa.','He doesn\'t have a visa.','He not have a visa.','He haven\'t a visa.'],a:1,e:'ประธานเป็นบุรุษที่ 3 เอกพจน์ (He) ต้องใช้ "doesn\'t" ในประโยคปฏิเสธ Present Simple'},
+          {q:'What is a "passport"?',c:['เอกสารการเดินทางระหว่างประเทศ','ใบอนุญาตทำงาน','วีซ่าท่องเที่ยว','บัตรประจำตัวประชาชน'],a:0,e:'"Passport" คือหนังสือเดินทาง เป็นเอกสารที่ใช้เดินทางระหว่างประเทศ'},
+          {q:'The officer asked the tourist to "declare" the items. What does "declare" mean?',c:['ซ่อน','แจ้ง/ประกาศ','ทิ้ง','ซื้อ'],a:1,e:'"Declare" ในบริบทศุลกากร หมายถึง การแจ้งหรือประกาศรายการสินค้าต่อเจ้าหน้าที่'},
+          {q:'Fill in: "The visa _____ on 31 December."',c:['expire','expires','expired','expiring'],a:1,e:'ประธาน "visa" เป็นเอกพจน์ ใช้ "expires" ในรูป Present Simple'},
+        ]},
+        {id:'crim',name:'กฎหมายอาญา',icon:'🏛️',ratio:25,qs:[
+          {q:'ความผิดอาญาแผ่นดิน คือความผิดประเภทใด?',c:['ความผิดที่ยอมความได้','ความผิดที่รัฐเป็นผู้เสียหาย ยอมความไม่ได้','ความผิดเกี่ยวกับทรัพย์','ความผิดลหุโทษ'],a:1,e:'ความผิดอาญาแผ่นดิน คือความผิดที่กระทบต่อความสงบเรียบร้อย รัฐเป็นผู้เสียหาย ยอมความไม่ได้'},
+          {q:'เจตนาในทางอาญา แบ่งออกเป็นกี่ประเภท?',c:['1 ประเภท','2 ประเภท','3 ประเภท','4 ประเภท'],a:1,e:'เจตนาในทางอาญาแบ่งเป็น 2 ประเภท คือ เจตนาประสงค์ต่อผล และเจตนาเล็งเห็นผล'},
+          {q:'อายุความในคดีอาญาเริ่มนับจากวันใด?',c:['วันที่จับกุมผู้ต้องหา','วันที่กระทำความผิด','วันที่ฟ้องคดี','วันที่ศาลมีคำพิพากษา'],a:1,e:'อายุความในคดีอาญาเริ่มนับตั้งแต่วันที่กระทำความผิด'},
+          {q:'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',c:['3 สถาน','4 สถาน','5 สถาน','6 สถาน'],a:2,e:'โทษทางอาญามี 5 สถาน ได้แก่ ประหารชีวิต จำคุก กักขัง ปรับ และริบทรัพย์สิน'},
+          {q:'การกระทำใดเป็น "ความผิดลหุโทษ"?',c:['ลักทรัพย์','ชิงทรัพย์','เมาแล้วขับ','ทำร้ายร่างกาย'],a:2,e:'เมาแล้วขับ (ขับรถในขณะเมาสุรา) เป็นความผิดลหุโทษตาม พ.ร.บ. จราจรทางบก'},
+        ]},
+        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:15,qs:[
+          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา สวิตเซอร์แลนด์','ลียง ฝรั่งเศส','กรุงเฮก เนเธอร์แลนด์','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
+          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
+          {q:'ICPO ย่อมาจากอะไร?',c:['International Criminal Police Organization','International Control Police Office','Interpol Criminal Police Operations','International Cooperation Police Organization'],a:0,e:'ICPO ย่อมาจาก International Criminal Police Organization หรือที่รู้จักกันในชื่อ Interpol'},
+        ]}
+      ]
+    }
+  }
+};
+
+// ===== Supabase Config =====
+const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
+const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// session id สำหรับ track history ของ user นี้ (ไม่ต้อง login)
+const SESSION_ID=(()=>{let s=localStorage.getItem('exam_session');if(!s){s=crypto.randomUUID();localStorage.setItem('exam_session',s);}return s;})();
+
+let state = {
+  unit:'', unitName:'', unitShort:'',
+  level:'', examType:'', selSubj:'', quizMode:'',
+  questions:[], cur:0, ans:[], done:[],
+  history:[]
+};
+
+// โหลดข้อสอบจาก Supabase
+async function loadQuestions(unitId, level, subjId=null){
+  try {
+    let q = supa
+      .from('question_units')
+      .select(`
+        level,
+        questions (
+          id, question, choice_a, choice_b, choice_c, choice_d,
+          choice_a_image, choice_b_image, choice_c_image, choice_d_image,
+          answer, explanation, question_image,
+          subjects ( name, icon )
+        )
+      `)
+      .eq('unit_id', unitId)
+      .eq('published', true);
+
+    if(level!=='both') q=q.in('level',[level,'both']);
+    if(subjId) q=q.eq('questions.subject_id', subjId);
+
+    const {data,error}=await q;
+    if(error) throw error;
+
+    // แปลงให้ตรงกับ format เดิม
+    return (data||[]).map(row=>{
+      const qq=row.questions;
+      if(!qq) return null;
+      const choices=[qq.choice_a,qq.choice_b,qq.choice_c,qq.choice_d];
+      const images=[qq.choice_a_image,qq.choice_b_image,qq.choice_c_image,qq.choice_d_image];
+      const ansIdx={'a':0,'b':1,'c':2,'d':3}[qq.answer]??0;
+      return {
+        id:qq.id, q:qq.question,
+        c:choices, cImg:images,
+        a:ansIdx, e:qq.explanation||'',
+        img:qq.question_image||null,
+        subj:qq.subjects?.name||'', subjIcon:qq.subjects?.icon||''
+      };
+    }).filter(Boolean);
+  } catch(err){
+    console.error('loadQuestions error:',err);
+    return [];
+  }
+}
+
+// โหลดหน่วยงานและวิชาจาก Supabase
+async function loadUnits(){
+  try {
+    const {data,error}=await supa.from('units').select('*');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+async function loadSubjects(unitId, level){
+  try {
+    const lv=level==='p'?['p','both']:['s','both'];
+    const {data,error}=await supa
+      .from('subjects')
+      .select('*')
+      .eq('unit_id',unitId)
+      .in('level',lv)
+      .order('id');
+    if(error) throw error;
+    return data||[];
+  } catch(e){ return []; }
+}
+
+// บันทึก history ลง Supabase + localStorage (fallback)
+async function saveHistory(rec){
+  // localStorage fallback
+  state.history.unshift(rec);
+  if(state.history.length>100) state.history=state.history.slice(0,100);
+  localStorage.setItem('examHistory',JSON.stringify(state.history));
+  // Supabase
+  try {
+    await supa.from('exam_history').insert({
+      session_id: SESSION_ID,
+      unit_id: rec.unit,
+      level: rec.level,
+      exam_type: rec.examType,
+      quiz_mode: rec.quizMode,
+      subject_name: rec.subjName,
+      score: rec.score,
+      total: rec.total,
+      pct: rec.pct
+    });
+  } catch(e){ console.warn('saveHistory Supabase error:',e); }
+}
+
+// โหลด history จาก Supabase
+async function loadHistory(){
+  try {
+    const {data,error}=await supa
+      .from('exam_history')
+      .select('*')
+      .eq('session_id',SESSION_ID)
+      .order('created_at',{ascending:false})
+      .limit(100);
+    if(error) throw error;
+    return (data||[]).map(h=>({
+      id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
+      unit:h.unit_id, unitShort:h.unit_id?.toUpperCase(),
+      unitName:h.unit_id, level:h.level,
+      lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+      examType:h.exam_type, quizMode:h.quiz_mode,
+      subj:'', subjName:h.subject_name,
+      score:h.score, total:h.total, pct:h.pct
+    }));
+  } catch(e){
+    // fallback localStorage
+    return JSON.parse(localStorage.getItem('examHistory')||'[]');
+  }
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function makeBc(items){
+  return items.map((it,i)=>`<span class="${i===items.length-1?'cur':''}">${it}</span>${i<items.length-1?'<span class="bc-sep">›</span>':''}`).join('');
+}
+
+function goHome(){
+  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('btn-home').disabled=true;
+  state.unit='';
+  goScreen('s-home');
+}
+
+function pickUnit(id,name,short){
+  state.unit=id; state.unitName=name; state.unitShort=short;
+  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('u-'+id).classList.add('sel');
+  document.getElementById('btn-home').disabled=false;
+}
+
+function goLevel(){
+  if(!state.unit) return;
+  document.getElementById('bc-level').innerHTML=makeBc([state.unitShort,'เลือกระดับ']);
+  document.getElementById('sub-level').textContent=state.unitName;
+  ['lv-p','lv-s'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-level').disabled=true;
+  state.level='';
+  goScreen('s-level');
+}
+
+function pickLevel(lv){
+  state.level=lv;
+  document.getElementById('lv-p').classList.toggle('sel',lv==='p');
+  document.getElementById('lv-s').classList.toggle('sel',lv==='s');
+  document.getElementById('btn-level').disabled=false;
+}
+
+function goType(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-type').innerHTML=makeBc([state.unitShort,lvLabel,'รูปแบบ']);
+  document.getElementById('sub-type').textContent=state.unitName+' — '+lvLabel;
+  ['tp-sub','tp-full'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-type').disabled=true;
+  state.examType='';
+  goScreen('s-type');
+}
+
+function pickType(t){
+  state.examType=t;
+  document.getElementById('tp-sub').classList.toggle('sel',t==='sub');
+  document.getElementById('tp-full').classList.toggle('sel',t==='full');
+  document.getElementById('btn-type').disabled=false;
+}
+
+function goSubjOrRatio(){
+  if(state.examType==='sub') goSubj();
+  else goRatio();
+}
+
+function goSubj(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-subj').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา','เลือกวิชา']);
+  document.getElementById('sub-subj').textContent=state.unitName+' — '+lvLabel+' — เลือกวิชาที่ต้องการฝึก';
+  const data=DB[state.unit]?.[state.level];
+  const list=document.getElementById('subj-list');
+  list.innerHTML='';
+  state.selSubj='';
+  document.getElementById('btn-subj').disabled=true;
+  data.subjects.forEach(subj=>{
+    const row=document.createElement('div');
+    row.className='subj-row';
+    row.id='srow-'+subj.id;
+    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${subj.qs.length} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">เลือก</span>`;
+    row.onclick=()=>{
+      state.selSubj=subj.id;
+      data.subjects.forEach(s=>{
+        const t=document.getElementById('stag-'+s.id);
+        if(t){t.className='tag tag-gray';t.textContent='เลือก';}
+      });
+      const tsel=document.getElementById('stag-'+subj.id);
+      if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
+      document.getElementById('btn-subj').disabled=false;
+    };
+    list.appendChild(row);
+  });
+  goScreen('s-subj');
+}
+
+function goRatio(){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  document.getElementById('bc-ratio').innerHTML=makeBc([state.unitShort,lvLabel,'จำลองสอบ','โหมด']);
+  document.getElementById('sub-ratio').textContent=state.unitName+' — '+lvLabel;
+  const data=DB[state.unit]?.[state.level];
+  const rl=document.getElementById('ratio-list');
+  rl.innerHTML='';
+  data.subjects.forEach(s=>{
+    const row=document.createElement('div');
+    row.className='ratio-row';
+    row.innerHTML=`<span style="font-size:13px;color:var(--text)">${s.icon} ${s.name}</span><div style="display:flex;align-items:center;gap:8px"><div class="ratio-bar-track"><div class="ratio-bar-fill" style="width:${s.ratio}%"></div></div><span style="font-size:12px;color:var(--text2);min-width:30px;text-align:right">${s.ratio}%</span></div>`;
+    rl.appendChild(row);
+  });
+  ['fm-i','fm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-ratio').disabled=true;
+  state.quizMode='';
+  goScreen('s-ratio');
+}
+
+function pickFMode(m){
+  state.quizMode=m;
+  document.getElementById('fm-i').classList.toggle('sel',m==='instant');
+  document.getElementById('fm-e').classList.toggle('sel',m==='exam');
+  document.getElementById('btn-ratio').disabled=false;
+}
+
+function goMode(from){
+  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
+  const data=DB[state.unit]?.[state.level];
+  const subj=data.subjects.find(s=>s.id===state.selSubj);
+  document.getElementById('bc-mode').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา',subj.name,'โหมด']);
+  document.getElementById('sub-mode').textContent=state.unitName+' — '+subj.name;
+  ['sm-i','sm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('btn-mode').disabled=true;
+  state.quizMode='';
+  goScreen('s-mode');
+}
+
+function pickSMode(m){
+  state.quizMode=m;
+  document.getElementById('sm-i').classList.toggle('sel',m==='instant');
+  document.getElementById('sm-e').classList.toggle('sel',m==='exam');
+  document.getElementById('btn-mode').disabled=false;
+}
+
+// สุ่มตัวเลือกและจำตำแหน่งเฉลยใหม่ต่อ 1 ข้อ
+function shuffleChoices(q){
+  const indexed=q.c.map((text,i)=>({text,isAnswer:i===q.a}));
+  const shuffled=shuffle(indexed);
+  return {
+    ...q,
+    c: shuffled.map(x=>x.text),
+    a: shuffled.findIndex(x=>x.isAnswer)
+  };
+}
+
+function startQuiz(){
+  const data=DB[state.unit]?.[state.level];
+  let rawQs=[];
+  if(state.examType==='full'){
+    data.subjects.forEach(s=>s.qs.forEach(q=>rawQs.push({...q,subj:s.name,subjIcon:s.icon})));
+  } else {
+    const subj=data.subjects.find(s=>s.id===state.selSubj);
+    rawQs=subj.qs.map(q=>({...q,subj:subj.name,subjIcon:subj.icon}));
+  }
+  // สุ่มลำดับข้อ + สุ่มตัวเลือกแต่ละข้อ
+  state.questions=shuffle(rawQs).map(q=>shuffleChoices(q));
+  state.cur=0;
+  state.ans=Array(state.questions.length).fill(null);
+  state.done=Array(state.questions.length).fill(false);
+  renderQ();
+  goScreen('s-quiz');
+}
+
+const labels=['ก','ข','ค','ง'];
+
+function renderQ(){
+  const q=state.questions[state.cur];
+  const total=state.questions.length;
+  const pct=Math.round((state.cur/total)*100);
+  document.getElementById('pbar-fill').style.width=pct+'%';
+  document.getElementById('q-num').textContent='ข้อ '+(state.cur+1)+' / '+total;
+
+  const modeTag=state.quizMode==='instant'
+    ?'<span class="tag tag-blue">💡 ฝึกซ้อม</span>'
+    :'<span class="tag tag-yellow">📋 จำลองสอบ</span>';
+  const shuffleTag='<span class="tag" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border)">🔀 สุ่มแล้ว</span>';
+  document.getElementById('q-tags').innerHTML=`<span class="tag" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)">${q.subjIcon||''} ${q.subj||''}</span>${modeTag}${shuffleTag}`;
+  document.getElementById('q-text').textContent=q.q;
+
+  const imgWrap=document.getElementById('q-img-wrap');
+  if(q.img){imgWrap.style.display='block';document.getElementById('q-img').src=q.img;}
+  else imgWrap.style.display='none';
+
+  const ch=document.getElementById('q-choices');
+  ch.innerHTML='';
+  q.c.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    let cls='';
+    if(state.ans[state.cur]===i){
+      if(state.quizMode==='instant'&&state.done[state.cur]) cls=i===q.a?'ok':'ng';
+      else cls='sel';
+    } else if(state.quizMode==='instant'&&state.done[state.cur]&&i===q.a) cls='ok';
+    if(cls) btn.classList.add(cls);
+    if(state.quizMode==='instant'&&state.done[state.cur]) btn.disabled=true;
+    btn.innerHTML=`<span class="choice-lbl">${labels[i]}</span><span>${c}</span>`;
+    btn.onclick=()=>pickAns(i);
+    ch.appendChild(btn);
+  });
+
+  const fb=document.getElementById('q-feedback');
+  if(state.quizMode==='instant'&&state.done[state.cur]){
+    const ok=state.ans[state.cur]===q.a;
+    fb.className='feedback '+(ok?'ok':'ng');
+    document.getElementById('fb-title').textContent=ok?'✓ ถูกต้อง':'✗ ไม่ถูกต้อง';
+    document.getElementById('fb-body').textContent=q.e;
+    fb.style.display='block';
+  } else fb.style.display='none';
+
+  const prev=document.getElementById('qb-prev');
+  const next=document.getElementById('qb-next');
+  const sub=document.getElementById('qb-submit');
+  prev.style.display=state.cur>0?'block':'none';
+  if(state.quizMode==='exam'){
+    next.style.display=state.cur<total-1?'block':'none';
+    sub.style.display=state.cur===total-1&&state.ans.every(a=>a!==null)?'block':'none';
+  } else {
+    next.style.display=state.done[state.cur]&&state.cur<total-1?'block':'none';
+    sub.style.display=state.done[state.cur]&&state.cur===total-1?'block':'none';
+  }
+}
+
+function pickAns(i){
+  if(state.quizMode==='instant'&&state.done[state.cur]) return;
+  state.ans[state.cur]=i;
+  if(state.quizMode==='instant') state.done[state.cur]=true;
+  renderQ();
+}
+function qPrev(){if(state.cur>0){state.cur--;renderQ();}}
+function qNext(){if(state.cur<state.questions.length-1){state.cur++;renderQ();}}
+
+async function showResult(){
+  const score=state.ans.filter((a,i)=>a===state.questions[i].a).length;
+  const total=state.questions.length;
+  const pct=Math.round((score/total)*100);
+  document.getElementById('r-score').textContent=score+' / '+total;
+  document.getElementById('r-pct').textContent='คะแนน '+pct+'% — '+state.unitShort+' '+(state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร');
+
+  const prevScores=state.history.filter(h=>h.unit===state.unit&&h.level===state.level&&h.subj===(state.selSubj||'all')).map(h=>h.pct);
+  const avg=prevScores.length>0?Math.round(prevScores.reduce((a,b)=>a+b,0)/prevScores.length):null;
+  const best=prevScores.length>0?Math.max(...prevScores):null;
+  const diff=avg!==null?pct-avg:null;
+
+  document.getElementById('r-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val" style="color:${pct>=70?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</div><div class="stat-lbl">ครั้งนี้</div></div>
+    <div class="stat-box"><div class="stat-val">${avg!==null?avg+'%':'—'}</div><div class="stat-lbl">เฉลี่ย</div></div>
+    <div class="stat-box"><div class="stat-val">${best!==null?best+'%':'—'}</div><div class="stat-lbl">สูงสุด</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:${diff===null?'var(--text)':diff>=0?'var(--success)':'var(--danger)'}">${diff===null?'—':(diff>=0?'+':'')+diff+'%'}</div><div class="stat-lbl">จากเฉลี่ย</div></div>`;
+
+  const dots=document.getElementById('r-dots');
+  dots.innerHTML='';
+  state.questions.forEach((_,i)=>{
+    const ok=state.ans[i]===state.questions[i].a;
+    const d=document.createElement('div');
+    d.className='rdot '+(ok?'ok':'ng');
+    d.textContent=i+1;
+    dots.appendChild(d);
+  });
+
+  const rev=document.getElementById('r-review');
+  rev.innerHTML='';
+  state.questions.forEach((q,i)=>{
+    const ok=state.ans[i]===q.a;
+    const d=document.createElement('div');
+    d.className='review-item';
+    d.innerHTML=`<div class="review-q">ข้อ ${i+1}: ${q.q}</div>
+    <div class="review-ans" style="color:${ok?'var(--success)':'var(--danger)'}">คำตอบของคุณ: ${labels[state.ans[i]]}. ${q.c[state.ans[i]]} ${ok?'✓':'✗'}</div>
+    ${!ok?`<div class="review-ans" style="color:var(--success)">เฉลย: ${labels[q.a]}. ${q.c[q.a]}</div>`:''}
+    <div class="review-explain">${q.e}</div>`;
+    rev.appendChild(d);
+  });
+
+  const data=DB[state.unit]?.[state.level];
+  const subjName=state.examType==='full'?'จำลองสอบจริง (รวมทุกวิชา)':(data.subjects.find(s=>s.id===state.selSubj)?.name||'');
+  const rec={
+    id:Date.now(),
+    date:new Date().toLocaleString('th-TH'),
+    unit:state.unit, unitShort:state.unitShort, unitName:state.unitName,
+    level:state.level, lvLabel:state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+    examType:state.examType, quizMode:state.quizMode,
+    subj:state.selSubj||'all', subjName,
+    score, total, pct
+  };
+  await saveHistory(rec);
+
+  goScreen('s-result');
+}
+
+function restartSame(){
+  startQuiz();
+}
+
+async function goHistory(){
+  document.getElementById('h-list').innerHTML='<div class="empty-hist"><div class="big">⏳</div><p>กำลังโหลด...</p></div>';
+  goScreen('s-history');
+  state.history=await loadHistory();
+  renderHistory('all');
+}
+
+function renderHistory(filterUnit){
+  const hist=state.history;
+  const units=[...new Set(hist.map(h=>h.unit))];
+
+  const stats=document.getElementById('h-stats');
+  if(hist.length===0){
+    stats.innerHTML='';
+  } else {
+    const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
+    const avg=filtered.length?Math.round(filtered.reduce((a,b)=>a+b.pct,0)/filtered.length):0;
+    const best=filtered.length?Math.max(...filtered.map(h=>h.pct)):0;
+    const subjCount=[...new Set(filtered.map(h=>h.subjName))].length;
+    stats.innerHTML=`
+      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--accent)">${filtered.length}</div><div class="hist-stat-lbl">ครั้งที่สอบ</div></div>
+      <div class="hist-stat"><div class="hist-stat-val" style="color:${avg>=70?'var(--success)':avg>=50?'var(--warning)':'var(--danger)'}">${avg}%</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
+      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--success)">${best}%</div><div class="hist-stat-lbl">สูงสุด</div></div>
+      <div class="hist-stat"><div class="hist-stat-val">${subjCount}</div><div class="hist-stat-lbl">รูปแบบ</div></div>`;
   }
 
-  window.addEventListener('error', function (e) {
-    if (e.target && e.target.tagName === 'SCRIPT') {
-      showProblem('โหลดสคริปต์ไม่สำเร็จ', 'โหลดไม่สำเร็จ: ' + (e.target.src || e.target.href));
-    }
-  }, true);
-
-  window.addEventListener('DOMContentLoaded', function () {
-    setTimeout(function () {
-      var login = document.getElementById('s-login');
-      var visible = login && login.style.display !== 'none' && login.style.display !== '';
-      if (visible) return;
-      if (typeof doLogin !== 'function') {
-        showProblem('ระบบไม่เริ่มทำงาน', 'ไม่พบฟังก์ชันของระบบ — สคริปต์อาจโหลดไม่ครบ');
-      } else {
-        // สคริปต์พร้อม แต่ยังไม่แสดงหน้า → บังคับแสดง
-        login.style.display = 'flex';
-      }
-    }, 800);
+  const filters=document.getElementById('h-filters');
+  filters.innerHTML=`<button class="filter-btn ${filterUnit==='all'?'active':''}" onclick="renderHistory('all')">ทั้งหมด</button>`;
+  units.forEach(u=>{
+    const s=hist.find(h=>h.unit===u);
+    if(s) filters.innerHTML+=`<button class="filter-btn ${filterUnit===u?'active':''}" onclick="renderHistory('${u}')">${s.unitShort}</button>`;
   });
-})();
+
+  const list=document.getElementById('h-list');
+  const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
+  if(filtered.length===0){
+    list.innerHTML=`<div class="empty-hist"><div class="big">📋</div><p>ยังไม่มีประวัติการสอบ<br>เริ่มทำข้อสอบแล้วผลจะปรากฏที่นี่</p></div>`;
+    return;
+  }
+  list.innerHTML='<div class="hlist">';
+  filtered.forEach(h=>{
+    const color=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
+    const dotColor=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
+    const modeLabel=h.quizMode==='instant'?'ฝึกซ้อม':'จำลองสอบ';
+    list.innerHTML+=`<div class="hitem">
+      <div class="hdot" style="background:${dotColor}"></div>
+      <div class="hitem-body">
+        <div class="hitem-title">${h.unitShort} — ${h.lvLabel}</div>
+        <div class="hitem-sub">${h.subjName} · ${modeLabel}</div>
+        <div class="hitem-time">${h.date}</div>
+      </div>
+      <div class="hitem-right">
+        <div class="hitem-score" style="color:${color}">${h.pct}%</div>
+        <div style="font-size:11px;color:var(--text3)">${h.score}/${h.total}</div>
+      </div>
+    </div>`;
+  });
+  list.innerHTML+='</div>';
+}
+
+async function clearHistory(){
+  if(!confirm('ลบประวัติการสอบทั้งหมด?')) return;
+  state.history=[];
+  localStorage.removeItem('examHistory');
+  try{
+    await supa.from('exam_history').delete().eq('session_id',SESSION_ID);
+  }catch(e){console.warn(e);}
+  renderHistory('all');
+}
+
+
+/* ===== ADMIN JS ===== */
+
+
+// ===== Supabase CRUD =====
+
+async function dbLoadQuestions(){
+  const {data,error}=await supa
+    .from('questions')
+    .select(`id, question, answer, difficulty, source, published, created_at,
+             subjects(name),
+             question_units(unit_id, level)`)
+    .order('id',{ascending:false});
+  if(error){console.error(error);return[];}
+  return (data||[]).map(q=>({
+    id:q.id,
+    question:q.question,
+    unit:[...new Set((q.question_units||[]).map(u=>u.unit_id))].join(','),
+    level:[...new Set((q.question_units||[]).map(u=>u.level))].join(','),
+    subject:q.subjects?.name||'',
+    type:q.question_image?'มีรูป':'ข้อความ',
+    status:q.published?'เผยแพร่':'รอตรวจสอบ',
+    answer:q.answer
+  }));
+}
+
+async function dbSaveQuestion(formData){
+  const {units,levels,subject_id,question,choice_a,choice_b,choice_c,choice_d,
+         answer,explanation,difficulty,source,published}=formData;
+  // insert question
+  const {data:q,error:e1}=await supa.from('questions').insert({
+    question,choice_a,choice_b,choice_c,choice_d,
+    answer,explanation,difficulty,source,published,subject_id
+  }).select().single();
+  if(e1){console.error(e1);return false;}
+  // insert question_units (หลายหน่วย x หลายระดับ)
+  const rows=[];
+  units.forEach(u=>levels.forEach(lv=>rows.push({question_id:q.id,unit_id:u,level:lv})));
+  if(rows.length){
+    const {error:e2}=await supa.from('question_units').insert(rows);
+    if(e2) console.error(e2);
+  }
+  return true;
+}
+
+async function dbDeleteQuestions(ids){
+  const {error}=await supa.from('questions').delete().in('id',ids);
+  return !error;
+}
+
+async function dbTogglePublish(id,published){
+  await supa.from('questions').update({published}).eq('id',id);
+}
+
+let questions=[
+  {id:1001,question:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',unit:'ตม.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1002,question:'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',unit:'ตม.',level:'ประทวน',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1003,question:'เมื่อพบป้ายจราจรในภาพ ผู้ขับขี่ต้องปฏิบัติอย่างไร?',unit:'จร.',level:'ประทวน',subject:'กฎหมายจราจร',type:'มีรูป',status:'เผยแพร่',answer:'ข'},
+  {id:1004,question:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',unit:'ตม.',level:'สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ค'},
+  {id:1005,question:'What does "immigration" mean?',unit:'ตม.',level:'สัญญาบัตร',subject:'ภาษาอังกฤษ',type:'ข้อความ',status:'เผยแพร่',answer:'ข'},
+  {id:1006,question:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษอย่างไร?',unit:'ตม.,จร.',level:'ประทวน,สัญญาบัตร',subject:'กฎหมาย ตม.',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1007,question:'ประเทศไทยมีกี่จังหวัด?',unit:'ตม.,สส.,จร.',level:'ประทวน,สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'เผยแพร่',answer:'ค'},
+  {id:1008,question:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',unit:'ตม.',level:'สัญญาบัตร',subject:'ความรู้ทั่วไป',type:'ข้อความ',status:'รอตรวจสอบ',answer:'ข'},
+];
+
+let selectedIds=new Set(), curPage=1, pageSize=5, filtered=[];
+let pinVal='';
+
+
+
+
+
+function goPage(id,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(navEl){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  const titles={'dashboard':'Dashboard','questions':'ข้อสอบทั้งหมด','add-question':'เพิ่มข้อสอบ','import-csv':'นำเข้า CSV'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  // show switch-to-user if role=both
+  const sw=document.getElementById('admin-switch-user');
+  if(sw) sw.style.display=currentUser?.role==='both'?'flex':'none';
+}
+
+function initAdminDashboard(){
+  const units=[{n:'ตม.',v:328},{n:'สส.',v:252},{n:'จร.',v:196},{n:'ปป.',v:160},{n:'อก.+พยาบาล',v:112}];
+  const max=328;
+  document.getElementById('unit-bars').innerHTML=units.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${u.n}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:100px;height:5px;background:var(--surface2);border-radius:2px">
+          <div style="width:${Math.round(u.v/max*100)}%;height:5px;background:var(--accent);border-radius:2px"></div>
+        </div>
+        <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
+      </div>
+    </div>`).join('');
+  const acts=[
+    {color:'var(--success)',text:'เพิ่มข้อสอบ กฎหมาย ตม. 15 ข้อ',time:'10 นาทีที่แล้ว'},
+    {color:'var(--accent)',text:'แก้ไขเฉลยข้อสอบ ภาษาไทย ประทวน',time:'1 ชั่วโมงที่แล้ว'},
+    {color:'var(--warning)',text:'นำเข้า CSV จร. 48 ข้อ',time:'เมื่อวาน'},
+    {color:'var(--danger)',text:'ลบข้อสอบซ้ำ สส. 3 ข้อ',time:'2 วันที่แล้ว'},
+  ];
+  document.getElementById('activity-log').innerHTML=acts.map(a=>`
+    <div class="activity-item">
+      <div class="act-dot" style="background:${a.color}"></div>
+      <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+async function initQuestions(){
+  // แสดง loading
+  document.getElementById('q-tbody').innerHTML=
+    '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text2)">⏳ กำลังโหลดข้อสอบ...</td></tr>';
+  questions=await dbLoadQuestions();
+  filtered=[...questions];
+  renderTable();
+}
+
+function filterQ(){
+  const s=document.getElementById('q-search').value.toLowerCase();
+  const u=document.getElementById('q-unit').value;
+  const lv=document.getElementById('q-level').value;
+  const st=document.getElementById('q-status').value;
+  filtered=questions.filter(q=>{
+    if(s&&!q.question.toLowerCase().includes(s))return false;
+    if(u&&!q.unit.includes(u))return false;
+    if(lv&&!q.level.includes(lv))return false;
+    if(st&&q.status!==st)return false;
+    return true;
+  });
+  curPage=1;selectedIds.clear();updateBulkBar();
+  renderTable();
+}
+
+function renderTable(){
+  const start=(curPage-1)*pageSize, end=start+pageSize;
+  const rows=filtered.slice(start,end);
+  const tbody=document.getElementById('q-tbody');
+  const labels={'เผยแพร่':'tag-green','รอตรวจสอบ':'tag-yellow'};
+  const types={'ข้อความ':'tag-gray','มีรูป':'tag-blue'};
+  tbody.innerHTML=rows.map(q=>`
+    <tr class="${selectedIds.has(q.id)?'sel-row':''}" id="row-${q.id}">
+      <td><input type="checkbox" ${selectedIds.has(q.id)?'checked':''} onchange="toggleSel(${q.id},this)"></td>
+      <td style="font-size:12px;color:var(--text2)">#${q.id}</td>
+      <td>
+        <div style="font-size:13px">${q.question.length>55?q.question.slice(0,55)+'...':q.question}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${q.level}</div>
+      </td>
+      <td>
+        <span class="tag tag-blue" style="font-size:11px">${q.unit}</span>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${q.subject}</td>
+      <td><span class="tag ${types[q.type]||'tag-gray'}">${q.type}</span></td>
+      <td><span class="tag ${labels[q.status]||'tag-gray'}">${q.status}</span></td>
+      <td>
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-icon btn-sm" title="แก้ไข" onclick="editQ(${q.id})" style="color:var(--accent)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-icon btn-sm" title="ลบ" onclick="quickDel(${q.id})" style="color:var(--danger)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+  document.getElementById('q-count-label').textContent=`แสดง ${rows.length} จาก ${filtered.length} ข้อ`;
+  document.getElementById('btn-prev').disabled=curPage===1;
+  document.getElementById('btn-next').disabled=end>=filtered.length;
+  document.getElementById('chk-all').checked=rows.length>0&&rows.every(q=>selectedIds.has(q.id));
+}
+
+function changePage(d){curPage+=d;renderTable();}
+
+function toggleSel(id,chk){
+  if(chk.checked)selectedIds.add(id);else selectedIds.delete(id);
+  document.getElementById(`row-${id}`)?.classList.toggle('sel-row',chk.checked);
+  updateBulkBar();
+}
+
+function toggleAll(chk){
+  const start=(curPage-1)*pageSize,end=start+pageSize;
+  filtered.slice(start,end).forEach(q=>{
+    if(chk.checked)selectedIds.add(q.id);else selectedIds.delete(q.id);
+    document.getElementById(`row-${q.id}`)?.classList.toggle('sel-row',chk.checked);
+  });
+  updateBulkBar();
+}
+
+function clearSel(){selectedIds.clear();updateBulkBar();renderTable();}
+
+function updateBulkBar(){
+  const bar=document.getElementById('bulk-bar');
+  const n=selectedIds.size;
+  bar.style.display=n>0?'flex':'none';
+  document.getElementById('bulk-count').textContent=`เลือก ${n} รายการ`;
+}
+
+function quickDel(id){selectedIds.clear();selectedIds.add(id);openDeleteModal();}
+
+/* editQ defined above */
+
+function openDeleteModal(){
+  const ids=[...selectedIds];
+  if(ids.length===0){showToast('กรุณาเลือกข้อสอบก่อน','danger');return;}
+  const items=questions.filter(q=>ids.includes(q.id));
+  document.getElementById('del-list').innerHTML=`
+    <div style="font-size:11px;font-weight:500;color:var(--danger);margin-bottom:6px">รายการที่จะถูกลบ (${items.length} รายการ)</div>
+    ${items.map(q=>`<div class="del-item"><span style="flex-shrink:0">—</span><span>#${q.id} ${q.question.length>50?q.question.slice(0,50)+'...':q.question}</span></div>`).join('')}`;
+  document.getElementById('del-btn-label').textContent=`ลบ ${items.length} รายการ`;
+  document.getElementById('btn-confirm-del').disabled=true;
+  document.getElementById('pin-err').textContent='';
+  pinVal='';
+  const container=document.getElementById('pin-inputs');
+  container.innerHTML='';
+  for(let i=0;i<6;i++){
+    const inp=document.createElement('input');
+    inp.type='password';inp.maxLength=1;inp.dataset.idx=i;
+    inp.addEventListener('input',onPinInput);
+    inp.addEventListener('keydown',onPinKey);
+    container.appendChild(inp);
+  }
+  document.getElementById('delete-modal').classList.add('open');
+  setTimeout(()=>container.children[0]?.focus(),100);
+}
+
+function onPinInput(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  inp.classList.remove('pin-err');
+  if(inp.value){
+    const next=inp.parentElement.children[idx+1];
+    if(next)next.focus();
+  }
+  updatePin();
+}
+
+function onPinKey(e){
+  const inp=e.target,idx=+inp.dataset.idx;
+  if(e.key==='Backspace'&&!inp.value&&idx>0){
+    inp.parentElement.children[idx-1].focus();
+  }
+}
+
+function updatePin(){
+  const inputs=[...document.getElementById('pin-inputs').children];
+  pinVal=inputs.map(i=>i.value).join('');
+  if(pinVal.length===6){
+    if(pinVal===DELETE_PIN){
+      document.getElementById('btn-confirm-del').disabled=false;
+      document.getElementById('pin-err').textContent='';
+      inputs.forEach(i=>i.classList.remove('pin-err'));
+    } else {
+      document.getElementById('btn-confirm-del').disabled=true;
+      document.getElementById('pin-err').textContent='รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
+      inputs.forEach(i=>i.classList.add('pin-err'));
+      setTimeout(()=>{
+        inputs.forEach(i=>{i.value='';i.classList.remove('pin-err');});
+        inputs[0].focus();pinVal='';
+        document.getElementById('pin-err').textContent='';
+      },800);
+    }
+  } else {
+    document.getElementById('btn-confirm-del').disabled=true;
+  }
+}
+
+function closeDeleteModal(){
+  document.getElementById('delete-modal').classList.remove('open');
+  pinVal='';
+}
+
+async function confirmDelete(){
+  const ids=[...selectedIds];
+  const ok=await dbDeleteQuestions(ids);
+  if(ok){
+    questions=questions.filter(q=>!ids.includes(q.id));
+    filtered=filtered.filter(q=>!ids.includes(q.id));
+    selectedIds.clear();
+    updateBulkBar();
+    renderTable();
+    closeDeleteModal();
+    showToast(`ลบ ${ids.length} ข้อสอบแล้ว`,'success');
+  } else {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่','danger');
+  }
+}
+
+function initChoicesForm(){
+  const labels=['ก','ข','ค','ง'];
+  let selAns=null;
+  const wrap=document.getElementById('choices-form');
+  wrap.innerHTML=labels.map((lbl,i)=>`
+    <div class="choice-row">
+      <input type="radio" name="ans-radio" class="choice-radio" value="${i}" id="radio-${i}" onchange="updateAnsMsg(${i},'${lbl}')">
+      <span class="choice-lbl">${lbl}</span>
+      <input type="text" placeholder="ตัวเลือก ${lbl}..." style="flex:1" id="c-${i}">
+      <div class="img-zone">📷 รูปตัวเลือก</div>
+    </div>`).join('');
+}
+
+function updateAnsMsg(idx,lbl){
+  const val=document.getElementById(`c-${idx}`)?.value||'(ยังไม่ได้กรอก)';
+  const msg=document.getElementById('ans-ok-msg');
+  msg.style.display='block';
+  msg.textContent=`✓ เฉลยที่เลือก: ${lbl}. ${val}`;
+}
+
+function toggleChip(el,e){
+  e.preventDefault();
+  e.stopPropagation();
+  el.classList.toggle('on');
+  const chk=el.querySelector('input[type=checkbox]');
+  if(chk) chk.checked=el.classList.contains('on');
+  updateChipNotice();
+}
+
+function updateChipNotice(){
+  const units=[...document.querySelectorAll('#unit-checks .check-chip.on')].map(c=>c.textContent.trim());
+  const notice=document.getElementById('unit-notice');
+  if(notice){
+    if(units.length>0){notice.textContent='ข้อสอบนี้จะปรากฏใน: '+units.join(', ');notice.style.display='flex';}
+    else notice.style.display='none';
+  }
+}
+
+async function saveQuestion(){
+  // รวบรวมข้อมูลจากฟอร์ม
+  const units=[...document.querySelectorAll('#unit-checks .check-chip.on')]
+    .map(c=>c.textContent.trim().split(' ')[1]?.toLowerCase()||'')
+    .filter(Boolean);
+  const levels=[...document.querySelectorAll('.check-chip.on')]
+    .map(c=>c.textContent.trim())
+    .filter(t=>t.includes('ประทวน')||t.includes('สัญญาบัตร'))
+    .map(t=>t.includes('ประทวน')?'p':'s');
+  const question=document.getElementById('q-text-input')?.value?.trim()||'';
+  if(!question){showToast('กรุณากรอกคำถาม','danger');return;}
+  if(units.length===0){showToast('กรุณาเลือกหน่วยงาน','danger');return;}
+
+  const radioEl=document.querySelector('input[name="ans-radio"]:checked');
+  const answerMap=['a','b','c','d'];
+  const answer=radioEl?answerMap[+radioEl.value]:'a';
+  const choices=['a','b','c','d'].map((_,i)=>document.getElementById('c-'+i)?.value?.trim()||'');
+
+  const formData={
+    units, levels,
+    subject_id:1,
+    question,
+    choice_a:choices[0], choice_b:choices[1],
+    choice_c:choices[2], choice_d:choices[3],
+    answer, explanation:'',
+    difficulty:'medium', source:'',
+    published:document.getElementById('publish-chk')?.checked||false
+  };
+
+  showToast('กำลังบันทึก...','');
+  const ok=await dbSaveQuestion(formData);
+  if(ok){
+    showToast('บันทึกข้อสอบแล้ว','success');
+    await initQuestions();
+    setTimeout(()=>goPage('questions',null),600);
+  } else {
+    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่','danger');
+  }
+}
+
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.className='toast',3000);
+}
 </script>
 </body>
 </html>
