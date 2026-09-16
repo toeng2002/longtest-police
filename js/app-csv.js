@@ -56,20 +56,20 @@ function downloadTextFile(filename, content) {
   setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
 }
 
-// template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว
+// template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว (อิงตาม Unit ID ตัวเลข เช่น 1=ตม., 3=จร.)
 function buildTemplateCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
   const rows = [head];
 
-  rows.push(['tm', 'p', 'กฎหมาย ตม.', 'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',
+  rows.push(['1', 'p', 'กฎหมาย ตม.', 'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',
     '1 มกราคม 2522', '27 กุมภาพันธ์ 2523', '1 มีนาคม 2522', '31 ธันวาคม 2522',
     'b', 'มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523', 'medium', 'ข้อสอบปี 2565 รอบ 1', '', 'true']);
 
-  rows.push(['tm', 'p', 'ภาษาไทย', 'ข้อใดเขียนถูกต้อง?',
+  rows.push(['1', 'p', 'ภาษาไทย', 'ข้อใดเขียนถูกต้อง?',
     'กระเพราะ', 'กระเพาะ', 'กะเพราะ', 'กะเพาะ',
     'b', 'สะกดถูกต้องตามพจนานุกรมฉบับราชบัณฑิตยสถาน', 'easy', '', 'true']);
 
-  rows.push(['tm,jr', 'p,s', 'ความรู้ทั่วไป', 'ประเทศไทยมีกี่จังหวัด?',
+  rows.push(['1,3', 'p,s', 'ความรู้ทั่วไป', 'ประเทศไทยมีกี่จังหวัด?',
     '75 จังหวัด', '76 จังหวัด', '77 จังหวัด', '78 จังหวัด',
     'c', 'ประเทศไทยมีทั้งหมด 77 จังหวัด', 'easy', 'ข้อสอบปี 2564', '', 'true']);
 
@@ -81,23 +81,23 @@ function downloadCsvTemplate() {
   showToast('ดาวน์โหลด template แล้ว', 'success');
 }
 
-// ตัวอย่างเต็ม 5 ข้อ (ให้เห็นรูปแบบครบ)
+// ตัวอย่างเต็ม 5 ข้อ (ให้เห็นรูปแบบครบ อิงตาม Unit ID ตัวเลข เช่น 1=ตม., 3=จร.)
 function buildSampleCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
   const qs = [
-    ['tm', 'p', 'กฎหมาย ตม.', 'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',
+    ['1', 'p', 'กฎหมาย ตม.', 'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',
       'มาตรา 11', 'มาตรา 54', 'มาตรา 81', 'มาตรา 101', 'c',
       'มาตรา 81 โทษจำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 20,000 บาท', 'medium', 'ข้อสอบปี 2565'],
-    ['tm', 'p', 'กฎหมาย ตม.', 'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',
+    ['1', 'p', 'กฎหมาย ตม.', 'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',
       'ผบ.ตร.', 'อธิบดีกรมการปกครอง', 'รัฐมนตรีว่าการกระทรวงมหาดไทย', 'นายกรัฐมนตรี', 'c',
       'รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศ', 'hard', ''],
-    ['tm', 's', 'ภาษาอังกฤษ', 'Choose the correct sentence.',
+    ['1', 's', 'ภาษาอังกฤษ', 'Choose the correct sentence.',
       'He don not have a visa.', 'He does not have a visa.', 'He not have a visa.', 'He have not a visa.', 'b',
       'ประธานเป็นบุรุษที่ 3 เอกพจน์ ใช้ does not', 'medium', ''],
-    ['tm', 'p', 'ความรู้ทั่วไป', 'ASEAN มีสมาชิกกี่ประเทศ?',
+    ['1', 'p', 'ความรู้ทั่วไป', 'ASEAN มีสมาชิกกี่ประเทศ?',
       '8 ประเทศ', '9 ประเทศ', '10 ประเทศ', '11 ประเทศ', 'c',
       'อาเซียนมีสมาชิก 10 ประเทศ', 'easy', ''],
-    ['tm', 's', 'กฎหมายอาญา', 'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',
+    ['1', 's', 'กฎหมายอาญา', 'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',
       '3 สถาน', '4 สถาน', '5 สถาน', '6 สถาน', 'c',
       'มี 5 สถาน: ประหารชีวิต จำคุก กักขัง ปรับ ริบทรัพย์สิน', 'medium', '']
   ];
@@ -113,22 +113,22 @@ function downloadCsvSample() {
   showToast('ดาวน์โหลดตัวอย่างแล้ว', 'success');
 }
 
-// รายชื่อหน่วย+วิชาที่มีในระบบ (ให้รู้ว่ากรอกอะไรได้)
+// รายชื่อหน่วย+วิชาที่มีในระบบ (แสดง unit_id ตัวเลข ให้รู้ว่ากรอก ID ไหน)
 async function downloadCsvSubjects() {
   showToast('กำลังสร้างไฟล์...', '');
   try {
     const u = await supa.from('units').select('*').order('id');
     const s = await supa.from('subjects').select('*').order('unit_id').order('id');
-    const rows = [['unit', 'unit_name', 'level', 'subject', 'ratio']];
+    const rows = [['unit_id', 'unit_name', 'short_name', 'level', 'subject', 'ratio']];
     (s.data || []).forEach(function (x) {
       const unit = (u.data || []).filter(function (y) { return y.id === x.unit_id; })[0];
-      rows.push([x.unit_id, unit ? unit.name : '', x.level, x.name, x.ratio == null ? '' : x.ratio]);
+      rows.push([x.unit_id, unit ? unit.name : '', unit ? (unit.short_name || '') : '', x.level, x.name, x.ratio == null ? '' : x.ratio]);
     });
     if (rows.length === 1) {
-      (u.data || []).forEach(function (x) { rows.push([x.id, x.name, '', '']); });
+      (u.data || []).forEach(function (x) { rows.push([x.id, x.name, x.short_name || '', '', '']); });
     }
-    downloadTextFile('รายชื่อหน่วยและวิชา.csv', csvText(rows));
-    showToast('ดาวน์โหลดรายชื่อแล้ว', 'success');
+    downloadTextFile('รายชื่อหน่วยและวิชา-อิงID.csv', csvText(rows));
+    showToast('ดาวน์โหลดรายชื่ออิง ID แล้ว', 'success');
   } catch (e) {
     showToast('สร้างไฟล์ไม่สำเร็จ: ' + e.message, 'danger');
   }
@@ -308,7 +308,15 @@ function validateCsvRow(o) {
     published: /^(true|1|yes|y)$/i.test(o.publish || '')
   };
 
-  if (data.units.length === 0) errors.push('ไม่มีรหัสหน่วยงาน (unit)');
+  if (data.units.length === 0) {
+    errors.push('ไม่มีรหัสหน่วยงาน (unit)');
+  } else {
+    data.units.forEach(function (u) {
+      if (!/^\d+$/.test(u)) {
+        errors.push('รหัสหน่วยงาน (unit) ต้องเป็น ID ตัวเลข เช่น 1, 2, 3 หรือ 1,3 (พบ: "' + u + '" — ดู ID ได้จากปุ่ม "รายชื่อหน่วย+วิชาที่มี")');
+      }
+    });
+  }
   if (data.levels.length === 0) errors.push('ไม่มีระดับชั้น (level)');
   data.levels.forEach(function (lv) {
     if (lv !== 'p' && lv !== 's' && lv !== 'both') {
@@ -472,21 +480,39 @@ async function runCsvImport() {
   try {
     await csvLoadSubjects();
     const units = await loadUnits();
-    const unitIds = {};
-    units.forEach(function (u) { unitIds[u.id] = true; });
+    const unitMap = {};
+    const legacyNumToCode = { '1': 'tm', '2': 'ss', '3': 'jr', '4': 'pp', '5': 'ak', '6': 'nr', '7': 'test' };
+
+    units.forEach(function (u) {
+      if (typeof u.id === 'number' || /^\d+$/.test(String(u.id))) {
+        const numId = Number(u.id);
+        unitMap[String(numId)] = numId;
+        if (u.code) unitMap[String(u.code).toLowerCase()] = numId;
+      } else {
+        const code = String(u.id).toLowerCase();
+        for (const [k, v] of Object.entries(legacyNumToCode)) {
+          if (v === code) unitMap[k] = code;
+        }
+        unitMap[code] = code;
+      }
+    });
 
     for (let i = 0; i < okRows.length; i++) {
       const d = okRows[i].data;
       btn.textContent = 'กำลังนำเข้า ' + (i + 1) + '/' + okRows.length + '...';
 
       try {
-        // ตรวจว่าหน่วยงานมีอยู่จริง
-        const badUnit = d.units.filter(function (u) { return !unitIds[u]; })[0];
-        if (badUnit) throw new Error('ไม่พบหน่วยงานรหัส "' + badUnit + '" ในระบบ');
+        // ตรวจสอบและแปลงหน่วยงานเป็น ID ตัวเลข
+        const resolvedUnits = [];
+        for (const u of d.units) {
+          const matched = unitMap[String(u).toLowerCase()];
+          if (!matched) throw new Error('ไม่พบหน่วยงาน ID "' + u + '" ในระบบ (กรุณาดูที่ไฟล์ รายชื่อหน่วยและวิชา-อิงID.csv)');
+          if (resolvedUnits.indexOf(matched) === -1) resolvedUnits.push(matched);
+        }
 
         // 1) สร้าง/หา subject ของแต่ละหน่วย × ระดับ
         const pairs = [];
-        for (const u of d.units) {
+        for (const u of resolvedUnits) {
           for (const lv of d.levels) {
             const key = u + '|' + lv;
             if (pairs.some(function (p) { return p.key === key; })) continue;
@@ -513,9 +539,10 @@ async function runCsvImport() {
 
         if (qRes.error) throw new Error(qRes.error.message);
 
-        // 3) ผูกกับทุกหน่วย × ทุกระดับ
+        // 3) ผูกกับทุกหน่วย × ทุกระดับ (unit_id เป็นตัวเลข)
         const linkRows = pairs.map(function (p) {
-          return { question_id: qRes.data.id, unit_id: p.unit, level: p.level };
+          const targetUnit = typeof p.unit === 'number' ? p.unit : (isNaN(Number(p.unit)) ? p.unit : Number(p.unit));
+          return { question_id: qRes.data.id, unit_id: targetUnit, level: p.level };
         });
         const lRes = await supa.from('question_units').insert(linkRows);
         if (lRes.error) {

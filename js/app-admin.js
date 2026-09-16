@@ -1,50 +1,110 @@
-﻿/* ============================================================\n   app-admin.js — โหมดผู้ดูแลระบบ: dashboard, จัดการข้อสอบ, ลบ, เพิ่มข้อสอบ\n   ต้องโหลดหลัง exam-db.js\n   ============================================================ */
+/* ============================================================
+   app-admin.js — โหมดผู้ดูแลระบบ: dashboard, จัดการข้อสอบ, ลบ, เพิ่มข้อสอบ
+   ต้องโหลดหลัง exam-db.js
+   ============================================================ */
 
 // ===== Supabase CRUD =====
 
 async function dbLoadQuestions(){
   const {data,error}=await supa
     .from('questions')
-    .select(`id, question, answer, difficulty, source, published, created_at,
+    .select(`id, question, choice_a, choice_b, choice_c, choice_d,
+             answer, explanation, difficulty, source, published, created_at,
+             question_image, subject_id,
              subjects(name),
              question_units(unit_id, level)`)
     .order('id',{ascending:false});
   if(error){console.error(error);return[];}
-  return (data||[]).map(q=>({
-    id:q.id,
-    question:q.question,
-    unit:[...new Set((q.question_units||[]).map(u=>u.unit_id))].join(','),
-    level:[...new Set((q.question_units||[]).map(u=>u.level))].join(','),
-    subject:q.subjects?.name||'',
-    type:q.question_image?'มีรูป':'ข้อความ',
-    status:q.published?'เผยแพร่':'รอตรวจสอบ',
-    answer:q.answer
-  }));
+
+  const uMap = typeof getUnitsMap === 'function' ? await getUnitsMap() : {};
+
+  return (data||[]).map(q=>{
+    const unitList = [...new Set((q.question_units||[]).map(u=>u.unit_id))];
+    const unitLabels = unitList.map(uId => (uMap[uId] ? (uMap[uId].short_name || uMap[uId].name) : uId));
+    return {
+      id:q.id,
+      question:q.question,
+      choice_a:q.choice_a, choice_b:q.choice_b, choice_c:q.choice_c, choice_d:q.choice_d,
+      answer:q.answer,
+      explanation:q.explanation||'',
+      difficulty:q.difficulty||'medium',
+      source:q.source||'',
+      image:q.question_image||'',
+      subject_id:q.subject_id,
+      unitsRaw:unitList,
+      levelsRaw:[...new Set((q.question_units||[]).map(u=>u.level))],
+      unit:unitLabels.join(','),
+      level:[...new Set((q.question_units||[]).map(u=>u.level))].join(','),
+      subject:q.subjects?.name||'',
+      type:q.question_image?'มีรูป':'ข้อความ',
+      status:q.published?'เผยแพร่':'รอตรวจสอบ'
+    };
+  });
 }
 
-async function dbSaveQuestion(formData){
-  const {units,levels,subject_id,question,choice_a,choice_b,choice_c,choice_d,
-         answer,explanation,difficulty,source,published}=formData;
-  // insert question
-  const {data:q,error:e1}=await supa.from('questions').insert({
-    question,choice_a,choice_b,choice_c,choice_d,
-    answer,explanation,difficulty,source,published,subject_id
-  }).select().single();
-  if(e1){console.error(e1);return false;}
-  // เชื่อมข้อสอบกับ ทุกหน่วย × ทุกระดับ ที่เลือก (ไม่สร้างแถวซ้ำ)
+// สร้างแถว question_units (ทุกหน่วย × ทุกระดับ, ไม่ซ้ำ)
+function buildUnitRows(questionId, units, levels){
   const rows=[];
   const seen=new Set();
-  units.forEach(u=>levels.forEach(lv=>{
-    const key=u+'|'+lv;
-    if(seen.has(key)) return;
-    seen.add(key);
-    rows.push({question_id:q.id,unit_id:u,level:lv});
-  }));
+  units.forEach(u=>{
+    const parsedUnit = isNaN(Number(u)) ? u : Number(u);
+    levels.forEach(lv=>{
+      const key=parsedUnit+'|'+lv;
+      if(seen.has(key)) return;
+      seen.add(key);
+      rows.push({question_id:questionId,unit_id:parsedUnit,level:lv});
+    });
+  });
+  return rows;
+}
+
+// เพิ่มข้อสอบใหม่ — คืนค่า { ok, id, error }
+async function dbInsertQuestion(formData){
+  const {units,levels,subject_id,question,choice_a,choice_b,choice_c,choice_d,
+         answer,explanation,difficulty,source,published,image}=formData;
+
+  const {data:q,error:e1}=await supa.from('questions').insert({
+    question,choice_a,choice_b,choice_c,choice_d,
+    answer,explanation:explanation||null,difficulty,source:source||null,
+    published,subject_id,question_image:image||null
+  }).select().single();
+  if(e1){ console.error(e1); return { ok:false, error:e1.message }; }
+
+  const rows=buildUnitRows(q.id, units, levels);
   if(rows.length){
     const {error:e2}=await supa.from('question_units').insert(rows);
-    if(e2){ console.error(e2); return false; }
+    if(e2){
+      // ย้อนลบข้อสอบที่เพิ่งสร้าง ไม่ให้เหลือข้อมูลค้าง
+      await supa.from('questions').delete().eq('id',q.id);
+      return { ok:false, error:'ผูกหน่วยงานไม่สำเร็จ: '+e2.message };
+    }
   }
-  return true;
+  return { ok:true, id:q.id };
+}
+
+// แก้ไขข้อสอบเดิม — อัปเดต questions + เปลี่ยน question_units ให้ตรงใหม่
+async function dbUpdateQuestion(id, formData){
+  const {units,levels,subject_id,question,choice_a,choice_b,choice_c,choice_d,
+         answer,explanation,difficulty,source,published,image}=formData;
+
+  // 1) อัปเดตตัวข้อสอบ
+  const {error:e1}=await supa.from('questions').update({
+    question,choice_a,choice_b,choice_c,choice_d,
+    answer,explanation:explanation||null,difficulty,source:source||null,
+    published,subject_id,question_image:image||null
+  }).eq('id',id);
+  if(e1){ console.error(e1); return { ok:false, error:e1.message }; }
+
+  // 2) เอาการผูกหน่วย/ระดับเดิมออก แล้วใส่ใหม่ตามที่เลือก
+  const del=await supa.from('question_units').delete().eq('question_id',id);
+  if(del.error){ return { ok:false, error:'ลบการผูกหน่วยเดิมไม่สำเร็จ: '+del.error.message }; }
+
+  const rows=buildUnitRows(id, units, levels);
+  if(rows.length){
+    const {error:e2}=await supa.from('question_units').insert(rows);
+    if(e2){ return { ok:false, error:'ผูกหน่วยงานไม่สำเร็จ: '+e2.message }; }
+  }
+  return { ok:true, id:id };
 }
 
 async function dbDeleteQuestions(ids){
@@ -83,7 +143,11 @@ function goPage(id,navEl){
   // เปิด Dashboard → โหลดสถิติใหม่ทุกครั้ง (ไม่งั้นตัวเลขจะค้างอยู่ของเก่า)
   if(id==='dashboard' && typeof initAdminDashboard==='function') initAdminDashboard();
   // เปิดหน้าเพิ่มข้อสอบ → เตรียมฟอร์ม + โหลดรายวิชาจริง
-  if(id==='add-question' && typeof prepareAddForm==='function') prepareAddForm();
+  if(id==='add-question'){
+    // ถ้าเข้ามาจากเมนูโดยตรง (ไม่ใช่ปุ่มแก้ไข) ให้เริ่มเป็นโหมดเพิ่มใหม่
+    const fromEdit = (typeof editingId!=='undefined' && editingId!==null);
+    if(!fromEdit && typeof prepareAddForm==='function') prepareAddForm();
+  }
   // เปิดหน้ารวมข้อสอบ → โหลดใหม่ทุกครั้งเพื่อให้เห็นข้อมูลล่าสุด
   if(id==='questions' && typeof initQuestions==='function') initQuestions();
 }
@@ -241,9 +305,108 @@ function updateBulkBar(){
 
 function quickDel(id){selectedIds.clear();selectedIds.add(id);openDeleteModal();}
 
-function editQ(id){
-  document.getElementById('form-title').textContent='แก้ไขข้อสอบ #'+id;
-  goPage('add-question',null);
+// เก็บ id ของข้อสอบที่กำลังแก้ไข (null = เพิ่มใหม่)
+let editingId = null;
+
+// เปิดฟอร์มแก้ไข พร้อมโหลดข้อมูลเดิมมาใส่
+async function editQ(id){
+  const q = questions.filter(x => x.id === id)[0];
+  if(!q){ showToast('ไม่พบข้อสอบ #'+id, 'danger'); return; }
+
+  // ตั้งค่า editingId ก่อน แล้วให้ prepareAddForm() เตรียมฟอร์ม (จะรู้ว่าเป็นโหมดแก้ไข)
+  editingId = id;
+  goPage('add-question', null);
+
+  // เตรียม dropdown ทั้งหมดก่อน แล้วค่อยเติมค่าลงฟอร์ม
+  if(typeof prepareAddForm === 'function') await prepareAddForm();
+  await loadQuestionIntoForm(q);
+}
+
+// เติมข้อมูลข้อสอบลงแบบฟอร์ม
+async function loadQuestionIntoForm(q){
+  document.getElementById('form-title').textContent = 'แก้ไขข้อสอบ #' + q.id;
+  const sub = document.querySelector('#page-add-question .form-header-sub');
+  if(sub) sub.textContent = 'แก้ไขข้อมูลแล้วกดบันทึก (จะอัปเดตข้อเดิม ไม่สร้างใหม่)';
+
+  // 1) หน่วยงาน — ติ๊กเฉพาะที่ข้อสอบนี้ผูกอยู่
+  if(typeof loadUnitChips === 'function'){
+    await loadUnitChips(q.unitsRaw || []);
+  }
+
+  // 2) ระดับชั้น
+  const lvSet = q.levelsRaw || [];
+  document.querySelectorAll('#level-checks .check-chip').forEach(function(chip){
+    const inp = chip.querySelector('input');
+    const on = lvSet.indexOf(inp.value) !== -1;
+    chip.classList.toggle('on', on);
+    inp.checked = on;
+  });
+  if(typeof updateChipNotice === 'function') updateChipNotice();
+
+  // 3) วิชา — ใส่ชื่อวิชาเดิม
+  if(typeof refreshFormSubjects === 'function'){
+    await refreshFormSubjects();
+  }
+  const sel = document.getElementById('q-subject');
+  if(sel && typeof setSubjectByName === 'function') setSubjectByName(q.subject);
+  if(typeof updateSubjectHint === 'function') updateSubjectHint();
+
+  // 4) ระดับความยาก
+  const dif = document.getElementById('q-difficulty');
+  if(dif) dif.value = q.difficulty || 'medium';
+
+  // 5) ที่มา + ข้อความคำถาม
+  const src = document.getElementById('q-source');
+  if(src) src.value = q.source || '';
+  document.getElementById('q-text-input').value = q.question || '';
+  document.getElementById('q-explain').value = q.explanation || '';
+
+  // 6) ตัวเลือก + เลย
+  const maps = [['c-0', q.choice_a], ['c-1', q.choice_b], ['c-2', q.choice_c], ['c-3', q.choice_d]];
+  maps.forEach(function(pair){
+    const el = document.getElementById(pair[0]);
+    if(el) el.value = pair[1] || '';
+  });
+  const ansIdx = ['a','b','c','d'].indexOf(String(q.answer || '').toLowerCase());
+  document.querySelectorAll('input[name="ans-radio"]').forEach(function(r, i){
+    r.checked = (i === ansIdx);
+  });
+  if(ansIdx >= 0 && typeof updateAnsMsg === 'function'){
+    updateAnsMsg(ansIdx, ['ก','ข','ค','ง'][ansIdx]);
+  }
+
+  // 7) สถานะเผยแพร่
+  const pub = document.getElementById('publish-chk');
+  if(pub) pub.checked = (q.status === 'เผยแพร่');
+
+  showToast('โหลดข้อมูลข้อสอบ #' + q.id + ' แล้ว', 'success');
+}
+
+// ออกจากฟอร์มโดยรีเซ็ตสถานะกลับเป็น "เพิ่มใหม่"
+function cancelQuestionForm(){
+  resetQuestionForm();
+  goPage('questions', null);
+}
+
+// รีเซ็ตฟอร์มกลับเป็นโหมด "เพิ่มใหม่"
+function resetQuestionForm(){
+  editingId = null;
+  document.getElementById('form-title').textContent = 'เพิ่มข้อสอบใหม่';
+  const sub = document.querySelector('#page-add-question .form-header-sub');
+  if(sub) sub.textContent = 'กรอกข้อมูลให้ครบถ้วนแล้วกดบันทึก';
+  document.getElementById('q-text-input').value = '';
+  document.getElementById('q-explain').value = '';
+  const src = document.getElementById('q-source');
+  if(src) src.value = '';
+  ['c-0','c-1','c-2','c-3'].forEach(function(id){
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.querySelectorAll('input[name="ans-radio"]').forEach(function(r){ r.checked = false; });
+  const msg = document.getElementById('ans-ok-msg');
+  if(msg) msg.style.display = 'none';
+  const sel = document.getElementById('q-subject');
+  if(sel) sel.value = '';
 }
 
 function openDeleteModal(){
@@ -422,14 +585,21 @@ async function saveQuestion(){
     published:document.getElementById('publish-chk')?.checked||false
   };
 
-  showToast('กำลังบันทึก...','');
-  const ok=await dbSaveQuestion(formData);
-  if(ok){
-    showToast('บันทึกข้อสอบแล้ว','success');
+  // เลือกเส้นทาง: แก้ไขของเดิม หรือ สร้างใหม่
+  const isEdit = (editingId !== null);
+  showToast(isEdit ? 'กำลังบันทึกการแก้ไข...' : 'กำลังบันทึก...', '');
+
+  const res = isEdit
+    ? await dbUpdateQuestion(editingId, formData)
+    : await dbInsertQuestion(formData);
+
+  if(res.ok){
+    showToast(isEdit ? 'แก้ไขข้อสอบ #'+editingId+' แล้ว' : 'เพิ่มข้อสอบใหม่แล้ว', 'success');
+    resetQuestionForm();
     await initQuestions();
     setTimeout(()=>goPage('questions',null),600);
   } else {
-    showToast('เกิดข้อผิดพลาด กรุณาลองใหม่','danger');
+    showToast('บันทึกไม่สำเร็จ: '+(res.error||'เกิดข้อผิดพลาด'), 'danger');
   }
 }
 
@@ -464,18 +634,19 @@ function selectedLevel(){
 // หมายเหตุ: refreshFormSubjects() อยู่ใน app-settings.js
 // เมื่อเปิดหน้าเพิ่มข้อสอบ ให้เตรียมข้อมูลทั้งหมดจากฐานข้อมูล
 // ลำดับ: 1 หน่วยงาน → 2 ระดับชั้น → 3 วิชา
+// หมายเหตุ: ถ้าเป็นการกดจากปุ่ม "แก้ไข" (editQ) ฟังก์ชันนั้นจะเติมค่าฟอร์มเอง
 async function prepareAddForm(){
   initChoicesForm();
-
-  // โหลดหน่วยงานจากฐานข้อมูล (เดิมเป็น HTML ตายตัว)
-  if(typeof loadUnitChips==='function'){
-    const keep=checkedUnitIds();
-    await loadUnitChips(keep);
-  }
 
   // โหลดตัวเลือกระดับความยาก
   if(typeof loadDifficultyOptions==='function') loadDifficultyOptions();
 
-  // โหลดรายชื่อวิชาสำหรับ lookup
+  // โหลดรายชื่อวิชาสำหรับ dropdown
   if(typeof initSubjectField==='function') await initSubjectField();
+
+  // ถ้าเป็นการเปิดฟอร์มเพิ่มใหม่ (ไม่ใช่แก้ไข) ให้ล้างค่าเก่า + เริ่มจาก ตม.
+  if(editingId === null){
+    resetQuestionForm();
+    if(typeof loadUnitChips==='function') await loadUnitChips([]);
+  }
 }

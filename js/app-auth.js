@@ -145,7 +145,19 @@ function enterAdmin(){
 
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {
-    goPage('dashboard', document.querySelector('.nav-item'));
+    if(typeof goPage === 'function'){
+      goPage('dashboard', document.querySelector('.nav-item'));
+    } else {
+      // หน้านี้ไม่มีระบบ Admin — แสดงข้อความให้ไปหน้าที่ถูกต้อง
+      document.getElementById('admin-layout').innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;padding:20px;text-align:center">' +
+        '<div style="font-size:40px">🛡️</div>' +
+        '<div style="font-size:16px;font-weight:600;color:#1A1A18">คุณมีสิทธิ์ Admin</div>' +
+        '<div style="font-size:13px;color:#6B6B66">กรุณาเข้าใช้งานระบบจัดการข้อสอบผ่านหน้า Admin</div>' +
+        '<a href="index.html" style="background:#2563EB;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500">ไปหน้า Admin (ระบบหลัก) →</a>' +
+        '<button onclick="doLogout()" style="background:transparent;border:1px solid #D0D0CA;border-radius:8px;padding:8px 20px;font-size:13px;color:#6B6B66;cursor:pointer">← ออกจากระบบ</button>' +
+        '</div>';
+    }
   } catch (e) {
     console.error('enterAdmin UI error', e);
   }

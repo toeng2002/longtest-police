@@ -20,6 +20,7 @@ const HEAD = {
 // ---- หน่วยงาน ----------------
 // คอลัมน์จริงของตาราง units: id, name, icon, short_name
 // (ยืนยันจาก error ของ Postgres แล้ว — ไม่มีคอลัมน์ 'short')
+// คอลัมน์จริงของตาราง units: id (integer serial), code, name, icon, short_name
 const UNITS = [
   { id: 'tm', name: 'ตรวจคนเข้าเมือง',    short_name: 'ตม.',   icon: '✈️' },
   { id: 'ss', name: 'สายสอบสวน',          short_name: 'ส.',   icon: '🔍' },
@@ -27,11 +28,18 @@ const UNITS = [
   { id: 'pp', name: 'สายป้องกันปราบปราม', short_name: 'ป.',   icon: '🛡️' },
   { id: 'ak', name: 'สายอำนวยการ',         short_name: 'อก.',   icon: '🏢' },
   { id: 'nr', name: 'สายพยาบาล',           short_name: 'พยาบาล', icon: '⚕️' }
+  { id: 1, code: 'tm', name: 'ตรวจคนเข้าเมือง',    short_name: 'ตม.',   icon: '✈️' },
+  { id: 2, code: 'ss', name: 'สายสอบสวน',          short_name: 'ส.',   icon: '🔍' },
+  { id: 3, code: 'jr', name: 'สายจราจร',            short_name: 'จร.',   icon: '🚦' },
+  { id: 4, code: 'pp', name: 'สายป้องกันปราบปราม', short_name: 'ป.',   icon: '🛡️' },
+  { id: 5, code: 'ak', name: 'สายอำนวยการ',         short_name: 'อก.',   icon: '🏢' },
+  { id: 6, code: 'nr', name: 'สายพยาบาล',           short_name: 'พยาบาล', icon: '⚕️' }
 ];
 
 // ---- วิชา --------------
 // คอลัมน์จริงของตาราง subjects: id, unit_id, name, level, ratio
 // (ไม่มีคอลัมน์ 'icon' — ยืนยันจาก error ของ Postgres แล้ว)
+// คอลัมน์จริงของตาราง subjects: id, unit_id (integer), name, level, ratio
 // level: 'p' = ชั้นประทวน, 's' = ชั้นสัญญาบัตร, 'both' = ทั้งสอง
 const SUBJECTS = [
   // ตม. — ชั้นประทวน
@@ -43,6 +51,15 @@ const SUBJECTS = [
   { unit_id: 'tm', level: 's', name: 'ภาษาอังกฤษ',    ratio: 25 },
   { unit_id: 'tm', level: 's', name: 'กฎหมายอาญา',   ratio: 25 },
   { unit_id: 'tm', level: 's', name: 'ความรู้ทั่วไป', ratio: 15 }
+  // ตม. (1) — ชั้นประทวน
+  { unit_id: 1, level: 'p', name: 'กฎหมาย ตม.',   ratio: 40 },
+  { unit_id: 1, level: 'p', name: 'ภาษาไทย',       ratio: 30 },
+  { unit_id: 1, level: 'p', name: 'ความรู้ทั่วไป', ratio: 30 },
+  // ตม. (1) — ชั้นสัญญาบัตร
+  { unit_id: 1, level: 's', name: 'กฎหมาย ตม.',   ratio: 35 },
+  { unit_id: 1, level: 's', name: 'ภาษาอังกฤษ',    ratio: 25 },
+  { unit_id: 1, level: 's', name: 'กฎหมายอาญา',   ratio: 25 },
+  { unit_id: 1, level: 's', name: 'ความรู้ทั่วไป', ratio: 15 }
 ];
 
 async function req(method, path, body) {

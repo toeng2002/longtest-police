@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -6,6 +6,7 @@
 <title>ระบบจำลองข้อสอบตำรวจ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 /* ===== USER STYLES ===== */
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -20,7 +21,6 @@
   --radius:8px;--radius-lg:14px;
 }
 body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:15px;color:var(--text);line-height:1.6;min-height:100vh}
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 
 .screen{display:none;max-width:480px;margin:0 auto;padding:20px 16px;min-height:100vh}
 .screen.active{display:block}
@@ -422,42 +422,44 @@ textarea{resize:vertical;min-height:72px}
     <button class="icon-btn" onclick="goHistory()">📋 ประวัติ</button>
   </div>
 
-  <div class="group-label">สายปราบปราม</div>
-  <div class="card-grid col2" style="margin-bottom:10px">
-    <div class="unit-card" id="u-tm" onclick="pickUnit('tm','ตรวจคนเข้าเมือง','ตม.')">
-      <div class="unit-icon">✈️</div>
-      <div class="unit-name">ตม.</div>
-      <div class="unit-desc">ตรวจคนเข้าเมือง</div>
+  <div id="unit-cards-wrap">
+    <div class="group-label">สายปราบปราม</div>
+    <div class="card-grid col2" style="margin-bottom:10px">
+      <div class="unit-card" id="u-1" onclick="pickUnit(1,'ตรวจคนเข้าเมือง','ตม.')">
+        <div class="unit-icon">✈️</div>
+        <div class="unit-name">ตม.</div>
+        <div class="unit-desc">ตรวจคนเข้าเมือง</div>
+      </div>
+      <div class="unit-card" id="u-2" onclick="pickUnit(2,'สายสอบสวน','สส.')">
+        <div class="unit-icon">🔍</div>
+        <div class="unit-name">สส.</div>
+        <div class="unit-desc">สายสอบสวน</div>
+      </div>
     </div>
-    <div class="unit-card" id="u-ss" onclick="pickUnit('ss','สายสอบสวน','สส.')">
-      <div class="unit-icon">🔍</div>
-      <div class="unit-name">สส.</div>
-      <div class="unit-desc">สายสอบสวน</div>
+    <div class="card-grid col2" style="margin-bottom:10px">
+      <div class="unit-card" id="u-3" onclick="pickUnit(3,'สายจราจร','จร.')">
+        <div class="unit-icon">🚦</div>
+        <div class="unit-name">จร.</div>
+        <div class="unit-desc">สายจราจร</div>
+      </div>
+      <div class="unit-card" id="u-4" onclick="pickUnit(4,'สายป้องกันปราบปราม','ปป.')">
+        <div class="unit-icon">🛡️</div>
+        <div class="unit-name">ปป.</div>
+        <div class="unit-desc">สายป้องกันปราบปราม</div>
+      </div>
     </div>
-  </div>
-  <div class="card-grid col2" style="margin-bottom:10px">
-    <div class="unit-card" id="u-jr" onclick="pickUnit('jr','สายจราจร','จร.')">
-      <div class="unit-icon">🚦</div>
-      <div class="unit-name">จร.</div>
-      <div class="unit-desc">สายจราจร</div>
-    </div>
-    <div class="unit-card" id="u-pp" onclick="pickUnit('pp','สายป้องกันปราบปราม','ปป.')">
-      <div class="unit-icon">🛡️</div>
-      <div class="unit-name">ปป.</div>
-      <div class="unit-desc">สายป้องกันปราบปราม</div>
-    </div>
-  </div>
-  <div class="group-label">สายอำนวยการ</div>
-  <div class="card-grid col2">
-    <div class="unit-card" id="u-ak" onclick="pickUnit('ak','สายอำนวยการ','อก.')">
-      <div class="unit-icon">🏢</div>
-      <div class="unit-name">อก.</div>
-      <div class="unit-desc">สายอำนวยการ</div>
-    </div>
-    <div class="unit-card" id="u-nr" onclick="pickUnit('nr','สายพยาบาล','พยาบาล')">
-      <div class="unit-icon">⚕️</div>
-      <div class="unit-name">พยาบาล</div>
-      <div class="unit-desc">สายพยาบาล</div>
+    <div class="group-label">สายอำนวยการ</div>
+    <div class="card-grid col2">
+      <div class="unit-card" id="u-5" onclick="pickUnit(5,'สายอำนวยการ','อก.')">
+        <div class="unit-icon">🏢</div>
+        <div class="unit-name">อก.</div>
+        <div class="unit-desc">สายอำนวยการ</div>
+      </div>
+      <div class="unit-card" id="u-6" onclick="pickUnit(6,'สายพยาบาล','พยาบาล')">
+        <div class="unit-icon">⚕️</div>
+        <div class="unit-name">พยาบาล</div>
+        <div class="unit-desc">สายพยาบาล</div>
+      </div>
     </div>
   </div>
   <button class="btn btn-primary" id="btn-home" onclick="goLevel()" disabled style="margin-top:20px">ถัดไป →</button>
@@ -798,9 +800,9 @@ textarea{resize:vertical;min-height:72px}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
         <div>
           <div style="font-size:16px;font-weight:600;color:var(--text)" id="form-title">เพิ่มข้อสอบใหม่</div>
-          <div style="font-size:13px;color:var(--text2);margin-top:2px">กรอกข้อมูลให้ครบถ้วนแล้วกดบันทึก</div>
+          <div class="form-header-sub" style="font-size:13px;color:var(--text2);margin-top:2px">กรอกข้อมูลให้ครบถ้วนแล้วกดบันทึก</div>
         </div>
-        <button class="btn" onclick="goPage('questions',null)">← กลับ</button>
+        <button class="btn" onclick="cancelQuestionForm()">← กลับ</button>
       </div>
 
       <div class="form-section">
@@ -937,7 +939,7 @@ textarea{resize:vertical;min-height:72px}
           <table class="col-tbl">
             <thead><tr><th>คอลัมน์</th><th>ตัวอย่าง</th><th>หมายเหตุ</th><th>จำเป็น</th></tr></thead>
             <tbody>
-              <tr><td><span class="mono">unit</span></td><td>tm,jr</td><td style="color:var(--text2)">รหัสหน่วย คั่นด้วย , สำหรับหลายหน่วย</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">unit</span></td><td>1 หรือ 1,3</td><td style="color:var(--text2)">ID ตัวเลขของหน่วยงาน (ดูได้จากปุ่ม "รายชื่อหน่วย+วิชาที่มี") คั่นด้วย , สำหรับหลายหน่วย</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">level</span></td><td>p,s</td><td style="color:var(--text2)">p=ประทวน s=สัญญาบัตร ใส่ทั้งคู่ได้</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">subject</span></td><td>กฎหมาย ตม.</td><td style="color:var(--text2)">ชื่อวิชา</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">question</span></td><td>พ.ร.บ. คนเข้าเมือง...</td><td style="color:var(--text2)">ข้อความคำถาม</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
@@ -954,7 +956,7 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <div class="notice info" style="margin-top:12px">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
-          <div>คอลัมน์ <strong>unit</strong> และ <strong>level</strong> รองรับหลายค่าในแถวเดียว เช่น <span class="mono">unit = tm,jr</span> ข้อสอบจะปรากฏในทั้ง ตม. และ จร. พร้อมกัน</div>
+          <div>คอลัมน์ <strong>unit</strong> และ <strong>level</strong> รองรับหลายค่าในแถวเดียว เช่น <span class="mono">unit = 1,3</span> ข้อสอบจะปรากฏในทั้ง ตม. (ID 1) และ จร. (ID 3) พร้อมกัน (ต้องระบุเป็น ID ตัวเลข)</div>
         </div>
       </div>
 

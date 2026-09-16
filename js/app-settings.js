@@ -1,4 +1,5 @@
-﻿﻿/* ============================================================
+/* ============================================================
+/* ============================================================
    app-settings.js — เมนู "ตั้งค่า" ของผู้ดูแลระบบ
    จัดการ 4 อย่าง: หน่วยงาน / วิชา / ระดับความยาก / ผู้ใช้งาน
    ต้องโหลดหลัง exam-db.js (ใช้ supa, DELETE_PIN, showToast)
@@ -352,10 +353,15 @@ function openSetForm(kind, id) {
 
   if (kind === 'units') {
     const u = editing ? SET_DATA.units.find(x => x.id === setEditId) : null;
+    const u = editing ? SET_DATA.units.find(x => String(x.id) === String(setEditId)) : null;
     fields.innerHTML =
       fieldHtml('f-code', 'รหัสหน่วยงาน', u ? u.id : '', {
         required: true, readonly: editing, placeholder: 'เช่น tm',
         hint: editing ? 'แก้รหัสไม่ได้ เพราะถูกอ้างอิงในข้อสอบแล้ว' : 'ตัวพิมพ์เล็ก a-z, 0-9, _ เช่น tm หรือ jr'
+      (editing ? fieldHtml('f-id', 'ID หน่วยงาน (ตัวเลข)', u ? u.id : '', { readonly: true }) : '') +
+      fieldHtml('f-code', 'รหัสอ้างอิง (code)', u ? (u.code || u.id) : '', {
+        required: true, placeholder: 'เช่น tm หรือ jr',
+        hint: 'ตัวพิมพ์เล็ก a-z, 0-9, _ เช่น tm หรือ jr'
       }) +
       fieldHtml('f-name', 'ชื่อหน่วยงาน', u ? u.name : '', {
         required: true, placeholder: 'เช่น ตรวจคนเข้าเมือง'
@@ -483,6 +489,7 @@ async function saveUnit(editing) {
 
   const row = {
     id: code,
+    code: code,
     name: name,
     short_name: fieldValue('f-short') || null,
     icon: fieldValue('f-icon') || null
@@ -505,6 +512,8 @@ async function saveSubject(editing) {
   if (failIf(!unitId ? 'กรุณาเลือกหน่วยงาน' : null)) return;
 
   const row = { name: name, unit_id: unitId, level: fieldValue('f-level') || 'p' };
+  const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
+  const row = { name: name, unit_id: parsedUnitId, level: fieldValue('f-level') || 'p' };
 
   const ratioRaw = fieldValue('f-ratio');
   if (ratioRaw !== '') {
@@ -818,13 +827,13 @@ async function loadUnitChips(keepChecked) {
   // เลือกค่าเริ่มต้น: คงอันที่ติ๊กไว้ ถ้าไม่มีให้เลือก ตม. ก่อน (มีวิชาเยอะสุด)
   let keep;
   if (keepChecked && keepChecked.length) {
-    keep = keepChecked;
+    keep = keepChecked.map(String);
   } else {
-    const preferred = data.filter(u => u.id === 'tm');
-    keep = [preferred.length ? 'tm' : data[0].id];
+    const preferred = data.filter(u => u.id === 'tm' || u.id === 1 || u.code === 'tm');
+    keep = [String(preferred.length ? preferred[0].id : data[0].id)];
   }
 
-  box.innerHTML = data.map(u => unitChipHtml(u, keep.indexOf(u.id) !== -1)).join('');
+  box.innerHTML = data.map(u => unitChipHtml(u, keep.indexOf(String(u.id)) !== -1)).join('');
   updateChipNotice();
 }
 
@@ -1050,6 +1059,24 @@ function selectedSubjectName() {
   return el ? String(el.value || '').trim() : '';
 }
 
+// เลือกวิชาใน dropdown ตามชื่อ (ใช้ตอนโหลดฟอร์มแก้ไข)
+// ถ้าไม่มีในรายการ จะเติมเป็นตัวเลือกใหม่ให้ชั่วคราว
+function setSubjectByName(name) {
+  const sel = document.getElementById('q-subject');
+  if (!sel || !name) return;
+  const want = String(name).trim();
+
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === want) { sel.value = want; return; }
+  }
+  // ยังไม่มีในรายการ → เพิ่มเข้าไปแล้วเลือก
+  const opt = document.createElement('option');
+  opt.value = want;
+  opt.textContent = '📄 ' + want;
+  sel.appendChild(opt);
+  sel.value = want;
+}
+
 // Resolve ชื่อวิชา → subject_id สำหรับหน่วย+ระดับ ที่เลือก
 // ถ้าหน่วยนั้นยังไม่มีวิชานี้ จะสร้างใหม่ให้อัตโนมัติ
 // คืน { id, created, name } หรือ { error }
@@ -1060,12 +1087,15 @@ async function ensureSubjectForUnit(name, unitId, level) {
   // 1) หาในหน่วย+ระดับ ที่เลือกก่อน
   const lv = level === 'p' ? ['p', 'both'] : level === 's' ? ['s', 'both'] : ['p', 's', 'both'];
   let found = SUBJ_LIST.filter(s => s.name === name && s.unit_id === unitId &&
+  let found = SUBJ_LIST.filter(s => s.name === name && String(s.unit_id) === String(unitId) &&
     lv.indexOf(s.level) !== -1)[0];
   if (found) return { id: found.id, created: false, name: found.name };
 
   // 2) มีวิชานี้อยู่แล้วในหน่วยอื่น → คัดลอกมาให้หน่วยนี้
   const other = findSubjectAnyUnit(name, level);
   const row = { name: name, unit_id: unitId, level: (level || 'p') };
+  const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
+  const row = { name: name, unit_id: parsedUnitId, level: (level || 'p') };
   if (other && other.ratio != null) row.ratio = other.ratio;
 
   const res = await supa.from('subjects').insert(row).select().single();

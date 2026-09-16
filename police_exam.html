@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <title>ระบบจำลองข้อสอบตำรวจ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+/* ===== USER STYLES ===== */
+
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#F7F7F5;--surface:#FFFFFF;--surface2:#F2F2EF;
@@ -18,7 +21,6 @@
   --radius:8px;--radius-lg:14px;
 }
 body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:15px;color:var(--text);line-height:1.6;min-height:100vh}
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 
 .screen{display:none;max-width:480px;margin:0 auto;padding:20px 16px;min-height:100vh}
 .screen.active{display:block}
@@ -166,11 +168,251 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 
 /* Divider label */
 .group-label{font-size:11px;color:var(--text3);font-weight:500;margin:14px 0 8px}
+
+
+/* ===== ADMIN STYLES ===== */
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F5F3;--surface:#FFFFFF;--surface2:#F0F0EE;
+  --border:#E2E2DE;--border2:#C8C8C4;
+  --text:#1C1C1A;--text2:#6A6A66;--text3:#9A9A96;
+  --accent:#2563EB;--accent-bg:#EFF6FF;--accent-bd:#BFDBFE;
+  --success:#16A34A;--success-bg:#F0FDF4;--success-bd:#BBF7D0;
+  --danger:#DC2626;--danger-bg:#FEF2F2;--danger-bd:#FECACA;
+  --warning:#D97706;--warning-bg:#FFFBEB;--warning-bd:#FDE68A;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-bd:#DDD6FE;
+  --r:8px;--rl:12px;
+}
+body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:14px;color:var(--text);min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+
+/* --- Login --- */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .badge{display:inline-block;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em;margin-bottom:10px}
+.login-logo h1{font-size:18px;font-weight:600;color:var(--text)}
+.login-logo p{font-size:13px;color:var(--text2);margin-top:4px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.field input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--accent)}
+.err-msg{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none}
+.btn-login{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-login:hover{opacity:.9}
+
+/* --- Layout --- */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sidebar-logo .name{font-size:14px;font-weight:600;color:var(--text)}
+.sidebar-logo .role{font-size:11px;color:var(--text3);margin-top:2px}
+.sidebar-logo .badge-admin{display:inline-block;background:var(--danger-bg);color:var(--danger);font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;margin-top:4px}
+.sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:2px;transition:background .1s,color .1s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-sep{font-size:10px;font-weight:500;color:var(--text3);padding:10px 10px 4px;letter-spacing:.05em}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border)}
+.main{margin-left:220px;flex:1;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#F5F3FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#7C3AED}
+.page{padding:24px;display:none}
+.page.active{display:block}
+
+/* --- Buttons --- */
+.btn{border:1px solid var(--border2);border-radius:var(--r);padding:8px 14px;font-size:13px;cursor:pointer;background:var(--surface);color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:background .1s,border-color .1s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn-primary:hover{opacity:.9;background:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff;border-color:transparent}
+.btn-danger:hover{opacity:.9;background:var(--danger)}
+.btn-danger:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r)}
+
+/* --- Stats --- */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px}
+.stat-val{font-size:26px;font-weight:600;color:var(--text);line-height:1.1}
+.stat-lbl{font-size:12px;color:var(--text2);margin-top:4px}
+.stat-sub{font-size:11px;margin-top:5px}
+
+/* --- Cards --- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:500;color:var(--text)}
+
+/* --- Table --- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 14px;font-size:11px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+tr.sel-row td{background:var(--accent-bg)}
+
+/* --- Tags --- */
+.tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;gap:3px;white-space:nowrap}
+.tag-blue{background:var(--accent-bg);color:var(--accent)}
+.tag-green{background:var(--success-bg);color:var(--success)}
+.tag-yellow{background:var(--warning-bg);color:var(--warning)}
+.tag-red{background:var(--danger-bg);color:var(--danger)}
+.tag-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.tag-purple{background:#F5F3FF;color:#7C3AED}
+
+/* --- Form --- */
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:14px}
+.form-section-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;gap:14px}
+.form-grid.col2{grid-template-columns:1fr 1fr}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;font-weight:500;color:var(--text2)}
+.required{color:var(--danger)}
+input[type=text],input[type=password],input[type=email],select,textarea{font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:72px}
+.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.check-chip{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--r);padding:6px 11px;cursor:pointer;font-size:13px;color:var(--text);background:var(--surface);transition:all .1s;user-select:none}
+.check-chip:hover{border-color:var(--border2);background:var(--surface2)}
+.check-chip.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.check-chip input{accent-color:var(--accent)}
+.choice-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.choice-radio{width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0}
+.choice-lbl{font-size:12px;font-weight:500;color:var(--text2);min-width:16px}
+.img-zone{border:1px dashed var(--border2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text3);cursor:pointer;text-align:center;background:var(--surface2);min-width:90px;flex-shrink:0;transition:all .1s}
+.img-zone:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.ans-ok{background:var(--success-bg);border:1px solid var(--success-bd);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--success);margin-top:6px}
+
+/* --- Toolbar --- */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:180px;max-width:260px}
+.search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.search-box input{padding-left:32px}
+.bulk-bar{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:8px 14px;display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--accent)}
+
+/* --- Modal / overlay --- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.del-list{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;max-height:140px;overflow-y:auto}
+.del-item{font-size:12px;color:var(--danger);padding:3px 0;border-bottom:1px solid var(--danger-border);display:flex;gap:6px;align-items:flex-start}
+.del-item:last-child{border-bottom:none}
+.pin-wrap{margin:14px 0}
+.pin-wrap label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:8px}
+.pin-inputs{display:flex;gap:8px;justify-content:center}
+.pin-inputs input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:600;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--text);outline:none;transition:border-color .15s}
+.pin-inputs input:focus{border-color:var(--accent);background:var(--accent-bg)}
+.pin-inputs input.pin-err{border-color:var(--danger);background:var(--danger-bg)}
+.pin-err-msg{font-size:12px;color:var(--danger);text-align:center;margin-top:6px;min-height:18px}
+.notice{border-radius:var(--r);padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.notice svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
+.notice.info{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
+.notice.warn{background:var(--warning-bg);border:1px solid var(--warning-bd);color:var(--warning)}
+.notice.danger{background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* --- CSV --- */
+.csv-steps{display:flex;gap:0;margin-bottom:20px}
+.csv-step{display:flex;align-items:center;gap:6px}
+.csv-step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.csv-step.done .csv-step-dot{background:var(--success);color:#fff}
+.csv-step.active .csv-step-dot{background:var(--accent);color:#fff}
+.csv-step.wait .csv-step-dot{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.csv-step-lbl{font-size:12px}
+.csv-step.done .csv-step-lbl{color:var(--success)}
+.csv-step.active .csv-step-lbl{color:var(--accent);font-weight:500}
+.csv-step.wait .csv-step-lbl{color:var(--text3)}
+.csv-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.upload-zone{border:1px dashed var(--border2);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;color:var(--text3);background:var(--surface2);transition:all .15s;margin-bottom:14px}
+.upload-zone:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.upload-zone svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin-bottom:8px}
+.col-tbl{font-size:12px}
+.col-tbl th{font-size:11px}
+.col-tbl td{font-size:12px;padding:8px 12px}
+.mono{font-family:monospace;font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px}
+
+/* --- Activity --- */
+.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.act-text{font-size:13px;color:var(--text)}
+.act-time{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* --- Toast --- */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;z-index:200;transform:translateY(100px);opacity:0;transition:all .25s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--success)}
+.toast.danger{background:var(--danger)}
+
 </style>
 </head>
 <body>
 
-<!-- SCREEN: หน้าหลัก (เลือกหน่วย) -->
+<!-- SCREEN: LOGIN -->
+<div id="s-login" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:600;padding:3px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:.04em">ระบบข้อสอบตำรวจ</div>
+      <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:4px">เข้าสู่ระบบ</div>
+      <div style="font-size:13px;color:var(--text2)">กรอก Username และ Password เพื่อเริ่มใช้งาน</div>
+    </div>
+    <div id="login-err" style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none">Username หรือ Password ไม่ถูกต้อง</div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username</label>
+      <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Password</label>
+      <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password">
+    </div>
+    <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer">เข้าสู่ระบบ</button>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี? <span style="color:var(--accent)">ติดต่อผู้ดูแลระบบ</span></div>
+  </div>
+</div>
+
+<!-- SCREEN: เลือก Role (สำหรับ role=both) -->
+<div id="s-pick-role" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:400px;text-align:center">
+    <div id="role-avatar" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;margin:0 auto 12px;background:#F5F3FF;color:#7C3AED">AD</div>
+    <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px" id="role-greeting">สวัสดี</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">เลือกโหมดที่ต้องการใช้งาน</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div onclick="enterUser()" style="background:var(--accent-bg);border:1.5px solid var(--accent-border);border-radius:12px;padding:16px;cursor:pointer">
+        <div style="font-size:28px;margin-bottom:8px">👤</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">โหมดผู้ใช้</div>
+        <div style="font-size:11px;color:var(--text2)">ทำข้อสอบและดูประวัติ</div>
+      </div>
+      <div onclick="enterAdmin()" style="background:#F5F3FF;border:1.5px solid #DDD6FE;border-radius:12px;padding:16px;cursor:pointer">
+        <div style="font-size:28px;margin-bottom:8px">🛡️</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">โหมด Admin</div>
+        <div style="font-size:11px;color:var(--text2)">จัดการข้อสอบและระบบ</div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:8px 20px;font-size:13px;color:var(--text2);cursor:pointer">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div id="user-layout" style="display:none">
+  <!-- Topbar for user -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
+    <div style="font-size:14px;font-weight:600;color:var(--text)">ระบบข้อสอบตำรวจ</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--accent);cursor:pointer">⚙️ Admin</button>
+      <span id="user-topbar-name" style="font-size:12px;color:var(--text2)"></span>
+      <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer">ออกจากระบบ</button>
+    </div>
+  </div>
+  <!-- SCREEN: หน้าหลัก (เลือกหน่วย) -->
 <div id="s-home" class="screen active">
   <div class="topbar">
     <div>
@@ -180,42 +422,44 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
     <button class="icon-btn" onclick="goHistory()">📋 ประวัติ</button>
   </div>
 
-  <div class="group-label">สายปราบปราม</div>
-  <div class="card-grid col2" style="margin-bottom:10px">
-    <div class="unit-card" id="u-tm" onclick="pickUnit('tm','ตรวจคนเข้าเมือง','ตม.')">
-      <div class="unit-icon">✈️</div>
-      <div class="unit-name">ตม.</div>
-      <div class="unit-desc">ตรวจคนเข้าเมือง</div>
+  <div id="unit-cards-wrap">
+    <div class="group-label">สายปราบปราม</div>
+    <div class="card-grid col2" style="margin-bottom:10px">
+      <div class="unit-card" id="u-1" onclick="pickUnit(1,'ตรวจคนเข้าเมือง','ตม.')">
+        <div class="unit-icon">✈️</div>
+        <div class="unit-name">ตม.</div>
+        <div class="unit-desc">ตรวจคนเข้าเมือง</div>
+      </div>
+      <div class="unit-card" id="u-2" onclick="pickUnit(2,'สายสอบสวน','สส.')">
+        <div class="unit-icon">🔍</div>
+        <div class="unit-name">สส.</div>
+        <div class="unit-desc">สายสอบสวน</div>
+      </div>
     </div>
-    <div class="unit-card" id="u-ss" onclick="pickUnit('ss','สายสอบสวน','สส.')">
-      <div class="unit-icon">🔍</div>
-      <div class="unit-name">สส.</div>
-      <div class="unit-desc">สายสอบสวน</div>
+    <div class="card-grid col2" style="margin-bottom:10px">
+      <div class="unit-card" id="u-3" onclick="pickUnit(3,'สายจราจร','จร.')">
+        <div class="unit-icon">🚦</div>
+        <div class="unit-name">จร.</div>
+        <div class="unit-desc">สายจราจร</div>
+      </div>
+      <div class="unit-card" id="u-4" onclick="pickUnit(4,'สายป้องกันปราบปราม','ปป.')">
+        <div class="unit-icon">🛡️</div>
+        <div class="unit-name">ปป.</div>
+        <div class="unit-desc">สายป้องกันปราบปราม</div>
+      </div>
     </div>
-  </div>
-  <div class="card-grid col2" style="margin-bottom:10px">
-    <div class="unit-card" id="u-jr" onclick="pickUnit('jr','สายจราจร','จร.')">
-      <div class="unit-icon">🚦</div>
-      <div class="unit-name">จร.</div>
-      <div class="unit-desc">สายจราจร</div>
-    </div>
-    <div class="unit-card" id="u-pp" onclick="pickUnit('pp','สายป้องกันปราบปราม','ปป.')">
-      <div class="unit-icon">🛡️</div>
-      <div class="unit-name">ปป.</div>
-      <div class="unit-desc">สายป้องกันปราบปราม</div>
-    </div>
-  </div>
-  <div class="group-label">สายอำนวยการ</div>
-  <div class="card-grid col2">
-    <div class="unit-card" id="u-ak" onclick="pickUnit('ak','สายอำนวยการ','อก.')">
-      <div class="unit-icon">🏢</div>
-      <div class="unit-name">อก.</div>
-      <div class="unit-desc">สายอำนวยการ</div>
-    </div>
-    <div class="unit-card" id="u-nr" onclick="pickUnit('nr','สายพยาบาล','พยาบาล')">
-      <div class="unit-icon">⚕️</div>
-      <div class="unit-name">พยาบาล</div>
-      <div class="unit-desc">สายพยาบาล</div>
+    <div class="group-label">สายอำนวยการ</div>
+    <div class="card-grid col2">
+      <div class="unit-card" id="u-5" onclick="pickUnit(5,'สายอำนวยการ','อก.')">
+        <div class="unit-icon">🏢</div>
+        <div class="unit-name">อก.</div>
+        <div class="unit-desc">สายอำนวยการ</div>
+      </div>
+      <div class="unit-card" id="u-6" onclick="pickUnit(6,'สายพยาบาล','พยาบาล')">
+        <div class="unit-icon">⚕️</div>
+        <div class="unit-name">พยาบาล</div>
+        <div class="unit-desc">สายพยาบาล</div>
+      </div>
     </div>
   </div>
   <button class="btn btn-primary" id="btn-home" onclick="goLevel()" disabled style="margin-top:20px">ถัดไป →</button>
@@ -392,570 +636,36 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
   </div>
 </div>
 
+</div>
+
+<div id="admin-layout" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+<script src="js/exam-db.js"></script>
+<script src="js/app-auth.js"></script>
+<script src="js/app-quiz.js"></script>
+
 <script>
-const DB = {
-  tm: {
-    name:'ตรวจคนเข้าเมือง', short:'ตม.',
-    p: {
-      subjects: [
-        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:40,qs:[
-          {q:'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',c:['1 มกราคม 2522','27 กุมภาพันธ์ 2523','1 มีนาคม 2522','31 ธันวาคม 2522'],a:1,e:'พ.ร.บ. คนเข้าเมือง มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523 ครับ'},
-          {q:'คนต่างด้าวที่เข้ามาในราชอาณาจักรโดยไม่ได้รับอนุญาต มีความผิดตาม พ.ร.บ. คนเข้าเมือง มาตราใด?',c:['มาตรา 11','มาตรา 54','มาตรา 81','มาตรา 101'],a:2,e:'มาตรา 81 บัญญัติโทษจำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 20,000 บาท หรือทั้งจำทั้งปรับ'},
-          {q:'ช่องทางที่คนต่างด้าวเข้า-ออกราชอาณาจักรได้ เรียกว่าอะไร?',c:['ด่านศุลกากร','ช่องทางอนุญาต','ด่านตรวจคนเข้าเมือง','จุดผ่านแดน'],a:1,e:'"ช่องทางอนุญาต" คือทางบก ทางน้ำ หรือทางอากาศที่อธิบดีกำหนด'},
-          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'ตาม พ.ร.บ. คนเข้าเมือง รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศ'},
-          {q:'คนต่างด้าวที่อยู่เกินกำหนด (Overstay) มีโทษตามกฎหมายอย่างไร?',c:['ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท','จำคุกไม่เกิน 1 ปี','ปรับวันละ 500 บาท ไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี','เนรเทศออกทันที'],a:2,e:'มาตรา 81 ปรับวันละ 500 บาท สูงสุดไม่เกิน 20,000 บาท หรือจำคุกไม่เกิน 2 ปี หรือทั้งจำทั้งปรับ'},
-          {q:'พนักงานเจ้าหน้าที่ตาม พ.ร.บ. คนเข้าเมือง หมายถึงบุคคลใด?',c:['เจ้าหน้าที่ตำรวจทุกคน','เจ้าหน้าที่ที่รัฐมนตรีแต่งตั้งเพื่อปฏิบัติการตามพระราชบัญญัตินี้','ข้าราชการพลเรือนระดับ 5 ขึ้นไป','อธิบดีกรมตรวจคนเข้าเมืองเท่านั้น'],a:1,e:'"พนักงานเจ้าหน้าที่" หมายถึงบุคคลซึ่งรัฐมนตรีแต่งตั้งให้ปฏิบัติการตามพระราชบัญญัตินี้'},
-        ]},
-        {id:'thai',name:'ภาษาไทย',icon:'📖',ratio:30,qs:[
-          {q:'ข้อใดเขียนถูกต้อง?',c:['กระเพราะ','กระเพาะ','กะเพราะ','กะเพาะ'],a:1,e:'"กระเพาะ" เป็นการสะกดที่ถูกต้องตามพจนานุกรมฉบับราชบัณฑิตยสถาน'},
-          {q:'คำว่า "วิสุทธิ์" มีความหมายว่าอะไร?',c:['สะอาด บริสุทธิ์','ฉลาดเฉลียว','แข็งแกร่ง','สูงส่ง'],a:0,e:'"วิสุทธิ์" หมายถึง บริสุทธิ์ สะอาด ปราศจากมลทิน'},
-          {q:'ประโยคใดใช้คำราชาศัพท์ถูกต้อง?',c:['พระองค์เสด็จไปวัด','พระองค์ไปวัด','พระองค์เสด็จวัด','พระองค์ทรงเสด็จวัด'],a:0,e:'"เสด็จ" เป็นคำราชาศัพท์ของ "ไป" ใช้กับพระมหากษัตริย์'},
-          {q:'ข้อใดใช้วรรณยุกต์ถูกต้อง?',c:['เขาไปซื้ออาหารที่ตลาด (ตลาด ออกเสียง โท)','ฉันชอบกินข้าว (ข้าว ออกเสียง โท)','เธอนั่งอยู่บนเก้าอี้ (เก้าอี้ ออกเสียง เอก)','หมาไล่แมว (หมา ออกเสียง สามัญ)'],a:1,e:'"ข้าว" ออกเสียงวรรณยุกต์โท ถูกต้อง'},
-          {q:'สำนวน "น้ำขึ้นให้รีบตัก" หมายความว่าอย่างไร?',c:['ควรรีบตักน้ำก่อนน้ำลด','ฉวยโอกาสทำสิ่งที่เป็นประโยชน์เมื่อมีโอกาส','อย่ารอช้าเมื่อมีงานเร่งด่วน','รีบทำงานให้เสร็จก่อนเวลา'],a:1,e:'"น้ำขึ้นให้รีบตัก" หมายถึง เมื่อมีโอกาสดีควรรีบฉวยโอกาสนั้น'},
-          {q:'คำใดไม่ใช่คำยืมจากภาษาบาลี-สันสกฤต?',c:['วิทยา','กษัตริย์','สมุทร','กะทิ'],a:3,e:'"กะทิ" เป็นคำไทยแท้ ส่วนวิทยา กษัตริย์ สมุทร มาจากภาษาบาลี-สันสกฤต'},
-        ]},
-        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:30,qs:[
-          {q:'ประเทศไทยมีกี่จังหวัด?',c:['75 จังหวัด','76 จังหวัด','77 จังหวัด','78 จังหวัด'],a:2,e:'ประเทศไทยมีทั้งหมด 77 จังหวัด'},
-          {q:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่าอะไร?',c:['ผบ.ตร.','ผช.ผบ.ตร.','จตช.','สตช.'],a:0,e:'ผู้บัญชาการตำรวจแห่งชาติ มีชื่อย่อว่า "ผบ.ตร."'},
-          {q:'ASEAN มีสมาชิกกี่ประเทศ?',c:['8 ประเทศ','9 ประเทศ','10 ประเทศ','11 ประเทศ'],a:2,e:'อาเซียนมีสมาชิกทั้งหมด 10 ประเทศ ก่อตั้งในปี 2510'},
-          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
-          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา','ลียง ฝรั่งเศส','กรุงเฮก','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
-          {q:'กฎหมายอาญาของไทยใช้หลักใดในการบังคับใช้กับบุคคล?',c:['หลักดินแดน','หลักสัญชาติ','หลักดินแดนและหลักสัญชาติ','หลักความยุติธรรมสากล'],a:2,e:'กฎหมายอาญาไทยใช้ทั้งหลักดินแดน (บังคับในราชอาณาจักร) และหลักสัญชาติ (บังคับกับคนไทย)'},
-        ]}
-      ]
-    },
-    s: {
-      subjects: [
-        {id:'law',name:'กฎหมาย ตม.',icon:'⚖️',ratio:35,qs:[
-          {q:'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',c:['ผบ.ตร.','อธิบดีกรมการปกครอง','รัฐมนตรีว่าการกระทรวงมหาดไทย','นายกรัฐมนตรี'],a:2,e:'รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร'},
-          {q:'คนต่างด้าวที่อยู่เกินกำหนด มีโทษปรับวันละเท่าไหร่?',c:['200 บาท','300 บาท','500 บาท','1,000 บาท'],a:2,e:'โทษปรับ 500 บาทต่อวัน สูงสุดไม่เกิน 20,000 บาท ตามมาตรา 81'},
-          {q:'วีซ่าประเภทใดอนุญาตให้ทำงานในประเทศไทย?',c:['Non-O','Non-B','Tourist Visa','Transit Visa'],a:1,e:'Non-Immigrant Visa ประเภท B (Business) อนุญาตให้ทำงานในประเทศไทย'},
-          {q:'ข้อใดเป็นช่องทางอนุญาตตาม พ.ร.บ. คนเข้าเมือง?',c:['ทางบก ทางน้ำ ทางอากาศ','ทางบกเท่านั้น','ทางบกและทางน้ำ','ทางอากาศเท่านั้น'],a:0,e:'ช่องทางอนุญาตได้แก่ ทางบก ทางน้ำ และทางอากาศ ตามที่อธิบดีกำหนด'},
-          {q:'คนต่างด้าวที่ถูกเนรเทศสามารถขอเข้ามาใหม่ได้เมื่อใด?',c:['ไม่มีระยะเวลา สามารถขอได้ทันที','ภายหลัง 1 ปี','ภายหลัง 5 ปี','ตามที่รัฐมนตรีกำหนดเป็นรายกรณี'],a:3,e:'ขึ้นอยู่กับดุลพินิจของรัฐมนตรีเป็นรายกรณี'},
-        ]},
-        {id:'eng',name:'ภาษาอังกฤษ',icon:'🔤',ratio:25,qs:[
-          {q:'What does "immigration" mean?',c:['การเดินทางท่องเที่ยว','การเข้าเมือง/การย้ายถิ่นฐาน','การส่งออกสินค้า','การติดต่อสื่อสาร'],a:1,e:'"Immigration" หมายถึง การเข้าเมือง หรือการย้ายถิ่นฐานเข้ามาอยู่ในประเทศ'},
-          {q:'Choose the correct sentence.',c:['He don\'t have a visa.','He doesn\'t have a visa.','He not have a visa.','He haven\'t a visa.'],a:1,e:'ประธานเป็นบุรุษที่ 3 เอกพจน์ (He) ต้องใช้ "doesn\'t" ในประโยคปฏิเสธ Present Simple'},
-          {q:'What is a "passport"?',c:['เอกสารการเดินทางระหว่างประเทศ','ใบอนุญาตทำงาน','วีซ่าท่องเที่ยว','บัตรประจำตัวประชาชน'],a:0,e:'"Passport" คือหนังสือเดินทาง เป็นเอกสารที่ใช้เดินทางระหว่างประเทศ'},
-          {q:'The officer asked the tourist to "declare" the items. What does "declare" mean?',c:['ซ่อน','แจ้ง/ประกาศ','ทิ้ง','ซื้อ'],a:1,e:'"Declare" ในบริบทศุลกากร หมายถึง การแจ้งหรือประกาศรายการสินค้าต่อเจ้าหน้าที่'},
-          {q:'Fill in: "The visa _____ on 31 December."',c:['expire','expires','expired','expiring'],a:1,e:'ประธาน "visa" เป็นเอกพจน์ ใช้ "expires" ในรูป Present Simple'},
-        ]},
-        {id:'crim',name:'กฎหมายอาญา',icon:'🏛️',ratio:25,qs:[
-          {q:'ความผิดอาญาแผ่นดิน คือความผิดประเภทใด?',c:['ความผิดที่ยอมความได้','ความผิดที่รัฐเป็นผู้เสียหาย ยอมความไม่ได้','ความผิดเกี่ยวกับทรัพย์','ความผิดลหุโทษ'],a:1,e:'ความผิดอาญาแผ่นดิน คือความผิดที่กระทบต่อความสงบเรียบร้อย รัฐเป็นผู้เสียหาย ยอมความไม่ได้'},
-          {q:'เจตนาในทางอาญา แบ่งออกเป็นกี่ประเภท?',c:['1 ประเภท','2 ประเภท','3 ประเภท','4 ประเภท'],a:1,e:'เจตนาในทางอาญาแบ่งเป็น 2 ประเภท คือ เจตนาประสงค์ต่อผล และเจตนาเล็งเห็นผล'},
-          {q:'อายุความในคดีอาญาเริ่มนับจากวันใด?',c:['วันที่จับกุมผู้ต้องหา','วันที่กระทำความผิด','วันที่ฟ้องคดี','วันที่ศาลมีคำพิพากษา'],a:1,e:'อายุความในคดีอาญาเริ่มนับตั้งแต่วันที่กระทำความผิด'},
-          {q:'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',c:['3 สถาน','4 สถาน','5 สถาน','6 สถาน'],a:2,e:'โทษทางอาญามี 5 สถาน ได้แก่ ประหารชีวิต จำคุก กักขัง ปรับ และริบทรัพย์สิน'},
-          {q:'การกระทำใดเป็น "ความผิดลหุโทษ"?',c:['ลักทรัพย์','ชิงทรัพย์','เมาแล้วขับ','ทำร้ายร่างกาย'],a:2,e:'เมาแล้วขับ (ขับรถในขณะเมาสุรา) เป็นความผิดลหุโทษตาม พ.ร.บ. จราจรทางบก'},
-        ]},
-        {id:'gen',name:'ความรู้ทั่วไป',icon:'🌐',ratio:15,qs:[
-          {q:'Interpol มีสำนักงานใหญ่อยู่ที่ใด?',c:['เจนีวา สวิตเซอร์แลนด์','ลียง ฝรั่งเศส','กรุงเฮก เนเธอร์แลนด์','วอชิงตัน ดีซี'],a:1,e:'Interpol มีสำนักงานใหญ่อยู่ที่เมืองลียง ประเทศฝรั่งเศส'},
-          {q:'วันตำรวจแห่งชาติตรงกับวันที่เท่าไหร่?',c:['13 ตุลาคม','17 ตุลาคม','13 พฤศจิกายน','17 พฤศจิกายน'],a:3,e:'วันตำรวจแห่งชาติ ตรงกับวันที่ 17 พฤศจิกายน ของทุกปี'},
-          {q:'ICPO ย่อมาจากอะไร?',c:['International Criminal Police Organization','International Control Police Office','Interpol Criminal Police Operations','International Cooperation Police Organization'],a:0,e:'ICPO ย่อมาจาก International Criminal Police Organization หรือที่รู้จักกันในชื่อ Interpol'},
-        ]}
-      ]
-    }
+(function(){
+  function showErr(msg){
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEF2F2;' +
+      'border-bottom:2px solid #FECACA;padding:14px 18px;font-size:13px;color:#DC2626;' +
+      'display:flex;gap:10px;align-items:center">' +
+      '<span style="font-size:18px">&#9888;&#65039;</span>' +
+      '<div><b>&#3650;&#3627;&#3621;&#3604;&#3619;&#3632;&#3610;&#3610;&#3652;&#3617;&#3656;&#3626;&#3635;&#3648;&#3619;&#3655;&#3592;</b> &mdash; '+msg+'<br>' +
+      '<span style="font-size:11px;color:#9B1C1C">&#3585;&#3604; F12 &#8594; Console &#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</span>' +
+      '</div></div>');
   }
-};
-
-// ===== Supabase Config =====
-const SUPA_URL='https://dbkhyhtnhwwqhibbsgce.supabase.co';
-const SUPA_KEY='sb_publishable_SG2sdbQteFee7G4L60WOew_o5CrLoVe';
-const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
-
-// session id สำหรับ track history ของ user นี้ (ไม่ต้อง login)
-const SESSION_ID=(()=>{let s=localStorage.getItem('exam_session');if(!s){s=crypto.randomUUID();localStorage.setItem('exam_session',s);}return s;})();
-
-let state = {
-  unit:'', unitName:'', unitShort:'',
-  level:'', examType:'', selSubj:'', quizMode:'',
-  questions:[], cur:0, ans:[], done:[],
-  history:[]
-};
-
-// โหลดข้อสอบจาก Supabase
-async function loadQuestions(unitId, level, subjId=null){
-  try {
-    let q = supa
-      .from('question_units')
-      .select(`
-        level,
-        questions (
-          id, question, choice_a, choice_b, choice_c, choice_d,
-          choice_a_image, choice_b_image, choice_c_image, choice_d_image,
-          answer, explanation, question_image,
-          subjects ( name, icon )
-        )
-      `)
-      .eq('unit_id', unitId)
-      .eq('published', true);
-
-    if(level!=='both') q=q.in('level',[level,'both']);
-    if(subjId) q=q.eq('questions.subject_id', subjId);
-
-    const {data,error}=await q;
-    if(error) throw error;
-
-    // แปลงให้ตรงกับ format เดิม
-    return (data||[]).map(row=>{
-      const qq=row.questions;
-      if(!qq) return null;
-      const choices=[qq.choice_a,qq.choice_b,qq.choice_c,qq.choice_d];
-      const images=[qq.choice_a_image,qq.choice_b_image,qq.choice_c_image,qq.choice_d_image];
-      const ansIdx={'a':0,'b':1,'c':2,'d':3}[qq.answer]??0;
-      return {
-        id:qq.id, q:qq.question,
-        c:choices, cImg:images,
-        a:ansIdx, e:qq.explanation||'',
-        img:qq.question_image||null,
-        subj:qq.subjects?.name||'', subjIcon:qq.subjects?.icon||''
-      };
-    }).filter(Boolean);
-  } catch(err){
-    console.error('loadQuestions error:',err);
-    return [];
-  }
-}
-
-// โหลดหน่วยงานและวิชาจาก Supabase
-async function loadUnits(){
-  try {
-    const {data,error}=await supa.from('units').select('*');
-    if(error) throw error;
-    return data||[];
-  } catch(e){ return []; }
-}
-
-async function loadSubjects(unitId, level){
-  try {
-    const lv=level==='p'?['p','both']:['s','both'];
-    const {data,error}=await supa
-      .from('subjects')
-      .select('*')
-      .eq('unit_id',unitId)
-      .in('level',lv)
-      .order('id');
-    if(error) throw error;
-    return data||[];
-  } catch(e){ return []; }
-}
-
-// บันทึก history ลง Supabase + localStorage (fallback)
-async function saveHistory(rec){
-  // localStorage fallback
-  state.history.unshift(rec);
-  if(state.history.length>100) state.history=state.history.slice(0,100);
-  localStorage.setItem('examHistory',JSON.stringify(state.history));
-  // Supabase
-  try {
-    await supa.from('exam_history').insert({
-      session_id: SESSION_ID,
-      unit_id: rec.unit,
-      level: rec.level,
-      exam_type: rec.examType,
-      quiz_mode: rec.quizMode,
-      subject_name: rec.subjName,
-      score: rec.score,
-      total: rec.total,
-      pct: rec.pct
-    });
-  } catch(e){ console.warn('saveHistory Supabase error:',e); }
-}
-
-// โหลด history จาก Supabase
-async function loadHistory(){
-  try {
-    const {data,error}=await supa
-      .from('exam_history')
-      .select('*')
-      .eq('session_id',SESSION_ID)
-      .order('created_at',{ascending:false})
-      .limit(100);
-    if(error) throw error;
-    return (data||[]).map(h=>({
-      id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
-      unit:h.unit_id, unitShort:h.unit_id?.toUpperCase(),
-      unitName:h.unit_id, level:h.level,
-      lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
-      examType:h.exam_type, quizMode:h.quiz_mode,
-      subj:'', subjName:h.subject_name,
-      score:h.score, total:h.total, pct:h.pct
-    }));
-  } catch(e){
-    // fallback localStorage
-    return JSON.parse(localStorage.getItem('examHistory')||'[]');
-  }
-}
-
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
-  return a;
-}
-
-function goScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-
-function makeBc(items){
-  return items.map((it,i)=>`<span class="${i===items.length-1?'cur':''}">${it}</span>${i<items.length-1?'<span class="bc-sep">›</span>':''}`).join('');
-}
-
-function goHome(){
-  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
-  document.getElementById('btn-home').disabled=true;
-  state.unit='';
-  goScreen('s-home');
-}
-
-function pickUnit(id,name,short){
-  state.unit=id; state.unitName=name; state.unitShort=short;
-  document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
-  document.getElementById('u-'+id).classList.add('sel');
-  document.getElementById('btn-home').disabled=false;
-}
-
-function goLevel(){
-  if(!state.unit) return;
-  document.getElementById('bc-level').innerHTML=makeBc([state.unitShort,'เลือกระดับ']);
-  document.getElementById('sub-level').textContent=state.unitName;
-  ['lv-p','lv-s'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-level').disabled=true;
-  state.level='';
-  goScreen('s-level');
-}
-
-function pickLevel(lv){
-  state.level=lv;
-  document.getElementById('lv-p').classList.toggle('sel',lv==='p');
-  document.getElementById('lv-s').classList.toggle('sel',lv==='s');
-  document.getElementById('btn-level').disabled=false;
-}
-
-function goType(){
-  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
-  document.getElementById('bc-type').innerHTML=makeBc([state.unitShort,lvLabel,'รูปแบบ']);
-  document.getElementById('sub-type').textContent=state.unitName+' — '+lvLabel;
-  ['tp-sub','tp-full'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-type').disabled=true;
-  state.examType='';
-  goScreen('s-type');
-}
-
-function pickType(t){
-  state.examType=t;
-  document.getElementById('tp-sub').classList.toggle('sel',t==='sub');
-  document.getElementById('tp-full').classList.toggle('sel',t==='full');
-  document.getElementById('btn-type').disabled=false;
-}
-
-function goSubjOrRatio(){
-  if(state.examType==='sub') goSubj();
-  else goRatio();
-}
-
-function goSubj(){
-  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
-  document.getElementById('bc-subj').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา','เลือกวิชา']);
-  document.getElementById('sub-subj').textContent=state.unitName+' — '+lvLabel+' — เลือกวิชาที่ต้องการฝึก';
-  const data=DB[state.unit]?.[state.level];
-  const list=document.getElementById('subj-list');
-  list.innerHTML='';
-  state.selSubj='';
-  document.getElementById('btn-subj').disabled=true;
-  data.subjects.forEach(subj=>{
-    const row=document.createElement('div');
-    row.className='subj-row';
-    row.id='srow-'+subj.id;
-    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${subj.qs.length} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">เลือก</span>`;
-    row.onclick=()=>{
-      state.selSubj=subj.id;
-      data.subjects.forEach(s=>{
-        const t=document.getElementById('stag-'+s.id);
-        if(t){t.className='tag tag-gray';t.textContent='เลือก';}
-      });
-      const tsel=document.getElementById('stag-'+subj.id);
-      if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
-      document.getElementById('btn-subj').disabled=false;
-    };
-    list.appendChild(row);
+  window.addEventListener('error', function(e){
+    if(e.target && e.target.tagName==='SCRIPT') showErr('load error: '+(e.target.src||'unknown'));
+  }, true);
+  window.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      if(typeof doLogin!=='function') showErr('scripts not ready');
+    }, 1000);
   });
-  goScreen('s-subj');
-}
-
-function goRatio(){
-  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
-  document.getElementById('bc-ratio').innerHTML=makeBc([state.unitShort,lvLabel,'จำลองสอบ','โหมด']);
-  document.getElementById('sub-ratio').textContent=state.unitName+' — '+lvLabel;
-  const data=DB[state.unit]?.[state.level];
-  const rl=document.getElementById('ratio-list');
-  rl.innerHTML='';
-  data.subjects.forEach(s=>{
-    const row=document.createElement('div');
-    row.className='ratio-row';
-    row.innerHTML=`<span style="font-size:13px;color:var(--text)">${s.icon} ${s.name}</span><div style="display:flex;align-items:center;gap:8px"><div class="ratio-bar-track"><div class="ratio-bar-fill" style="width:${s.ratio}%"></div></div><span style="font-size:12px;color:var(--text2);min-width:30px;text-align:right">${s.ratio}%</span></div>`;
-    rl.appendChild(row);
-  });
-  ['fm-i','fm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-ratio').disabled=true;
-  state.quizMode='';
-  goScreen('s-ratio');
-}
-
-function pickFMode(m){
-  state.quizMode=m;
-  document.getElementById('fm-i').classList.toggle('sel',m==='instant');
-  document.getElementById('fm-e').classList.toggle('sel',m==='exam');
-  document.getElementById('btn-ratio').disabled=false;
-}
-
-function goMode(from){
-  const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
-  const data=DB[state.unit]?.[state.level];
-  const subj=data.subjects.find(s=>s.id===state.selSubj);
-  document.getElementById('bc-mode').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา',subj.name,'โหมด']);
-  document.getElementById('sub-mode').textContent=state.unitName+' — '+subj.name;
-  ['sm-i','sm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-mode').disabled=true;
-  state.quizMode='';
-  goScreen('s-mode');
-}
-
-function pickSMode(m){
-  state.quizMode=m;
-  document.getElementById('sm-i').classList.toggle('sel',m==='instant');
-  document.getElementById('sm-e').classList.toggle('sel',m==='exam');
-  document.getElementById('btn-mode').disabled=false;
-}
-
-// สุ่มตัวเลือกและจำตำแหน่งเฉลยใหม่ต่อ 1 ข้อ
-function shuffleChoices(q){
-  const indexed=q.c.map((text,i)=>({text,isAnswer:i===q.a}));
-  const shuffled=shuffle(indexed);
-  return {
-    ...q,
-    c: shuffled.map(x=>x.text),
-    a: shuffled.findIndex(x=>x.isAnswer)
-  };
-}
-
-function startQuiz(){
-  const data=DB[state.unit]?.[state.level];
-  let rawQs=[];
-  if(state.examType==='full'){
-    data.subjects.forEach(s=>s.qs.forEach(q=>rawQs.push({...q,subj:s.name,subjIcon:s.icon})));
-  } else {
-    const subj=data.subjects.find(s=>s.id===state.selSubj);
-    rawQs=subj.qs.map(q=>({...q,subj:subj.name,subjIcon:subj.icon}));
-  }
-  // สุ่มลำดับข้อ + สุ่มตัวเลือกแต่ละข้อ
-  state.questions=shuffle(rawQs).map(q=>shuffleChoices(q));
-  state.cur=0;
-  state.ans=Array(state.questions.length).fill(null);
-  state.done=Array(state.questions.length).fill(false);
-  renderQ();
-  goScreen('s-quiz');
-}
-
-const labels=['ก','ข','ค','ง'];
-
-function renderQ(){
-  const q=state.questions[state.cur];
-  const total=state.questions.length;
-  const pct=Math.round((state.cur/total)*100);
-  document.getElementById('pbar-fill').style.width=pct+'%';
-  document.getElementById('q-num').textContent='ข้อ '+(state.cur+1)+' / '+total;
-
-  const modeTag=state.quizMode==='instant'
-    ?'<span class="tag tag-blue">💡 ฝึกซ้อม</span>'
-    :'<span class="tag tag-yellow">📋 จำลองสอบ</span>';
-  const shuffleTag='<span class="tag" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border)">🔀 สุ่มแล้ว</span>';
-  document.getElementById('q-tags').innerHTML=`<span class="tag" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)">${q.subjIcon||''} ${q.subj||''}</span>${modeTag}${shuffleTag}`;
-  document.getElementById('q-text').textContent=q.q;
-
-  const imgWrap=document.getElementById('q-img-wrap');
-  if(q.img){imgWrap.style.display='block';document.getElementById('q-img').src=q.img;}
-  else imgWrap.style.display='none';
-
-  const ch=document.getElementById('q-choices');
-  ch.innerHTML='';
-  q.c.forEach((c,i)=>{
-    const btn=document.createElement('button');
-    btn.className='choice-btn';
-    let cls='';
-    if(state.ans[state.cur]===i){
-      if(state.quizMode==='instant'&&state.done[state.cur]) cls=i===q.a?'ok':'ng';
-      else cls='sel';
-    } else if(state.quizMode==='instant'&&state.done[state.cur]&&i===q.a) cls='ok';
-    if(cls) btn.classList.add(cls);
-    if(state.quizMode==='instant'&&state.done[state.cur]) btn.disabled=true;
-    btn.innerHTML=`<span class="choice-lbl">${labels[i]}</span><span>${c}</span>`;
-    btn.onclick=()=>pickAns(i);
-    ch.appendChild(btn);
-  });
-
-  const fb=document.getElementById('q-feedback');
-  if(state.quizMode==='instant'&&state.done[state.cur]){
-    const ok=state.ans[state.cur]===q.a;
-    fb.className='feedback '+(ok?'ok':'ng');
-    document.getElementById('fb-title').textContent=ok?'✓ ถูกต้อง':'✗ ไม่ถูกต้อง';
-    document.getElementById('fb-body').textContent=q.e;
-    fb.style.display='block';
-  } else fb.style.display='none';
-
-  const prev=document.getElementById('qb-prev');
-  const next=document.getElementById('qb-next');
-  const sub=document.getElementById('qb-submit');
-  prev.style.display=state.cur>0?'block':'none';
-  if(state.quizMode==='exam'){
-    next.style.display=state.cur<total-1?'block':'none';
-    sub.style.display=state.cur===total-1&&state.ans.every(a=>a!==null)?'block':'none';
-  } else {
-    next.style.display=state.done[state.cur]&&state.cur<total-1?'block':'none';
-    sub.style.display=state.done[state.cur]&&state.cur===total-1?'block':'none';
-  }
-}
-
-function pickAns(i){
-  if(state.quizMode==='instant'&&state.done[state.cur]) return;
-  state.ans[state.cur]=i;
-  if(state.quizMode==='instant') state.done[state.cur]=true;
-  renderQ();
-}
-function qPrev(){if(state.cur>0){state.cur--;renderQ();}}
-function qNext(){if(state.cur<state.questions.length-1){state.cur++;renderQ();}}
-
-async function showResult(){
-  const score=state.ans.filter((a,i)=>a===state.questions[i].a).length;
-  const total=state.questions.length;
-  const pct=Math.round((score/total)*100);
-  document.getElementById('r-score').textContent=score+' / '+total;
-  document.getElementById('r-pct').textContent='คะแนน '+pct+'% — '+state.unitShort+' '+(state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร');
-
-  const prevScores=state.history.filter(h=>h.unit===state.unit&&h.level===state.level&&h.subj===(state.selSubj||'all')).map(h=>h.pct);
-  const avg=prevScores.length>0?Math.round(prevScores.reduce((a,b)=>a+b,0)/prevScores.length):null;
-  const best=prevScores.length>0?Math.max(...prevScores):null;
-  const diff=avg!==null?pct-avg:null;
-
-  document.getElementById('r-stats').innerHTML=`
-    <div class="stat-box"><div class="stat-val" style="color:${pct>=70?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</div><div class="stat-lbl">ครั้งนี้</div></div>
-    <div class="stat-box"><div class="stat-val">${avg!==null?avg+'%':'—'}</div><div class="stat-lbl">เฉลี่ย</div></div>
-    <div class="stat-box"><div class="stat-val">${best!==null?best+'%':'—'}</div><div class="stat-lbl">สูงสุด</div></div>
-    <div class="stat-box"><div class="stat-val" style="color:${diff===null?'var(--text)':diff>=0?'var(--success)':'var(--danger)'}">${diff===null?'—':(diff>=0?'+':'')+diff+'%'}</div><div class="stat-lbl">จากเฉลี่ย</div></div>`;
-
-  const dots=document.getElementById('r-dots');
-  dots.innerHTML='';
-  state.questions.forEach((_,i)=>{
-    const ok=state.ans[i]===state.questions[i].a;
-    const d=document.createElement('div');
-    d.className='rdot '+(ok?'ok':'ng');
-    d.textContent=i+1;
-    dots.appendChild(d);
-  });
-
-  const rev=document.getElementById('r-review');
-  rev.innerHTML='';
-  state.questions.forEach((q,i)=>{
-    const ok=state.ans[i]===q.a;
-    const d=document.createElement('div');
-    d.className='review-item';
-    d.innerHTML=`<div class="review-q">ข้อ ${i+1}: ${q.q}</div>
-    <div class="review-ans" style="color:${ok?'var(--success)':'var(--danger)'}">คำตอบของคุณ: ${labels[state.ans[i]]}. ${q.c[state.ans[i]]} ${ok?'✓':'✗'}</div>
-    ${!ok?`<div class="review-ans" style="color:var(--success)">เฉลย: ${labels[q.a]}. ${q.c[q.a]}</div>`:''}
-    <div class="review-explain">${q.e}</div>`;
-    rev.appendChild(d);
-  });
-
-  const data=DB[state.unit]?.[state.level];
-  const subjName=state.examType==='full'?'จำลองสอบจริง (รวมทุกวิชา)':(data.subjects.find(s=>s.id===state.selSubj)?.name||'');
-  const rec={
-    id:Date.now(),
-    date:new Date().toLocaleString('th-TH'),
-    unit:state.unit, unitShort:state.unitShort, unitName:state.unitName,
-    level:state.level, lvLabel:state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
-    examType:state.examType, quizMode:state.quizMode,
-    subj:state.selSubj||'all', subjName,
-    score, total, pct
-  };
-  await saveHistory(rec);
-
-  goScreen('s-result');
-}
-
-function restartSame(){
-  startQuiz();
-}
-
-async function goHistory(){
-  document.getElementById('h-list').innerHTML='<div class="empty-hist"><div class="big">⏳</div><p>กำลังโหลด...</p></div>';
-  goScreen('s-history');
-  state.history=await loadHistory();
-  renderHistory('all');
-}
-
-function renderHistory(filterUnit){
-  const hist=state.history;
-  const units=[...new Set(hist.map(h=>h.unit))];
-
-  const stats=document.getElementById('h-stats');
-  if(hist.length===0){
-    stats.innerHTML='';
-  } else {
-    const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
-    const avg=filtered.length?Math.round(filtered.reduce((a,b)=>a+b.pct,0)/filtered.length):0;
-    const best=filtered.length?Math.max(...filtered.map(h=>h.pct)):0;
-    const subjCount=[...new Set(filtered.map(h=>h.subjName))].length;
-    stats.innerHTML=`
-      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--accent)">${filtered.length}</div><div class="hist-stat-lbl">ครั้งที่สอบ</div></div>
-      <div class="hist-stat"><div class="hist-stat-val" style="color:${avg>=70?'var(--success)':avg>=50?'var(--warning)':'var(--danger)'}">${avg}%</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
-      <div class="hist-stat"><div class="hist-stat-val" style="color:var(--success)">${best}%</div><div class="hist-stat-lbl">สูงสุด</div></div>
-      <div class="hist-stat"><div class="hist-stat-val">${subjCount}</div><div class="hist-stat-lbl">รูปแบบ</div></div>`;
-  }
-
-  const filters=document.getElementById('h-filters');
-  filters.innerHTML=`<button class="filter-btn ${filterUnit==='all'?'active':''}" onclick="renderHistory('all')">ทั้งหมด</button>`;
-  units.forEach(u=>{
-    const s=hist.find(h=>h.unit===u);
-    if(s) filters.innerHTML+=`<button class="filter-btn ${filterUnit===u?'active':''}" onclick="renderHistory('${u}')">${s.unitShort}</button>`;
-  });
-
-  const list=document.getElementById('h-list');
-  const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
-  if(filtered.length===0){
-    list.innerHTML=`<div class="empty-hist"><div class="big">📋</div><p>ยังไม่มีประวัติการสอบ<br>เริ่มทำข้อสอบแล้วผลจะปรากฏที่นี่</p></div>`;
-    return;
-  }
-  list.innerHTML='<div class="hlist">';
-  filtered.forEach(h=>{
-    const color=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
-    const dotColor=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
-    const modeLabel=h.quizMode==='instant'?'ฝึกซ้อม':'จำลองสอบ';
-    list.innerHTML+=`<div class="hitem">
-      <div class="hdot" style="background:${dotColor}"></div>
-      <div class="hitem-body">
-        <div class="hitem-title">${h.unitShort} — ${h.lvLabel}</div>
-        <div class="hitem-sub">${h.subjName} · ${modeLabel}</div>
-        <div class="hitem-time">${h.date}</div>
-      </div>
-      <div class="hitem-right">
-        <div class="hitem-score" style="color:${color}">${h.pct}%</div>
-        <div style="font-size:11px;color:var(--text3)">${h.score}/${h.total}</div>
-      </div>
-    </div>`;
-  });
-  list.innerHTML+='</div>';
-}
-
-async function clearHistory(){
-  if(!confirm('ลบประวัติการสอบทั้งหมด?')) return;
-  state.history=[];
-  localStorage.removeItem('examHistory');
-  try{
-    await supa.from('exam_history').delete().eq('session_id',SESSION_ID);
-  }catch(e){console.warn(e);}
-  renderHistory('all');
-}
+})();
 </script>
 </body>
 </html>

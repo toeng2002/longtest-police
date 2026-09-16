@@ -1,4 +1,7 @@
-﻿/* ============================================================\n   app-quiz.js — โหมดผู้ใช้: เลือกหน่วย/ระดับ/วิชา, ทำข้อสอบ, ผลคะแนน, ประวัติ\n   ต้องโหลดหลัง exam-db.js\n   ============================================================ */
+/* ============================================================
+   app-quiz.js — โหมดผู้ใช้: เลือกหน่วย/ระดับ/วิชา, ทำข้อสอบ, ผลคะแนน, ประวัติ
+   ต้องโหลดหลัง exam-db.js
+   ============================================================ */
 
 /* หมายเหตุ: DB / SUPA_* / supa / SESSION_ID / currentUser ถูกประกาศไว้ใน exam-db.js แล้ว
    ไม่ประกาศซ้ำที่นี่ เพื่อไม่ให้เกิด "Identifier has already been declared" */
@@ -6,33 +9,47 @@
 // ===== state ของโหมดทำข้อสอบ =====
 let state = {
   unit:'', unitName:'', unitShort:'',
-  level:'', examType:'', selSubj:'', quizMode:'',
+  level:'', examType:'', selSubj:'', selSubjName:'', quizMode:'',
   questions:[], cur:0, ans:[], done:[],
   history:[]
 };
 
+// ===== units cache สำหรับ map unit_id ↔ ชื่อจริง / code =====
+let _unitsCache = null;
+async function getUnitsMap(){
+  if(!_unitsCache){
+    const units = await loadUnits();
+    _unitsCache = {};
+    units.forEach(u => {
+      _unitsCache[u.id] = u;
+      if(u.code) _unitsCache[u.code] = u;
+    });
+  }
+  return _unitsCache;
+}
+
 // โหลดข้อสอบจาก Supabase
 async function loadQuestions(unitId, level, subjId=null){
   try {
+    const uMap = await getUnitsMap();
+    const resolvedUnitId = uMap[unitId] ? uMap[unitId].id : unitId;
+
     let q = supa
       .from('question_units')
       .select(`
         level,
-        level,
-        questions (
+        questions!inner (
           id, question, choice_a, choice_b, choice_c, choice_d,
           choice_a_image, choice_b_image, choice_c_image, choice_d_image,
-          answer, explanation, question_image, subject_id,
-          subjects ( name, icon )
+          answer, explanation, question_image, subject_id, published,
+          subjects ( name )
         )
       `)
-      .eq('unit_id', unitId)
-      .eq('published', true)
+      .eq('unit_id', resolvedUnitId)
       .eq('questions.published', true);
 
-    if(level!=='both') q=q.in('level',[level,'both']);
+    if(level && level!=='both') q=q.in('level',[level,'both']);
     // กรองตามวิชา — ใช้ subject_id เท่านั้น
-    // (ตาราง questions ไม่มีคอลัมน์ subject_name ทุกข้อสอบจึงต้องมี subject_id)
     if(subjId!=null && subjId!=='') q=q.eq('questions.subject_id', subjId);
 
     const {data,error}=await q;
@@ -51,7 +68,7 @@ async function loadQuestions(unitId, level, subjId=null){
         a:ansIdx, e:qq.explanation||'',
         img:qq.question_image||null,
         subjId:qq.subject_id,
-        subj:qq.subjects?.name||'', subjIcon:qq.subjects?.icon||''
+        subj:qq.subjects?.name||'', subjIcon:'📄'
       };
     }).filter(Boolean);
   } catch(err){
@@ -60,7 +77,7 @@ async function loadQuestions(unitId, level, subjId=null){
   }
 }
 
-// โหลดหน่วยงานและวิชาจาก Supabase
+// โหลดหน่วยงานจาก Supabase
 async function loadUnits(){
   try {
     const {data,error}=await supa.from('units').select('*');
@@ -71,6 +88,8 @@ async function loadUnits(){
 
 async function loadSubjects(unitId, level){
   try {
+    const uMap = await getUnitsMap();
+    const resolvedUnitId = uMap[unitId] ? uMap[unitId].id : unitId;
     // 'both' = ต้องการทุกระดับ → เอามาทั้ง p และ s
     const lv = level==='p' ? ['p','both']
              : level==='s' ? ['s','both']
@@ -78,7 +97,7 @@ async function loadSubjects(unitId, level){
     const {data,error}=await supa
       .from('subjects')
       .select('*')
-      .eq('unit_id',unitId)
+      .eq('unit_id',resolvedUnitId)
       .in('level',lv)
       .order('id');
     if(error) throw error;
@@ -94,9 +113,11 @@ async function saveHistory(rec){
   localStorage.setItem('examHistory',JSON.stringify(state.history));
   // Supabase
   try {
+    const uMap = await getUnitsMap();
+    const resolvedUnitId = uMap[rec.unit] ? uMap[rec.unit].id : rec.unit;
     await supa.from('exam_history').insert({
       session_id: SESSION_ID,
-      unit_id: rec.unit,
+      unit_id: resolvedUnitId,
       level: rec.level,
       exam_type: rec.examType,
       quiz_mode: rec.quizMode,
@@ -111,6 +132,7 @@ async function saveHistory(rec){
 // โหลด history จาก Supabase
 async function loadHistory(){
   try {
+    const unitsMap = await getUnitsMap();
     const {data,error}=await supa
       .from('exam_history')
       .select('*')
@@ -120,8 +142,10 @@ async function loadHistory(){
     if(error) throw error;
     return (data||[]).map(h=>({
       id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
-      unit:h.unit_id, unitShort:h.unit_id?.toUpperCase(),
-      unitName:h.unit_id, level:h.level,
+      unit:h.unit_id,
+      unitShort: unitsMap[h.unit_id]?.short_name || h.unit_id?.toUpperCase(),
+      unitName:  unitsMap[h.unit_id]?.name  || h.unit_id,
+      level:h.level,
       lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
       examType:h.exam_type, quizMode:h.quiz_mode,
       subj:'', subjName:h.subject_name,
@@ -149,18 +173,41 @@ function makeBc(items){
   return items.map((it,i)=>`<span class="${i===items.length-1?'cur':''}">${it}</span>${i<items.length-1?'<span class="bc-sep">›</span>':''}`).join('');
 }
 
+async function renderUnitCards(){
+  const wrap = document.getElementById('unit-cards-wrap');
+  if(!wrap) return;
+  const units = await loadUnits();
+  if(!units || units.length === 0) return;
+
+  wrap.innerHTML = `
+    <div class="card-grid col2" style="margin-bottom:10px">
+      ${units.map(u => `
+        <div class="unit-card ${String(state.unit)===String(u.id)?'sel':''}" id="u-${u.id}" onclick="pickUnit(${typeof u.id==='number'?u.id:`'${u.id}'`},'${u.name}','${u.short_name || u.name}')">
+          <div class="unit-icon">${u.icon || '🏢'}</div>
+          <div class="unit-name">${u.short_name || u.name}</div>
+          <div class="unit-desc">${u.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function goHome(){
   document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
-  document.getElementById('btn-home').disabled=true;
+  const btn = document.getElementById('btn-home');
+  if(btn) btn.disabled=true;
   state.unit='';
   goScreen('s-home');
+  renderUnitCards();
 }
 
 function pickUnit(id,name,short){
   state.unit=id; state.unitName=name; state.unitShort=short;
   document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
-  document.getElementById('u-'+id).classList.add('sel');
-  document.getElementById('btn-home').disabled=false;
+  const card = document.getElementById('u-'+id) || (id==1?document.getElementById('u-tm'):null);
+  if(card) card.classList.add('sel');
+  const btn = document.getElementById('btn-home');
+  if(btn) btn.disabled=false;
 }
 
 function goLevel(){
@@ -209,52 +256,57 @@ async function goSubj(){
   const list=document.getElementById('subj-list');
   list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">⏳ กำลังโหลดวิชา...</div>';
   state.selSubj='';
+  state.selSubjName='';
   document.getElementById('btn-subj').disabled=true;
   goScreen('s-subj');
 
-  // สร้างรายวิชาจาก “ข้อสอบที่มีอยู่จริง” (ไม่ต้องพึ่งตาราง subjects)
-  // เพราะข้อสอบอาจถูกสร้างโดยใช้ lookup ที่สร้าง subject ให้อัตโนมัติ
-  const qs=await loadQuestions(state.unit, state.level);
+  // ดึงวิชาจากตาราง subjects + นับข้อสอบจริงจาก questions
+  const [dbSubjs, qs] = await Promise.all([
+    loadSubjects(state.unit, state.level),
+    loadQuestions(state.unit, state.level)
+  ]);
+
   const counts={};
   const byId={};
-  qs.forEach(x=>{
-    if(x.subjId==null) return;   // ข้ามข้อที่ไม่มี subject_id
-    counts[x.subjId]=(counts[x.subjId]||0)+1;
-    if(!byId[x.subjId]) byId[x.subjId]={id:x.subjId,name:x.subj||'ไม่ระบุวิชา',icon:x.subjIcon||'📄'};
+  dbSubjs.forEach(s=>{
+    byId[s.id]={id:s.id, name:s.name, icon:'📄'};
+    counts[s.id]=0;
   });
-  let subjs=Object.keys(counts).map(k=>byId[k]).sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  qs.forEach(x=>{
+    if(x.subjId==null) return;
+    counts[x.subjId]=(counts[x.subjId]||0)+1;
+    if(!byId[x.subjId]) byId[x.subjId]={id:x.subjId,name:x.subj||'ไม่ระบุวิชา',icon:'📄'};
+  });
 
-  // ถ้าฐานข้อมูลว่าง ใช้วิชาจากชุด fallback
+  const subjs=Object.values(byId).sort((a,b)=>a.name.localeCompare(b.name,'th'));
+
   if(subjs.length===0){
-    const data=DB[state.unit]?.[state.level];
-    if(data){
-      subjs=data.subjects.map(s=>({id:s.id,name:s.name,icon:s.icon}));
-      data.subjects.forEach(s=>{ counts[s.id]=s.qs.length; });
-    }
-  }
-  if(subjs.length===0){
-    list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">ไม่พบวิชาในชุดนี้</div>';
+    list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">ไม่พบวิชาในชุดนี้ กรุณาตรวจสอบข้อมูลใน Supabase</div>';
     return;
   }
 
   list.innerHTML='';
-  const data={subjects:subjs};
   subjs.forEach(subj=>{
     const row=document.createElement('div');
     row.className='subj-row';
     row.id='srow-'+subj.id;
     const n=counts[subj.id]||0;
-    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon||'📄'}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${n} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">เลือก</span>`;
-    row.onclick=()=>{
-      state.selSubj=subj.id;
-      data.subjects.forEach(s=>{
-        const t=document.getElementById('stag-'+s.id);
-        if(t){t.className='tag tag-gray';t.textContent='เลือก';}
-      });
-      const tsel=document.getElementById('stag-'+subj.id);
-      if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
-      document.getElementById('btn-subj').disabled=false;
-    };
+    const hasQs=n>0;
+    if(!hasQs) row.style.opacity='0.6';
+    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon||'📄'}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${n} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">${hasQs?'เลือก':'ยังไม่มีข้อสอบ'}</span>`;
+    if(hasQs){
+      row.onclick=()=>{
+        state.selSubj=subj.id;
+        state.selSubjName=subj.name;
+        subjs.forEach(s=>{
+          const t=document.getElementById('stag-'+s.id);
+          if(t && counts[s.id]>0){t.className='tag tag-gray';t.textContent='เลือก';}
+        });
+        const tsel=document.getElementById('stag-'+subj.id);
+        if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
+        document.getElementById('btn-subj').disabled=false;
+      };
+    }
     list.appendChild(row);
   });
 }
@@ -268,16 +320,10 @@ async function goRatio(){
   rl.innerHTML='<div style="padding:12px 0;color:var(--text2);font-size:12px">กำลังโหลดสัดส่วน...</div>';
 
   // ดึงสัดส่วนจริงจากตาราง subjects ตามหน่วย+ระดับ
-  let subjs=await loadSubjects(state.unit, state.level);
-
-  // ถ้าไม่มีในฐานข้อมูล ใช้สัดส่วนจากชุดสำรอง
-  if(subjs.length===0){
-    const data=DB[state.unit]?.[state.level];
-    if(data) subjs=data.subjects.map(s=>({name:s.name,icon:s.icon,ratio:s.ratio}));
-  }
+  const subjs=await loadSubjects(state.unit, state.level);
 
   if(subjs.length===0){
-    rl.innerHTML='<div style="padding:12px 0;color:var(--text2);font-size:12px">ยังไม่มีข้อมูลสัดส่วนสำหรับชุดนี้</div>';
+    rl.innerHTML='<div style="padding:12px 0;color:var(--text2);font-size:12px">ยังไม่มีข้อมูลสัดส่วนสำหรับชุดนี้ กรุณาตรวจสอบข้อมูลใน Supabase</div>';
   } else {
     rl.innerHTML='';
     subjs.forEach(s=>{
@@ -304,10 +350,9 @@ function pickFMode(m){
 
 function goMode(from){
   const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
-  const data=DB[state.unit]?.[state.level];
-  const subj=data.subjects.find(s=>s.id===state.selSubj);
-  document.getElementById('bc-mode').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา',subj.name,'โหมด']);
-  document.getElementById('sub-mode').textContent=state.unitName+' — '+subj.name;
+  const subjName=state.selSubjName||'วิชาที่เลือก';
+  document.getElementById('bc-mode').innerHTML=makeBc([state.unitShort,lvLabel,'แยกวิชา',subjName,'โหมด']);
+  document.getElementById('sub-mode').textContent=state.unitName+' — '+subjName;
   ['sm-i','sm-e'].forEach(id=>document.getElementById(id).classList.remove('sel'));
   document.getElementById('btn-mode').disabled=true;
   state.quizMode='';
@@ -341,28 +386,16 @@ async function startQuiz(){
   document.getElementById('q-feedback').style.display='none';
   ['qb-prev','qb-next','qb-submit'].forEach(id=>document.getElementById(id).style.display='none');
 
-  // 1) ดึงข้อสอบจริงจาก Supabase
-  let rawQs=await loadQuestions(state.unit, state.level, state.examType==='sub'?state.selSubj:null);
-
-  // 2) ถ้าฐานข้อมูลว่าง/ผิดพลาด ใช้ชุดข้อสอบใน exam-db.js เป็น fallback
-  if(rawQs.length===0){
-    const data=DB[state.unit]?.[state.level];
-    if(data){
-      if(state.examType==='full'){
-        data.subjects.forEach(s=>s.qs.forEach(q=>rawQs.push({...q,subj:s.name,subjIcon:s.icon})));
-      } else {
-        const subj=data.subjects.find(s=>s.id===state.selSubj);
-        if(subj) rawQs=subj.qs.map(q=>({...q,subj:subj.name,subjIcon:subj.icon}));
-      }
-    }
-  }
+  // ดึงข้อสอบจริงจาก Supabase
+  const rawQs=await loadQuestions(state.unit, state.level, state.examType==='sub'?state.selSubj:null);
 
   if(rawQs.length===0){
-    document.getElementById('q-text').textContent='ไม่พบข้อสอบในชุดนี้ กรุณาเลือกวิชา/ระดับอื่น';
+    document.getElementById('q-text').textContent='ไม่พบข้อสอบในชุดนี้ กรุณาเลือกวิชา/ระดับอื่น หรือตรวจสอบข้อมูลใน Supabase';
+    document.getElementById('q-choices').innerHTML='<button class="btn btn-outline" onclick="goHome()" style="margin-top:16px;width:100%">← กลับหน้าหลัก</button>';
     return;
   }
 
-  // 3) สุ่มลำดับข้อ + สุ่มตัวเลือกแต่ละข้อ
+  // สุ่มลำดับข้อ + สุ่มตัวเลือกแต่ละข้อ
   state.questions=shuffle(rawQs).map(q=>shuffleChoices(q));
   state.cur=0;
   state.ans=Array(state.questions.length).fill(null);
@@ -479,8 +512,7 @@ async function showResult(){
     rev.appendChild(d);
   });
 
-  const data=DB[state.unit]?.[state.level];
-  const subjName=state.examType==='full'?'จำลองสอบจริง (รวมทุกวิชา)':(data.subjects.find(s=>s.id===state.selSubj)?.name||'');
+  const subjName=state.examType==='full'?'จำลองสอบจริง (รวมทุกวิชา)':(state.selSubjName||'');
   const rec={
     id:Date.now(),
     date:new Date().toLocaleString('th-TH'),
@@ -568,4 +600,3 @@ async function clearHistory(){
   }catch(e){console.warn(e);}
   renderHistory('all');
 }
-
