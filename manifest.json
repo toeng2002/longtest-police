@@ -1,0 +1,25 @@
+{
+  "name": "ระบบจำลองข้อสอบตำรวจ",
+  "short_name": "ข้อสอบตำรวจ",
+  "description": "ระบบจำลองและฝึกทำข้อสอบตำรวจออนไลน์ พร้อมระบบจัดการสำหรับผู้ดูแลระบบ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F7F5",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -134,7 +134,23 @@ let pinVal='';
 
 
 
+function toggleAdminSidebar(){
+  const sidebar = document.getElementById('admin-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if(!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if(overlay) overlay.classList.toggle('open', isOpen);
+}
+
+function closeAdminSidebar(){
+  const sidebar = document.getElementById('admin-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if(sidebar) sidebar.classList.remove('open');
+  if(overlay) overlay.classList.remove('open');
+}
+
 function goPage(id,navEl){
+  closeAdminSidebar();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(navEl){

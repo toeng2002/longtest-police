@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ระบบจำลองข้อสอบตำรวจ</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563EB">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/icon-apple.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ข้อสอบตำรวจ">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
@@ -360,6 +368,39 @@ textarea{resize:vertical;min-height:72px}
 .toast.danger{background:var(--danger)}
 .toast.warning{background:var(--warning)}
 
+/* --- Admin Responsive & Drawer for Mobile --- */
+.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:99;backdrop-filter:blur(2px)}
+.sidebar-overlay.open{display:block}
+.sidebar-toggle{display:none}
+.dashboard-split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+@media (max-width: 768px){
+  .sidebar-toggle{display:inline-flex}
+  .sidebar{
+    position:fixed;top:0;left:0;width:250px;height:100vh;z-index:100;
+    transform:translateX(-100%);
+    transition:transform .25s cubic-bezier(0.4,0,0.2,1);
+    box-shadow:4px 0 20px rgba(0,0,0,0.18);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;width:100%;min-width:0}
+  .topbar{padding:10px 14px}
+  .desktop-hide{display:none!important}
+  .page{padding:14px 12px}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+  .stat-card{padding:12px}
+  .stat-val{font-size:22px}
+  .dashboard-split{grid-template-columns:1fr!important;gap:12px}
+  .toolbar{flex-direction:column;align-items:stretch;gap:8px}
+  .search-box{max-width:100%!important;width:100%}
+  .toolbar select, .toolbar .btn{width:100%;justify-content:center}
+  .form-grid.col2, .form-grid.col3{grid-template-columns:1fr;gap:10px}
+  .set-pane .toolbar{flex-direction:column;align-items:stretch}
+  .set-pane .toolbar select, .set-pane .toolbar .btn{width:100%;max-width:100%!important}
+  #set-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  #set-tabs .filter-btn{flex-shrink:0}
+  .modal-box{width:calc(100vw - 24px)!important;max-width:100%!important;margin:12px;padding:18px 14px}
+}
 
 </style>
 </head>
@@ -642,7 +683,8 @@ textarea{resize:vertical;min-height:72px}
 </div>
 
 <div id="admin-layout" class="layout" style="display:none">
-  <aside class="sidebar">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeAdminSidebar()"></div>
+  <aside class="sidebar" id="admin-sidebar">
     <div class="sidebar-logo">
       <div class="name">ระบบข้อสอบตำรวจ</div>
       <div class="role">ผู้ดูแลระบบ — admin</div>
@@ -692,7 +734,12 @@ textarea{resize:vertical;min-height:72px}
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-icon sidebar-toggle" id="btn-sidebar-toggle" onclick="toggleAdminSidebar()" title="เปิดเมนู" aria-label="เปิดเมนู" style="padding:6px;width:34px;height:34px">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--text)"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+      </div>
       <div class="topbar-right">
         <button class="btn btn-sm" onclick="enterUser()" style="background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);font-weight:500">
           <svg viewBox="0 0 24 24" style="stroke:var(--accent);width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -727,7 +774,7 @@ textarea{resize:vertical;min-height:72px}
           <div class="stat-sub" style="color:var(--warning)">ยังไม่เผยแพร่</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="dashboard-split">
         <div class="card">
           <div class="card-header"><span class="card-title">ข้อสอบตามหน่วยงาน</span></div>
           <div style="padding:14px 16px">
@@ -1238,6 +1285,17 @@ textarea{resize:vertical;min-height:72px}
     }, 800);
   });
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('PWA Service Worker registered successfully with scope:', reg.scope);
+    }).catch(function(err) {
+      console.warn('PWA Service Worker registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
