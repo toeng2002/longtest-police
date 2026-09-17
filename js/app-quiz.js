@@ -405,6 +405,27 @@ async function startQuiz(){
 
 const labels=['ก','ข','ค','ง'];
 
+function formatMultiline(s){
+  if(s==null) return '';
+  return String(s)
+    .replace(/\r\n/g, '\n')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\\r/g, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+}
+
+function escapeHtml(s){
+  if(s==null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderQ(){
   const q=state.questions[state.cur];
   const total=state.questions.length;
@@ -417,7 +438,7 @@ function renderQ(){
     :'<span class="tag tag-yellow">📋 จำลองสอบ</span>';
   const shuffleTag='<span class="tag" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border)">🔀 สุ่มแล้ว</span>';
   document.getElementById('q-tags').innerHTML=`<span class="tag" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)">${q.subjIcon||''} ${q.subj||''}</span>${modeTag}${shuffleTag}`;
-  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-text').textContent=formatMultiline(q.q);
 
   const imgWrap=document.getElementById('q-img-wrap');
   if(q.img){imgWrap.style.display='block';document.getElementById('q-img').src=q.img;}
@@ -435,7 +456,7 @@ function renderQ(){
     } else if(state.quizMode==='instant'&&state.done[state.cur]&&i===q.a) cls='ok';
     if(cls) btn.classList.add(cls);
     if(state.quizMode==='instant'&&state.done[state.cur]) btn.disabled=true;
-    btn.innerHTML=`<span class="choice-lbl">${labels[i]}</span><span>${c}</span>`;
+    btn.innerHTML=`<span class="choice-lbl">${labels[i]}</span><span>${escapeHtml(formatMultiline(c))}</span>`;
     btn.onclick=()=>pickAns(i);
     ch.appendChild(btn);
   });
@@ -445,7 +466,7 @@ function renderQ(){
     const ok=state.ans[state.cur]===q.a;
     fb.className='feedback '+(ok?'ok':'ng');
     document.getElementById('fb-title').textContent=ok?'✓ ถูกต้อง':'✗ ไม่ถูกต้อง';
-    document.getElementById('fb-body').textContent=q.e;
+    document.getElementById('fb-body').textContent=formatMultiline(q.e);
     fb.style.display='block';
   } else fb.style.display='none';
 
@@ -503,12 +524,13 @@ async function showResult(){
   rev.innerHTML='';
   state.questions.forEach((q,i)=>{
     const ok=state.ans[i]===q.a;
+    const userAns=state.ans[i]!=null&&state.ans[i]>=0?`${labels[state.ans[i]]}. ${escapeHtml(formatMultiline(q.c[state.ans[i]]))}`:'(ไม่ได้ตอบ)';
     const d=document.createElement('div');
     d.className='review-item';
-    d.innerHTML=`<div class="review-q">ข้อ ${i+1}: ${q.q}</div>
-    <div class="review-ans" style="color:${ok?'var(--success)':'var(--danger)'}">คำตอบของคุณ: ${labels[state.ans[i]]}. ${q.c[state.ans[i]]} ${ok?'✓':'✗'}</div>
-    ${!ok?`<div class="review-ans" style="color:var(--success)">เฉลย: ${labels[q.a]}. ${q.c[q.a]}</div>`:''}
-    <div class="review-explain">${q.e}</div>`;
+    d.innerHTML=`<div class="review-q">ข้อ ${i+1}: ${escapeHtml(formatMultiline(q.q))}</div>
+    <div class="review-ans" style="color:${ok?'var(--success)':'var(--danger)'}">คำตอบของคุณ: ${userAns} ${ok?'✓':'✗'}</div>
+    ${!ok?`<div class="review-ans" style="color:var(--success)">เฉลย: ${labels[q.a]}. ${escapeHtml(formatMultiline(q.c[q.a]))}</div>`:''}
+    <div class="review-explain">${escapeHtml(formatMultiline(q.e))}</div>`;
     rev.appendChild(d);
   });
 

@@ -106,9 +106,9 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 /* Quiz */
 .q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .q-num{font-size:12px;color:var(--text2)}
-.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:16px}
+.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:16px;white-space:pre-line;word-break:break-word}
 .q-img{width:100%;border-radius:var(--radius);margin-bottom:14px;border:1px solid var(--border)}
-.choice-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--text);width:100%;text-align:left;transition:border-color .1s,background .1s;line-height:1.5}
+.choice-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--text);width:100%;text-align:left;transition:border-color .1s,background .1s;line-height:1.5;white-space:pre-line;word-break:break-word}
 .choice-btn:hover:not(:disabled){border-color:var(--border2);background:var(--surface2)}
 .choice-btn:disabled{cursor:default}
 .choice-btn.sel{border-color:var(--accent);background:var(--accent-bg)}
@@ -118,10 +118,11 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 .choice-btn.ok .choice-lbl{background:var(--success);color:#fff;border-color:transparent}
 .choice-btn.ng .choice-lbl{background:var(--danger);color:#fff;border-color:transparent}
 .choice-btn.sel:not(.ok):not(.ng) .choice-lbl{background:var(--accent);color:#fff;border-color:transparent}
-.feedback{padding:12px 14px;border-radius:var(--radius);font-size:13px;line-height:1.6;margin-top:10px}
+.feedback{padding:12px 14px;border-radius:var(--radius);font-size:13px;line-height:1.65;margin-top:10px}
 .feedback.ok{background:var(--success-bg);border:1px solid var(--success-border)}
 .feedback.ng{background:var(--danger-bg);border:1px solid var(--danger-border)}
-.feedback-title{font-weight:600;margin-bottom:3px}
+.feedback-title{font-weight:600;margin-bottom:6px}
+#fb-body{white-space:pre-line;word-break:break-word;line-height:1.65}
 .nav-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 
 /* Result */
@@ -139,9 +140,9 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 .rdot.ng{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
 .review-item{padding:12px 0;border-bottom:1px solid var(--border)}
 .review-item:last-child{border-bottom:none}
-.review-q{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px}
-.review-ans{font-size:12px;margin-bottom:2px}
-.review-explain{font-size:12px;color:var(--text2);line-height:1.5}
+.review-q{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px;white-space:pre-line;word-break:break-word}
+.review-ans{font-size:12px;margin-bottom:2px;white-space:pre-line;word-break:break-word}
+.review-explain{font-size:12px;color:var(--text2);line-height:1.65;white-space:pre-line;word-break:break-word;margin-top:6px}
 
 /* History */
 .hist-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}

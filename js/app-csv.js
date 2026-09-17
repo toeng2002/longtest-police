@@ -69,6 +69,19 @@ function esc(s) {
     .split('"').join('&quot;');
 }
 
+// จัดรูปแบบข้อความที่มีการขึ้นบรรทัดใหม่จาก CSV หรือ Excel (Alt+Enter หรือ \n หรือ <br>)
+function normalizeCsvNewlines(val) {
+  if (val == null) return '';
+  return String(val)
+    .replace(/\r\n/g, '\n')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\\r/g, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .trim();
+}
+
 // template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว (อิงตาม Unit ID และ Subject ID จากทะเบียนวิชา subject_lookup เช่น 1=ตม., 1=กฎหมาย ตม.)
 function buildTemplateCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
@@ -76,7 +89,7 @@ function buildTemplateCsv() {
 
   rows.push(['1', 'p', '1', 'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',
     '1 มกราคม 2522', '27 กุมภาพันธ์ 2523', '1 มีนาคม 2522', '31 ธันวาคม 2522',
-    'b', 'มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523', 'medium', 'ข้อสอบปี 2565 รอบ 1',
+    'b', 'มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523' + NL + NL + 'อ้างอิง: มาตรา 2 แห่ง พ.ร.บ. คนเข้าเมือง พ.ศ. 2522', 'medium', 'ข้อสอบปี 2565 รอบ 1',
     '', '', '', '', '', '', 'true']);
 
   rows.push(['1', 'p', '2', 'ข้อใดเขียนถูกต้อง?',
@@ -426,13 +439,13 @@ function validateCsvRow(o) {
     subject: '',
     subject_id: null,
     subjectLabel: '',
-    question: o.question || '',
-    choice_a: o.choice_a || '',
-    choice_b: o.choice_b || '',
-    choice_c: o.choice_c || '',
-    choice_d: o.choice_d || '',
-    answer: (o.answer || '').toLowerCase(),
-    explanation: o.explanation || '',
+    question: normalizeCsvNewlines(o.question),
+    choice_a: normalizeCsvNewlines(o.choice_a),
+    choice_b: normalizeCsvNewlines(o.choice_b),
+    choice_c: normalizeCsvNewlines(o.choice_c),
+    choice_d: normalizeCsvNewlines(o.choice_d),
+    answer: (o.answer || '').trim().toLowerCase(),
+    explanation: normalizeCsvNewlines(o.explanation),
     difficulty: o.difficulty || 'medium',
     source: o.source || '',
     question_image: o.question_image_url || null,
