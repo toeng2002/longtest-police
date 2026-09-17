@@ -16,3 +16,4 @@ ALTER TABLE units ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "units_all" ON units;
 CREATE POLICY "units_all" ON units FOR ALL USING (true) WITH CHECK (true);
+
