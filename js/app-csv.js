@@ -20,8 +20,10 @@ const CSV_OPTIONAL = ['explanation', 'difficulty', 'source', 'question_image_url
 
 let CSV_ROWS = [];        // แถวที่อ่านและตรวจแล้ว
 let CSV_FILE_NAME = '';
-let CSV_SUBJ_CACHE = {};   // key = unit|level|name → id
-let CSV_SUBJ_BY_ID = {};   // key = id → subject object
+let CSV_LOOKUP_BY_ID = {};     // key = subject_lookup.id → ทะเบียนวิชา
+let CSV_LOOKUP_BY_NAME = {};   // key = lowercase name → ทะเบียนวิชา
+let CSV_SUBJ_CACHE = {};       // key = unit|level|name → subjects.id (ที่จัดลงหน่วยงาน)
+let CSV_SUBJ_BY_NAME = {};     // key = lowercase name → array of subjects rows
 
 /* ============================================================
    1) ดาวน์โหลดไฟล์ template
@@ -67,22 +69,22 @@ function esc(s) {
     .split('"').join('&quot;');
 }
 
-// template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว (อิงตาม Unit ID และ Subject ID ตัวเลข เช่น 1=ตม., 6=กฎหมาย ตม.)
+// template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว (อิงตาม Unit ID และ Subject ID จากทะเบียนวิชา subject_lookup เช่น 1=ตม., 1=กฎหมาย ตม.)
 function buildTemplateCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
   const rows = [head];
 
-  rows.push(['1', 'p', '6', 'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',
+  rows.push(['1', 'p', '1', 'พ.ร.บ. คนเข้าเมือง พ.ศ. 2522 มีผลบังคับใช้เมื่อใด?',
     '1 มกราคม 2522', '27 กุมภาพันธ์ 2523', '1 มีนาคม 2522', '31 ธันวาคม 2522',
     'b', 'มีผลบังคับใช้ตั้งแต่วันที่ 27 กุมภาพันธ์ 2523', 'medium', 'ข้อสอบปี 2565 รอบ 1',
     '', '', '', '', '', '', 'true']);
 
-  rows.push(['1', 'p', '7', 'ข้อใดเขียนถูกต้อง?',
+  rows.push(['1', 'p', '2', 'ข้อใดเขียนถูกต้อง?',
     'กระเพราะ', 'กระเพาะ', 'กะเพราะ', 'กะเพาะ',
     'b', 'สะกดถูกต้องตามพจนานุกรมฉบับราชบัณฑิตยสถาน', 'easy', '',
     '', '', '', '', '', '', 'true']);
 
-  rows.push(['1,3', 'p,s', '8', 'ประเทศไทยมีกี่จังหวัด?',
+  rows.push(['1,3', 'p,s', '3', 'ประเทศไทยมีกี่จังหวัด?',
     '75 จังหวัด', '76 จังหวัด', '77 จังหวัด', '78 จังหวัด',
     'c', 'ประเทศไทยมีทั้งหมด 77 จังหวัด', 'easy', 'ข้อสอบปี 2564',
     '', '', '', '', '', '', 'true']);
@@ -95,23 +97,23 @@ function downloadCsvTemplate() {
   showToast('ดาวน์โหลด template แล้ว', 'success');
 }
 
-// ตัวอย่างเต็ม 5 ข้อ (ให้เห็นรูปแบบครบ อิงตาม Unit ID และ Subject ID ตัวเลข)
+// ตัวอย่างเต็ม 5 ข้อ (ให้เห็นรูปแบบครบ อิงตาม Unit ID และ Subject ID จากทะเบียนวิชา subject_lookup)
 function buildSampleCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
   const qs = [
-    ['1', 'p', '6', 'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',
+    ['1', 'p', '1', 'คนต่างด้าวที่เข้ามาโดยไม่ได้รับอนุญาต มีความผิดตามมาตราใด?',
       'มาตรา 11', 'มาตรา 54', 'มาตรา 81', 'มาตรา 101', 'c',
       'มาตรา 81 โทษจำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 20,000 บาท', 'medium', 'ข้อสอบปี 2565'],
-    ['1', 'p', '6', 'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',
+    ['1', 'p', '1', 'ใครมีอำนาจสั่งเนรเทศคนต่างด้าวออกนอกราชอาณาจักร?',
       'ผบ.ตร.', 'อธิบดีกรมการปกครอง', 'รัฐมนตรีว่าการกระทรวงมหาดไทย', 'นายกรัฐมนตรี', 'c',
       'รัฐมนตรีว่าการกระทรวงมหาดไทย มีอำนาจสั่งเนรเทศ', 'hard', ''],
-    ['1', 's', '24', 'Choose the correct sentence.',
+    ['1', 's', '7', 'Choose the correct sentence.',
       'He don not have a visa.', 'He does not have a visa.', 'He not have a visa.', 'He have not a visa.', 'b',
       'ประธานเป็นบุรุษที่ 3 เอกพจน์ ใช้ does not', 'medium', ''],
-    ['1', 'p', '8', 'ASEAN มีสมาชิกกี่ประเทศ?',
+    ['1', 'p', '3', 'ASEAN มีสมาชิกกี่ประเทศ?',
       '8 ประเทศ', '9 ประเทศ', '10 ประเทศ', '11 ประเทศ', 'c',
       'อาเซียนมีสมาชิก 10 ประเทศ', 'easy', ''],
-    ['1', 's', '11', 'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',
+    ['1', 's', '4', 'โทษทางอาญาตาม ป.อาญา มีกี่สถาน?',
       '3 สถาน', '4 สถาน', '5 สถาน', '6 สถาน', 'c',
       'มี 5 สถาน: ประหารชีวิต จำคุก กักขัง ปรับ ริบทรัพย์สิน', 'medium', '']
   ];
@@ -127,28 +129,58 @@ function downloadCsvSample() {
   showToast('ดาวน์โหลดตัวอย่างแล้ว', 'success');
 }
 
-// รายชื่อหน่วย+วิชาที่มีในระบบ (แสดง subject_id และ unit_id ตัวเลข ให้รู้ว่ากรอก ID ไหน)
+// รายชื่อหน่วย+วิชาที่มีในระบบ (อิงรหัสวิชาจากทะเบียนวิชา subject_lookup และแสดงการจัดลงหน่วยงานใน subjects)
 async function downloadCsvSubjects() {
   showToast('กำลังสร้างไฟล์...', '');
   try {
-    const u = await supa.from('units').select('*').order('id');
-    const s = await supa.from('subjects').select('*').order('unit_id').order('id');
-    const rows = [['subject_id', 'subject_name', 'unit_id', 'unit_name', 'short_name', 'level', 'ratio']];
-    (s.data || []).forEach(function (x) {
-      const unit = (u.data || []).filter(function (y) { return y.id === x.unit_id; })[0];
-      rows.push([
-        x.id,
-        x.name,
-        x.unit_id,
-        unit ? unit.name : '',
-        unit ? (unit.short_name || '') : '',
-        x.level,
-        x.ratio == null ? '' : x.ratio
-      ]);
+    const [uRes, lRes, sRes] = await Promise.all([
+      supa.from('units').select('*').order('id'),
+      supa.from('subject_lookup').select('*').order('sort_order').order('id'),
+      supa.from('subjects').select('*').order('unit_id').order('id')
+    ]);
+
+    const units = uRes.data || [];
+    const lookups = lRes.data || [];
+    const subjects = sRes.data || [];
+
+    const unitById = {};
+    units.forEach(function (u) { unitById[u.id] = u; });
+
+    const rows = [
+      ['subject_id (รหัสวิชา)', 'subject_name (ชื่อวิชา)', 'unit_id (รหัสหน่วย)', 'unit_name (ชื่อหน่วย)', 'short_name', 'level (ระดับ)', 'ratio (สัดส่วน)']
+    ];
+
+    lookups.forEach(function (l) {
+      const mappings = subjects.filter(function (s) {
+        return s.name && s.name.trim().toLowerCase() === l.name.trim().toLowerCase();
+      });
+
+      if (mappings.length > 0) {
+        mappings.forEach(function (m) {
+          const u = unitById[m.unit_id];
+          rows.push([
+            l.id,
+            l.name,
+            m.unit_id,
+            u ? u.name : '',
+            u ? (u.short_name || '') : '',
+            m.level,
+            m.ratio == null ? '' : m.ratio
+          ]);
+        });
+      } else {
+        rows.push([
+          l.id,
+          l.name,
+          '',
+          '',
+          '',
+          '',
+          ''
+        ]);
+      }
     });
-    if (rows.length === 1) {
-      (u.data || []).forEach(function (x) { rows.push(['', '', x.id, x.name, x.short_name || '', '', '']); });
-    }
+
     downloadTextFile('รายชื่อหน่วยและวิชา-อิงID.csv', csvText(rows));
     showToast('ดาวน์โหลดรายชื่ออิง ID แล้ว', 'success');
   } catch (e) {
@@ -428,26 +460,47 @@ function validateCsvRow(o) {
     });
   }
 
-  // ตรวจสอบคอลัมน์ subject (รองรับทั้ง ID ตัวเลข และชื่อวิชา)
+  // ตรวจสอบคอลัมน์ subject (อิงรหัสวิชาจากทะเบียนวิชา subject_lookup หรือชื่อวิชา)
   if (!rawSubj) {
     errors.push('ไม่มีรหัสวิชาหรือชื่อวิชา (subject)');
   } else if (/^\d+$/.test(rawSubj)) {
     subjectId = Number(rawSubj);
-    if (CSV_SUBJ_BY_ID && CSV_SUBJ_BY_ID[subjectId]) {
-      const found = CSV_SUBJ_BY_ID[subjectId];
+    const found = CSV_LOOKUP_BY_ID[subjectId] || CSV_LOOKUP_BY_ID[String(subjectId)];
+    if (found) {
       subjectName = found.name;
-      // ถ้าไม่ได้ระบุ unit หรือ level ในแถว สามารถเติมจากข้อมูลวิชาได้โดยอัตโนมัติ
-      if (data.units.length === 0 && found.unit_id) {
-        data.units = [String(found.unit_id)];
-      }
-      if (data.levels.length === 0 && found.level) {
-        data.levels = found.level === 'both' ? ['p', 's'] : [found.level];
-      }
     } else {
-      errors.push('ไม่พบรหัสวิชา (subject ID) "' + rawSubj + '" ในระบบ (กรุณาดู ID ที่ถูกต้องจากปุ่ม "รายชื่อหน่วย+วิชาที่มี")');
+      errors.push('ไม่พบรหัสวิชา (subject ID) "' + rawSubj + '" ในทะเบียนวิชา (subject_lookup) — กรุณาดู ID ที่ถูกต้องจากปุ่ม "รายชื่อหน่วย+วิชาที่มี"');
     }
   } else {
     subjectName = rawSubj;
+    const found = CSV_LOOKUP_BY_NAME[rawSubj.toLowerCase()];
+    if (found) {
+      subjectId = found.id;
+    }
+  }
+
+  // ถ้ายังไม่ได้ระบุ unit หรือ level แต่ใน subjects มีการจัดวิชานี้ไว้แค่หน่วยเดียว สามารถเติมให้อัตโนมัติได้
+  if (subjectName && CSV_SUBJ_BY_NAME && CSV_SUBJ_BY_NAME[subjectName.toLowerCase()]) {
+    const mappings = CSV_SUBJ_BY_NAME[subjectName.toLowerCase()];
+    if (data.units.length === 0) {
+      const distinctUnits = [];
+      mappings.forEach(function (m) {
+        const uStr = String(m.unit_id);
+        if (distinctUnits.indexOf(uStr) === -1) distinctUnits.push(uStr);
+      });
+      if (distinctUnits.length === 1) {
+        data.units = distinctUnits;
+      }
+    }
+    if (data.levels.length === 0) {
+      const distinctLevels = [];
+      mappings.forEach(function (m) {
+        if (distinctLevels.indexOf(m.level) === -1) distinctLevels.push(m.level);
+      });
+      if (distinctLevels.length === 1) {
+        data.levels = distinctLevels[0] === 'both' ? ['p', 's'] : [distinctLevels[0]];
+      }
+    }
   }
 
   data.subject = subjectName;
@@ -582,23 +635,58 @@ function resetCsvImport() {
 // แคช subject ที่มีอยู่ เพื่อไม่สร้างซ้ำในไฟล์เดียว
 
 async function csvLoadSubjects() {
-  const { data, error } = await supa.from('subjects').select('*');
-  if (error) throw new Error('โหลดรายวิชาไม่สำเร็จ: ' + error.message);
+  // 1) โหลดทะเบียนวิชาหลักจาก subject_lookup
+  let lookups = [];
+  try {
+    const { data, error } = await supa.from('subject_lookup').select('*').order('id');
+    if (!error && data) lookups = data;
+  } catch (e) {
+    console.warn('โหลด subject_lookup ไม่สำเร็จ:', e);
+  }
+
+  // 2) โหลดข้อมูล subjects ที่บันทึกการจัดลงหน่วยงาน+ระดับ
+  let subjects = [];
+  try {
+    const { data, error } = await supa.from('subjects').select('*');
+    if (!error && data) subjects = data;
+  } catch (e) {
+    console.warn('โหลด subjects ไม่สำเร็จ:', e);
+  }
+
+  CSV_LOOKUP_BY_ID = {};
+  CSV_LOOKUP_BY_NAME = {};
   CSV_SUBJ_CACHE = {};
-  CSV_SUBJ_BY_ID = {};
-  (data || []).forEach(function (s) {
+  CSV_SUBJ_BY_NAME = {};
+
+  lookups.forEach(function (l) {
+    CSV_LOOKUP_BY_ID[l.id] = l;
+    CSV_LOOKUP_BY_ID[String(l.id)] = l;
+    if (l.name) {
+      CSV_LOOKUP_BY_NAME[l.name.trim().toLowerCase()] = l;
+    }
+  });
+
+  subjects.forEach(function (s) {
+    if (s.name) {
+      const lower = s.name.trim().toLowerCase();
+      if (!CSV_LOOKUP_BY_NAME[lower]) {
+        CSV_LOOKUP_BY_NAME[lower] = { id: s.id, name: s.name };
+      }
+      if (!CSV_SUBJ_BY_NAME[lower]) CSV_SUBJ_BY_NAME[lower] = [];
+      CSV_SUBJ_BY_NAME[lower].push(s);
+    }
+    // แคช key = unit_id|level|name → subjects.id
     CSV_SUBJ_CACHE[s.unit_id + '|' + s.level + '|' + s.name] = s.id;
     if (s.level === 'both') {
       CSV_SUBJ_CACHE[s.unit_id + '|p|' + s.name] = s.id;
       CSV_SUBJ_CACHE[s.unit_id + '|s|' + s.name] = s.id;
     }
-    CSV_SUBJ_BY_ID[String(s.id)] = s;
-    CSV_SUBJ_BY_ID[s.id] = s;
   });
-  return data || [];
+
+  return { lookups: lookups, subjects: subjects };
 }
 
-// หา/สร้าง subject ให้ได้ id กลับมา
+// หา/สร้าง subject ในตาราง subjects (ที่เก็บว่าวิชาจาก subject_lookup ไปลงที่หน่วยไหน ระดับไหน)
 async function csvEnsureSubject(unitId, level, name) {
   const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
   const keyExact = parsedUnitId + '|' + level + '|' + name;
@@ -621,11 +709,25 @@ async function csvEnsureSubject(unitId, level, name) {
     return { id: existing[0].id, created: false };
   }
 
-  // ถ้ายังไม่มี สร้างใหม่
+  // ตรวจสอบและบันทึกเข้าทะเบียน subject_lookup ถ้ายังไม่มี
+  try {
+    const lower = name.trim().toLowerCase();
+    if (!CSV_LOOKUP_BY_NAME[lower]) {
+      const insL = await supa.from('subject_lookup').insert({ name: name, active: true, sort_order: 0 }).select().single();
+      if (insL.data) {
+        CSV_LOOKUP_BY_ID[insL.data.id] = insL.data;
+        CSV_LOOKUP_BY_NAME[lower] = insL.data;
+      }
+    }
+  } catch (e) {
+    console.warn('บันทึกทะเบียน subject_lookup ไม่สำเร็จ:', e);
+  }
+
+  // ถ้ายังไม่มีใน subjects ให้สร้างใหม่สำหรับหน่วยและระดับนี้
   const res = await supa.from('subjects')
     .insert({ name: name, unit_id: parsedUnitId, level: level, ratio: 0 })
     .select().single();
-  if (res.error) throw new Error('สร้างวิชา "' + name + '" ไม่สำเร็จ: ' + res.error.message);
+  if (res.error) throw new Error('สร้างวิชา "' + name + '" ให้หน่วยนี้ไม่สำเร็จ: ' + res.error.message);
 
   CSV_SUBJ_CACHE[keyExact] = res.data.id;
   return { id: res.data.id, created: true };
@@ -688,39 +790,22 @@ async function runCsvImport() {
           if (resolvedUnits.indexOf(matched) === -1) resolvedUnits.push(matched);
         }
 
-        // 1) สร้าง/หา subject ของแต่ละหน่วย × ระดับ
+        // 1) สร้าง/หา subject ของแต่ละหน่วย × ระดับ ในตาราง subjects
+        // (subject_lookup คือทะเบียนวิชา ส่วน subjects คือที่เก็บว่าวิชาจาก subject_lookup ไปลงที่หน่วยไหน ระดับไหน)
         const pairs = [];
         for (const u of resolvedUnits) {
           for (const lv of d.levels) {
             const key = u + '|' + lv;
             if (pairs.some(function (p) { return p.key === key; })) continue;
 
-            // ถ้าแถวนี้ระบุ d.subject_id มา และตรงกับหน่วยและระดับนี้ ให้ใช้ ID นั้นได้เลย
-            let matchedSubjId = null;
-            if (d.subject_id && CSV_SUBJ_BY_ID[d.subject_id]) {
-              const sObj = CSV_SUBJ_BY_ID[d.subject_id];
-              const sUnit = typeof sObj.unit_id === 'number' ? sObj.unit_id : Number(sObj.unit_id);
-              const uNum = typeof u === 'number' ? u : Number(u);
-              const lvMatch = sObj.level === 'both' || sObj.level === lv;
-              if (sUnit === uNum && lvMatch) {
-                matchedSubjId = sObj.id;
-              }
-            }
-
-            if (matchedSubjId) {
-              pairs.push({ key: key, unit: u, level: lv, subject_id: matchedSubjId });
-            } else {
-              const s = await csvEnsureSubject(u, lv, d.subject);
-              if (s.created) result.subjectsCreated++;
-              pairs.push({ key: key, unit: u, level: lv, subject_id: s.id });
-            }
+            const s = await csvEnsureSubject(u, lv, d.subject);
+            if (s.created) result.subjectsCreated++;
+            pairs.push({ key: key, unit: u, level: lv, subject_id: s.id });
           }
         }
 
-        // 2) insert ข้อสอบ (ใช้ d.subject_id หากมีใน pairs หรือใช้ pairs[0].subject_id)
-        const primarySubjectId = (d.subject_id && pairs.some(function (p) { return p.subject_id === d.subject_id; }))
-          ? d.subject_id
-          : (pairs[0] ? pairs[0].subject_id : d.subject_id);
+        // 2) insert ข้อสอบ (subject_id ใน questions ชี้ไปที่ subjects.id)
+        const primarySubjectId = pairs[0].subject_id;
 
         const qRes = await supa.from('questions').insert({
           question: d.question,
@@ -735,6 +820,7 @@ async function runCsvImport() {
           published: d.published,
           subject_id: primarySubjectId
         }).select().single();
+
 
         if (qRes.error) throw new Error(qRes.error.message);
 

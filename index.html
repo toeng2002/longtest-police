@@ -950,7 +950,7 @@ textarea{resize:vertical;min-height:72px}
             <tbody>
               <tr><td><span class="mono">unit</span></td><td>1 หรือ 1,3</td><td style="color:var(--text2)">ID ตัวเลขของหน่วยงาน (ดูได้จากปุ่ม "รายชื่อหน่วย+วิชาที่มี") คั่นด้วย , สำหรับหลายหน่วย</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">level</span></td><td>p,s</td><td style="color:var(--text2)">p=ประทวน s=สัญญาบัตร ใส่ทั้งคู่ได้</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
-              <tr><td><span class="mono">subject</span></td><td>6 หรือ กฎหมาย ตม.</td><td style="color:var(--text2)"><strong>รหัสวิชา (ID ตัวเลข แนะนำ)</strong> หรือ ชื่อวิชา (ดู ID ได้จากปุ่ม "รายชื่อหน่วย+วิชาที่มี")</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
+              <tr><td><span class="mono">subject</span></td><td>1 หรือ กฎหมาย ตม.</td><td style="color:var(--text2)"><strong>รหัสวิชา (ID จากทะเบียนวิชา subject_lookup แนะนำ)</strong> หรือ ชื่อวิชา (ดูรหัสได้จากปุ่ม "รายชื่อหน่วย+วิชาที่มี")</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">question</span></td><td>พ.ร.บ. คนเข้าเมือง...</td><td style="color:var(--text2)">ข้อความคำถาม</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">choice_a … choice_d</span></td><td>27 กุมภาพันธ์ 2523</td><td style="color:var(--text2)">ตัวเลือก ก–ง</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
               <tr><td><span class="mono">answer</span></td><td>a</td><td style="color:var(--text2)">เฉลย: a/b/c/d (ตัวพิมพ์เล็ก)</td><td><span class="tag tag-red">จำเป็น</span></td></tr>
@@ -965,7 +965,7 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <div class="notice info" style="margin-top:12px">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
-          <div>คอลัมน์ <strong>unit</strong> และ <strong>level</strong> รองรับหลายค่าในแถวเดียว เช่น <span class="mono">unit = 1,3</span> (ต้องระบุเป็น ID ตัวเลข) และคอลัมน์ <strong>subject</strong> แนะนำให้ระบุเป็น <strong>ID รหัสวิชา (ตัวเลข)</strong> เช่น <span class="mono">subject = 6</span> เพื่อความถูกต้องแม่นยำและป้องกันปัญหาชื่อวิชาซ้ำซ้อน</div>
+          <div>คอลัมน์ <strong>unit</strong> และ <strong>level</strong> รองรับหลายค่าในแถวเดียว เช่น <span class="mono">unit = 1,3</span> (ต้องระบุเป็น ID ตัวเลข) และคอลัมน์ <strong>subject</strong> แนะนำให้ระบุเป็น <strong>รหัสวิชาจากทะเบียนวิชา (subject_lookup)</strong> เช่น <span class="mono">subject = 1</span> (กฎหมาย ตม.) หรือ <span class="mono">subject = 2</span> (ภาษาไทย) โดยระบบจะนำไปบันทึกลงในหน่วยและระดับที่ระบุในตาราง subjects ให้อัตโนมัติ</div>
         </div>
       </div>
 
