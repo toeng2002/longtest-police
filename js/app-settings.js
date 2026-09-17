@@ -169,29 +169,58 @@ async function loadSetSubjectUnits() {
    1) หน่วยงาน
    ============================================================ */
 async function loadSetUnits() {
-  setBody('set-units-body', loadingRow(6));
+  setBody('set-units-body', loadingRow(7));
   await loadSetCounts();
 
   const { data, error } = await supa.from('units').select('*').order('id');
-  if (error) { setBody('set-units-body', errorRow(6, error.message)); return; }
+  if (error) { setBody('set-units-body', errorRow(7, error.message)); return; }
 
   SET_DATA.units = data || [];
   if (SET_DATA.units.length === 0) {
-    setBody('set-units-body', emptyRow(6, 'ยังไม่มีหน่วยงาน — กด "เพิ่มหน่วยงาน"'));
+    setBody('set-units-body', emptyRow(7, 'ยังไม่มีหน่วยงาน — กด "เพิ่มหน่วยงาน"'));
     return;
   }
   setBody('set-units-body', SET_DATA.units.map(u => {
     const n = SET_DATA.counts.units[u.id] || 0;
+    const isActive = u.active !== false;
+    const statusBtn = '<button class="btn btn-sm" onclick="toggleUnitActive(' + JSON.stringify(u.id) + ',' + (!isActive) + ')" ' +
+      'style="font-size:12px;padding:3px 8px;cursor:pointer;' +
+      (isActive ? 'background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)' : 'background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)') + '" ' +
+      'title="' + (isActive ? 'คลิกเพื่อปิดการเข้าใช้งาน' : 'คลิกเพื่อเปิดใช้งาน') + '">' +
+      (isActive ? '🟢 เปิดใช้งาน' : '🔒 ปิดใช้งาน') + '</button>';
     return '<tr>' +
       '<td><span class="mono">' + esc(u.id) + '</span></td>' +
       '<td>' + esc(u.name) + '</td>' +
       '<td>' + esc(u.short_name || '-') + '</td>' +
       '<td style="font-size:18px">' + esc(u.icon || '-') + '</td>' +
       '<td>' + countCell(n) + '</td>' +
+      '<td>' + statusBtn + '</td>' +
       '<td>' + actionCell('units', JSON.stringify(u.id), true) + '</td>' +
       '</tr>';
   }).join(''));
 }
+
+async function toggleUnitActive(id, newStatus) {
+  try {
+    const parsedId = isNaN(Number(id)) ? id : Number(id);
+    const { error } = await supa.from('units').update({ active: newStatus }).eq('id', parsedId);
+    if (error) {
+      if (error.code === 'PGRST204' || (error.message && error.message.includes('active'))) {
+        showToast('ยังไม่ได้รัน SQL: กรุณารัน migration_units_active.sql ใน Supabase ก่อน', 'danger');
+      } else {
+        showToast('ไม่สามารถเปลี่ยนสถานะได้: ' + error.message, 'danger');
+      }
+      return;
+    }
+    showToast((newStatus ? 'เปิดใช้งานหน่วยงานแล้ว' : 'ปิดการเข้าใช้งานหน่วยงานแล้ว'), 'success');
+    await loadSetUnits();
+    if (typeof _unitsCache !== 'undefined') _unitsCache = null;
+    if (typeof _unitsListCache !== 'undefined') _unitsListCache = null;
+  } catch (e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+  }
+}
+
 
 /* ============================================================
    2) วิชา
@@ -353,6 +382,7 @@ function openSetForm(kind, id) {
 
   if (kind === 'units') {
     const u = editing ? SET_DATA.units.find(x => String(x.id) === String(setEditId)) : null;
+    const isActive = u ? (u.active !== false) : true;
     fields.innerHTML =
       (editing ? fieldHtml('f-id', 'ID หน่วยงาน (ตัวเลข)', u ? u.id : '', { readonly: true }) : '') +
       fieldHtml('f-code', 'รหัสอ้างอิง (code)', u ? (u.code || u.id) : '', {
@@ -363,7 +393,15 @@ function openSetForm(kind, id) {
         required: true, placeholder: 'เช่น ตรวจคนเข้าเมือง'
       }) +
       fieldHtml('f-short', 'ชื่อย่อ', u ? u.short_name : '', { placeholder: 'เช่น ตม.' }) +
-      fieldHtml('f-icon', 'ไอคอน (emoji)', u ? u.icon : '', { placeholder: 'เช่น ✈️' });
+      fieldHtml('f-icon', 'ไอคอน (emoji)', u ? u.icon : '', { placeholder: 'เช่น ✈️' }) +
+      '<div class="form-group" style="margin-bottom:14px">' +
+        '<label class="form-label">สถานะการเข้าใช้งาน</label>' +
+        '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:4px 0">' +
+          '<input type="checkbox" id="f-unit-active" ' + (isActive ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">' +
+          '<span>เปิดให้ผู้ใช้เข้าทำข้อสอบหน่วยงานนี้</span>' +
+        '</label>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">หากปิด ผู้ใช้จะไม่สามารถเลือกสอบในหน่วยนี้ได้</div>' +
+      '</div>';
   }
 
   else if (kind === 'subjects') {
@@ -483,22 +521,34 @@ async function saveUnit(editing) {
   const name = fieldValue('f-name');
   if (failIf(!name ? 'กรุณากรอกชื่อหน่วยงาน' : null)) return;
 
+  const activeEl = document.getElementById('f-unit-active');
+  const activeVal = activeEl ? activeEl.checked : true;
+
   const row = {
-    id: code,
     code: code,
     name: name,
     short_name: fieldValue('f-short') || null,
-    icon: fieldValue('f-icon') || null
+    icon: fieldValue('f-icon') || null,
+    active: activeVal
   };
   const res = editing
     ? await supa.from('units').update(row).eq('id', setEditId)
     : await supa.from('units').insert(row);
-  if (failIf(res.error ? res.error.message : null)) return;
+  if (res.error) {
+    if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.includes('active'))) {
+      showSetError('ยังไม่ได้รัน SQL: กรุณารัน migration_units_active.sql ใน Supabase ก่อน');
+    } else {
+      showSetError(res.error.message);
+    }
+    return;
+  }
 
   showToast(editing ? 'แก้ไขหน่วยงานแล้ว' : 'เพิ่มหน่วยงานแล้ว', 'success');
   closeSetModal();
   loadSetUnits();
   loadSetSubjectUnits();
+  if (typeof _unitsCache !== 'undefined') _unitsCache = null;
+  if (typeof _unitsListCache !== 'undefined') _unitsListCache = null;
 }
 
 async function saveSubject(editing) {

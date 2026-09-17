@@ -611,14 +611,8 @@ async function saveQuestion(){
   }
 }
 
-let toastTimer;
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast show'+(type?' '+type:'');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.className='toast',3000);
-}
+// หมายเหตุ: showToast ถูกประกาศไว้ใน exam-db.js แล้ว (ใช้ร่วมกันทุกหน้า)
+
 /* ============================================================
    ตัวช่วยของฟอร์มเพิ่ม/แก้ไขข้อสอบ — ผูกกับข้อมูลจริงใน Supabase
    ============================================================ */

@@ -56,6 +56,10 @@ body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:1
 .unit-card.sel .unit-icon{background:var(--accent-bg)}
 .unit-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
 .unit-desc{font-size:11px;color:var(--text2)}
+.unit-card.unit-disabled{opacity:.65;background:var(--surface2);border-style:dashed;cursor:not-allowed}
+.unit-card.unit-disabled:hover{border-color:var(--border);background:var(--surface2)}
+.unit-closed-badge{font-size:10px;font-weight:600;color:var(--danger);background:var(--danger-bg);border:1px solid var(--danger-border);padding:2px 6px;border-radius:10px;display:inline-flex;align-items:center;gap:2px}
+
 
 .level-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:border-color .15s}
 .level-card:hover{border-color:var(--border2)}
@@ -354,6 +358,8 @@ textarea{resize:vertical;min-height:72px}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--success)}
 .toast.danger{background:var(--danger)}
+.toast.warning{background:var(--warning)}
+
 
 </style>
 </head>
@@ -1036,7 +1042,7 @@ textarea{resize:vertical;min-height:72px}
         </div>
         <div class="card"><div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:90px">รหัส</th><th>ชื่อหน่วยงาน</th><th style="width:110px">ชื่อย่อ</th><th style="width:70px">ไอคอน</th><th style="width:100px">ข้อสอบ</th><th style="width:110px">จัดการ</th></tr></thead>
+            <thead><tr><th style="width:80px">รหัส</th><th>ชื่อหน่วยงาน</th><th style="width:100px">ชื่อย่อ</th><th style="width:70px">ไอคอน</th><th style="width:90px">ข้อสอบ</th><th style="width:130px">สถานะ</th><th style="width:100px">จัดการ</th></tr></thead>
             <tbody id="set-units-body"></tbody>
           </table>
         </div></div>
