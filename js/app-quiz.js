@@ -17,8 +17,8 @@ let state = {
 // ===== units cache สำหรับ map unit_id ↔ ชื่อจริง / code =====
 let _unitsCache = null;
 let _unitsListCache = null;
-async function getUnitsMap(){
-  if(!_unitsCache){
+async function getUnitsMap(forceRefresh = false){
+  if(!_unitsCache || forceRefresh){
     const units = await loadUnits();
     _unitsListCache = units;
     _unitsCache = {};
@@ -30,6 +30,7 @@ async function getUnitsMap(){
   }
   return _unitsCache;
 }
+
 
 // โหลดข้อสอบจาก Supabase
 async function loadQuestions(unitId, level, subjId=null){
@@ -90,7 +91,7 @@ function cleanImgUrl(url){
 // โหลดหน่วยงานจาก Supabase
 async function loadUnits(){
   try {
-    const {data,error}=await supa.from('units').select('*');
+    const {data,error}=await supa.from('units').select('*').order('id');
     if(error) throw error;
     return data||[];
   } catch(e){ return []; }
@@ -209,21 +210,53 @@ function makeBc(items){
   return items.map((it,i)=>`<span class="${i===items.length-1?'cur':''}">${it}</span>${i<items.length-1?'<span class="bc-sep">›</span>':''}`).join('');
 }
 
+function escJs(str){
+  return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function onDisabledUnitClick(name){
+  showToast('หน่วยงาน "' + name + '" ปิดการเข้าใช้งานชั่วคราว', 'warning');
+}
+
 async function renderUnitCards(){
   const wrap = document.getElementById('unit-cards-wrap');
   if(!wrap) return;
   const units = await loadUnits();
   if(!units || units.length === 0) return;
 
+  _unitsListCache = units;
+  _unitsCache = {};
+  units.forEach(u => {
+    _unitsCache[u.id] = u;
+    _unitsCache[String(u.id)] = u;
+    if(u.code) _unitsCache[u.code] = u;
+  });
+
   wrap.innerHTML = `
     <div class="card-grid col2" style="margin-bottom:10px">
-      ${units.map(u => `
-        <div class="unit-card ${String(state.unit)===String(u.id)?'sel':''}" id="u-${u.id}" onclick="pickUnit(${typeof u.id==='number'?u.id:`'${u.id}'`},'${u.name}','${u.short_name || u.name}')">
-          <div class="unit-icon">${u.icon || '🏢'}</div>
-          <div class="unit-name">${u.short_name || u.name}</div>
-          <div class="unit-desc">${u.name}</div>
-        </div>
-      `).join('')}
+      ${units.map(u => {
+        const isActive = u.active !== false;
+        if (isActive) {
+          return `
+            <div class="unit-card ${String(state.unit)===String(u.id)?'sel':''}" id="u-${u.id}" onclick="pickUnit(${typeof u.id==='number'?u.id:`'${u.id}'`},'${escJs(u.name)}','${escJs(u.short_name || u.name)}')">
+              <div class="unit-icon">${u.icon || '🏢'}</div>
+              <div class="unit-name">${u.short_name || u.name}</div>
+              <div class="unit-desc">${u.name}</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="unit-card unit-disabled" id="u-${u.id}" onclick="onDisabledUnitClick('${escJs(u.short_name || u.name)}')" title="หน่วยงานนี้ปิดการเข้าใช้งานชั่วคราว">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="unit-icon" style="filter:grayscale(1);opacity:0.5">${u.icon || '🏢'}</div>
+                <span class="unit-closed-badge">🔒 ปิดใช้งาน</span>
+              </div>
+              <div class="unit-name" style="color:var(--text3)">${u.short_name || u.name}</div>
+              <div class="unit-desc" style="color:var(--text3)">${u.name}</div>
+            </div>
+          `;
+        }
+      }).join('')}
     </div>
   `;
 }
@@ -238,6 +271,10 @@ function goHome(){
 }
 
 function pickUnit(id,name,short){
+  if(_unitsCache && _unitsCache[id] && _unitsCache[id].active === false){
+    showToast('หน่วยงาน "' + (short || name) + '" ปิดการเข้าใช้งานชั่วคราว', 'warning');
+    return;
+  }
   state.unit=id; state.unitName=name; state.unitShort=short;
   document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
   const card = document.getElementById('u-'+id) || (id==1?document.getElementById('u-tm'):null);
@@ -248,6 +285,10 @@ function pickUnit(id,name,short){
 
 function goLevel(){
   if(!state.unit) return;
+  if(_unitsCache && _unitsCache[state.unit] && _unitsCache[state.unit].active === false){
+    showToast('หน่วยงาน "' + (state.unitShort || state.unitName) + '" ปิดการเข้าใช้งานชั่วคราว', 'warning');
+    return;
+  }
   document.getElementById('bc-level').innerHTML=makeBc([state.unitShort,'เลือกระดับ']);
   document.getElementById('sub-level').textContent=state.unitName;
   ['lv-p','lv-s'].forEach(id=>document.getElementById(id).classList.remove('sel'));
