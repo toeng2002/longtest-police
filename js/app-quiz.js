@@ -16,12 +16,15 @@ let state = {
 
 // ===== units cache สำหรับ map unit_id ↔ ชื่อจริง / code =====
 let _unitsCache = null;
+let _unitsListCache = null;
 async function getUnitsMap(){
   if(!_unitsCache){
     const units = await loadUnits();
+    _unitsListCache = units;
     _unitsCache = {};
     units.forEach(u => {
       _unitsCache[u.id] = u;
+      _unitsCache[String(u.id)] = u;
       if(u.code) _unitsCache[u.code] = u;
     });
   }
@@ -114,14 +117,20 @@ async function loadSubjects(unitId, level){
 
 // บันทึก history ลง Supabase + localStorage (fallback)
 async function saveHistory(rec){
-  // localStorage fallback
-  state.history.unshift(rec);
-  if(state.history.length>100) state.history=state.history.slice(0,100);
-  localStorage.setItem('examHistory',JSON.stringify(state.history));
-  // Supabase
   try {
     const uMap = await getUnitsMap();
     const resolvedUnitId = uMap[rec.unit] ? uMap[rec.unit].id : rec.unit;
+    const cleanUnitId = resolvedUnitId != null ? String(resolvedUnitId) : '';
+    rec.unit = cleanUnitId;
+    if (uMap[resolvedUnitId]) {
+      rec.unitShort = uMap[resolvedUnitId].short_name || rec.unitShort;
+      rec.unitName = uMap[resolvedUnitId].name || rec.unitName;
+    }
+    // localStorage fallback
+    state.history.unshift(rec);
+    if(state.history.length>100) state.history=state.history.slice(0,100);
+    localStorage.setItem('examHistory',JSON.stringify(state.history));
+
     await supa.from('exam_history').insert({
       session_id: SESSION_ID,
       unit_id: resolvedUnitId,
@@ -133,7 +142,12 @@ async function saveHistory(rec){
       total: rec.total,
       pct: rec.pct
     });
-  } catch(e){ console.warn('saveHistory Supabase error:',e); }
+  } catch(e){
+    console.warn('saveHistory error:',e);
+    state.history.unshift(rec);
+    if(state.history.length>100) state.history=state.history.slice(0,100);
+    localStorage.setItem('examHistory',JSON.stringify(state.history));
+  }
 }
 
 // โหลด history จาก Supabase
@@ -147,20 +161,35 @@ async function loadHistory(){
       .order('created_at',{ascending:false})
       .limit(100);
     if(error) throw error;
-    return (data||[]).map(h=>({
-      id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
-      unit:h.unit_id,
-      unitShort: unitsMap[h.unit_id]?.short_name || h.unit_id?.toUpperCase(),
-      unitName:  unitsMap[h.unit_id]?.name  || h.unit_id,
-      level:h.level,
-      lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
-      examType:h.exam_type, quizMode:h.quiz_mode,
-      subj:'', subjName:h.subject_name,
-      score:h.score, total:h.total, pct:h.pct
-    }));
+    return (data||[]).map(h=>{
+      const uInfo = unitsMap[h.unit_id] || (h.unit_id != null ? unitsMap[String(h.unit_id)] : null);
+      const unitShort = uInfo ? (uInfo.short_name || uInfo.name) : String(h.unit_id || '');
+      const unitName  = uInfo ? uInfo.name : String(h.unit_id || '');
+      return {
+        id:h.id, date:new Date(h.created_at).toLocaleString('th-TH'),
+        unit:String(h.unit_id != null ? h.unit_id : ''),
+        unitShort: unitShort,
+        unitName:  unitName,
+        level:h.level,
+        lvLabel:h.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร',
+        examType:h.exam_type, quizMode:h.quiz_mode,
+        subj:'', subjName:h.subject_name,
+        score:h.score, total:h.total, pct:h.pct
+      };
+    });
   } catch(e){
     // fallback localStorage
-    return JSON.parse(localStorage.getItem('examHistory')||'[]');
+    const unitsMap = await getUnitsMap().catch(()=>({}));
+    const local = JSON.parse(localStorage.getItem('examHistory')||'[]');
+    return local.map(h => {
+      const uInfo = unitsMap[h.unit] || (h.unit != null ? unitsMap[String(h.unit)] : null);
+      return {
+        ...h,
+        unit: String(uInfo?.id != null ? uInfo.id : (h.unit != null ? h.unit : '')),
+        unitShort: uInfo?.short_name || h.unitShort || String(h.unit || ''),
+        unitName: uInfo?.name || h.unitName || String(h.unit || '')
+      };
+    });
   }
 }
 
@@ -513,7 +542,7 @@ async function showResult(){
   document.getElementById('r-score').textContent=score+' / '+total;
   document.getElementById('r-pct').textContent='คะแนน '+pct+'% — '+state.unitShort+' '+(state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร');
 
-  const prevScores=state.history.filter(h=>h.unit===state.unit&&h.level===state.level&&h.subj===(state.selSubj||'all')).map(h=>h.pct);
+  const prevScores=state.history.filter(h=>String(h.unit)===String(state.unit)&&h.level===state.level&&h.subj===(state.selSubj||'all')).map(h=>h.pct);
   const avg=prevScores.length>0?Math.round(prevScores.reduce((a,b)=>a+b,0)/prevScores.length):null;
   const best=prevScores.length>0?Math.max(...prevScores):null;
   const diff=avg!==null?pct-avg:null;
@@ -571,47 +600,104 @@ async function goHistory(){
   document.getElementById('h-list').innerHTML='<div class="empty-hist"><div class="big">⏳</div><p>กำลังโหลด...</p></div>';
   goScreen('s-history');
   state.history=await loadHistory();
-  renderHistory('all');
+  await renderHistory('all');
 }
 
-function renderHistory(filterUnit){
-  const hist=state.history;
-  const units=[...new Set(hist.map(h=>h.unit))];
+async function renderHistory(filterUnit='all'){
+  const hist = state.history || [];
+  const uMap = await getUnitsMap();
+  const allUnits = _unitsListCache || await loadUnits();
 
-  const stats=document.getElementById('h-stats');
-  if(hist.length===0){
-    stats.innerHTML='';
+  const targetUnit = String(filterUnit);
+  const isAll = (targetUnit === 'all');
+  const filtered = isAll ? hist : hist.filter(h => String(h.unit) === targetUnit);
+
+  // สถิติสรุป
+  const stats = document.getElementById('h-stats');
+  if (filtered.length === 0) {
+    if (isAll) {
+      stats.innerHTML = '';
+    } else {
+      stats.innerHTML = `
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--accent)">0</div><div class="hist-stat-lbl">ครั้งที่สอบ</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--text3)">—</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--text3)">—</div><div class="hist-stat-lbl">สูงสุด</div></div>
+        <div class="hist-stat"><div class="hist-stat-val">0</div><div class="hist-stat-lbl">รูปแบบ</div></div>`;
+    }
   } else {
-    const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
-    const avg=filtered.length?Math.round(filtered.reduce((a,b)=>a+b.pct,0)/filtered.length):0;
-    const best=filtered.length?Math.max(...filtered.map(h=>h.pct)):0;
-    const subjCount=[...new Set(filtered.map(h=>h.subjName))].length;
-    stats.innerHTML=`
+    const avg = Math.round(filtered.reduce((a, b) => a + b.pct, 0) / filtered.length);
+    const best = Math.max(...filtered.map(h => h.pct));
+    const subjCount = [...new Set(filtered.map(h => h.subjName))].length;
+    stats.innerHTML = `
       <div class="hist-stat"><div class="hist-stat-val" style="color:var(--accent)">${filtered.length}</div><div class="hist-stat-lbl">ครั้งที่สอบ</div></div>
-      <div class="hist-stat"><div class="hist-stat-val" style="color:${avg>=70?'var(--success)':avg>=50?'var(--warning)':'var(--danger)'}">${avg}%</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
+      <div class="hist-stat"><div class="hist-stat-val" style="color:${avg >= 70 ? 'var(--success)' : avg >= 50 ? 'var(--warning)' : 'var(--danger)'}">${avg}%</div><div class="hist-stat-lbl">เฉลี่ย</div></div>
       <div class="hist-stat"><div class="hist-stat-val" style="color:var(--success)">${best}%</div><div class="hist-stat-lbl">สูงสุด</div></div>
       <div class="hist-stat"><div class="hist-stat-val">${subjCount}</div><div class="hist-stat-lbl">รูปแบบ</div></div>`;
   }
 
-  const filters=document.getElementById('h-filters');
-  filters.innerHTML=`<button class="filter-btn ${filterUnit==='all'?'active':''}" onclick="renderHistory('all')">ทั้งหมด</button>`;
-  units.forEach(u=>{
-    const s=hist.find(h=>h.unit===u);
-    if(s) filters.innerHTML+=`<button class="filter-btn ${filterUnit===u?'active':''}" onclick="renderHistory('${u}')">${s.unitShort}</button>`;
+  // ปุ่มตัวกรองหน่วย
+  const filters = document.getElementById('h-filters');
+  const unitList = [];
+  const seenUnits = new Set();
+
+  (allUnits || []).forEach(u => {
+    const uId = String(u.id);
+    if (!seenUnits.has(uId)) {
+      seenUnits.add(uId);
+      const count = hist.filter(h => String(h.unit) === uId).length;
+      unitList.push({
+        id: uId,
+        short: u.short_name || u.name,
+        name: u.name,
+        count: count
+      });
+    }
   });
 
-  const list=document.getElementById('h-list');
-  const filtered=filterUnit==='all'?hist:hist.filter(h=>h.unit===filterUnit);
-  if(filtered.length===0){
-    list.innerHTML=`<div class="empty-hist"><div class="big">📋</div><p>ยังไม่มีประวัติการสอบ<br>เริ่มทำข้อสอบแล้วผลจะปรากฏที่นี่</p></div>`;
+  hist.forEach(h => {
+    const uId = String(h.unit);
+    if (uId && !seenUnits.has(uId)) {
+      seenUnits.add(uId);
+      const count = hist.filter(x => String(x.unit) === uId).length;
+      unitList.push({
+        id: uId,
+        short: h.unitShort || uId,
+        name: h.unitName || uId,
+        count: count
+      });
+    }
+  });
+
+  let filterHtml = `<button class="filter-btn ${isAll ? 'active' : ''}" onclick="renderHistory('all')">ทั้งหมด (${hist.length})</button>`;
+  unitList.forEach(u => {
+    const active = (!isAll && targetUnit === u.id) ? 'active' : '';
+    const badge = u.count > 0 ? ` <span style="font-size:10px;opacity:0.85">(${u.count})</span>` : '';
+    filterHtml += `<button class="filter-btn ${active}" onclick="renderHistory('${u.id}')">${u.short}${badge}</button>`;
+  });
+  filters.innerHTML = filterHtml;
+
+  // รายการประวัติ
+  const list = document.getElementById('h-list');
+  if (filtered.length === 0) {
+    if (isAll) {
+      list.innerHTML = `<div class="empty-hist"><div class="big">📋</div><p>ยังไม่มีประวัติการสอบ<br>เริ่มทำข้อสอบแล้วผลจะปรากฏที่นี่</p></div>`;
+    } else {
+      const uInfo = unitList.find(u => u.id === targetUnit);
+      const uName = uInfo ? (uInfo.name || uInfo.short) : 'หน่วยนี้';
+      list.innerHTML = `<div class="empty-hist">
+        <div class="big">📋</div>
+        <p>ยังไม่มีประวัติการสอบของ<b>${uName}</b><br>สามารถเลือกหน่วยนี้เพื่อเริ่มฝึกทำข้อสอบได้</p>
+      </div>`;
+    }
     return;
   }
-  list.innerHTML='<div class="hlist">';
-  filtered.forEach(h=>{
-    const color=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
-    const dotColor=h.pct>=70?'var(--success)':h.pct>=50?'var(--warning)':'var(--danger)';
-    const modeLabel=h.quizMode==='instant'?'ฝึกซ้อม':'จำลองสอบ';
-    list.innerHTML+=`<div class="hitem">
+
+  let listHtml = '<div class="hlist">';
+  filtered.forEach(h => {
+    const color = h.pct >= 70 ? 'var(--success)' : h.pct >= 50 ? 'var(--warning)' : 'var(--danger)';
+    const dotColor = color;
+    const modeLabel = h.quizMode === 'instant' ? 'ฝึกซ้อม' : 'จำลองสอบ';
+    listHtml += `<div class="hitem">
       <div class="hdot" style="background:${dotColor}"></div>
       <div class="hitem-body">
         <div class="hitem-title">${h.unitShort} — ${h.lvLabel}</div>
@@ -624,7 +710,8 @@ function renderHistory(filterUnit){
       </div>
     </div>`;
   });
-  list.innerHTML+='</div>';
+  listHtml += '</div>';
+  list.innerHTML = listHtml;
 }
 
 async function clearHistory(){
@@ -634,5 +721,5 @@ async function clearHistory(){
   try{
     await supa.from('exam_history').delete().eq('session_id',SESSION_ID);
   }catch(e){console.warn(e);}
-  renderHistory('all');
+  await renderHistory('all');
 }
