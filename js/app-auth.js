@@ -18,12 +18,21 @@ function isBcryptHash(s){
 async function verifyPassword(plain, stored){
   if(stored==null) return false;
   if(isBcryptHash(stored)){
-    if(typeof dcodeIO==='undefined' || !dcodeIO.bcrypt){
-      console.error('ไม่พบไลบรารี bcryptjs — กรุณาตรวจสอบว่าโหลด script จาก CDN สำเร็จ');
+    const bcryptLib = (typeof dcodeIO!=='undefined' && dcodeIO.bcrypt) 
+      ? dcodeIO.bcrypt 
+      : (typeof bcrypt!=='undefined' ? bcrypt : null);
+
+    if(!bcryptLib){
+      console.error('ไม่พบไลบรารี bcryptjs — กรุณาตรวจสอบว่าโหลด script สำเร็จ');
+      const err=document.getElementById('login-err');
+      if(err){
+        err.style.display='block';
+        err.textContent='ไม่พบระบบตรวจสอบรหัสผ่าน (bcrypt) กรุณารีเฟรชหน้าเว็บ';
+      }
       return false;
     }
     try{
-      return await dcodeIO.bcrypt.compare(plain, stored);
+      return await bcryptLib.compare(plain, stored);
     }catch(e){
       console.error('bcrypt compare error', e);
       return false;
@@ -52,10 +61,11 @@ async function doLogin(){
   err.style.display='none';
 
   try{
+    // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin)
     const {data,error}=await supa
       .from('users')
       .select('id, username, password, role, display_name')
-      .eq('username', u)
+      .ilike('username', u)
       .maybeSingle();
 
     if(error) throw error;
@@ -92,7 +102,7 @@ async function doLogin(){
   }catch(e){
     console.error('doLogin error', e);
     err.style.display='block';
-    err.textContent='เชื่อมต่อฐานข้อมูลไม่ได้ กรุณาลองใหม่';
+    err.textContent='เชื่อมต่อฐานข้อมูลไม่ได้: ' + (e.message || 'กรุณาลองใหม่');
   }finally{
     btn.textContent='เข้าสู่ระบบ';
     btn.disabled=false;

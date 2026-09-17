@@ -12,7 +12,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ข้อสอบตำรวจ">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase.min.js"></script>
+<script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');}</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 /* ===== USER STYLES ===== */
@@ -384,11 +385,11 @@ textarea{resize:vertical;min-height:72px}
     <div id="login-err" style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;display:none">Username หรือ Password ไม่ถูกต้อง</div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username</label>
-      <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username">
+      <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
     <div style="margin-bottom:20px">
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Password</label>
-      <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password">
+      <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
     <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer">เข้าสู่ระบบ</button>
     <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี? <span style="color:var(--accent)">ติดต่อผู้ดูแลระบบ</span></div>
@@ -651,7 +652,8 @@ textarea{resize:vertical;min-height:72px}
 
 <div id="admin-layout" style="display:none"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+<script src="js/bcrypt.min.js"></script>
+<script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js"></script>
 <script src="js/app-auth.js"></script>
 <script src="js/app-quiz.js"></script>

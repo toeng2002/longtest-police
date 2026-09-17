@@ -12,14 +12,32 @@ const DELETE_PIN = '123456';
 // Supabase client ใช้ร่วมกันทั้งแอป (ประกาศครั้งเดียวที่นี่)
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ฟังก์ชันสร้าง UUID ที่รองรับทั้ง Secure Context (HTTPS/localhost) และ Non-Secure Context (HTTP ผ่าน LAN IP เช่น 192.168.x.x)
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // session id สำหรับ track history ของผู้ใช้เครื่องนี้ (ไม่ต้อง login)
 const SESSION_ID = (() => {
-  let s = localStorage.getItem('exam_session');
-  if (!s) {
-    s = crypto.randomUUID();
-    localStorage.setItem('exam_session', s);
+  try {
+    let s = localStorage.getItem('exam_session');
+    if (!s) {
+      s = generateUUID();
+      localStorage.setItem('exam_session', s);
+    }
+    return s;
+  } catch (e) {
+    return generateUUID();
   }
-  return s;
 })();
 
 // ผู้ใช้ที่ล็อกอินอยู่ (ถูก set โดย app-auth.js)
