@@ -137,9 +137,9 @@ function goPage(id,navEl){
   document.getElementById('topbar-title').textContent=titles[id]||id;
   // เปิดหน้าตั้งค่า → โหลดข้อมูล (ฟังก์ชันอยู่ใน app-settings.js)
   if(id==='settings' && typeof initSettingsPage==='function') initSettingsPage();
-  // show switch-to-user if role=both
+  // show switch-to-user if role=both or admin
   const sw=document.getElementById('admin-switch-user');
-  if(sw) sw.style.display=currentUser?.role==='both'?'flex':'none';
+  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin')?'flex':'none';
   // เปิด Dashboard → โหลดสถิติใหม่ทุกครั้ง (ไม่งั้นตัวเลขจะค้างอยู่ของเก่า)
   if(id==='dashboard' && typeof initAdminDashboard==='function') initAdminDashboard();
   // เปิดหน้าเพิ่มข้อสอบ → เตรียมฟอร์ม + โหลดรายวิชาจริง

@@ -121,7 +121,7 @@ function enterUser(){
   const tb=document.getElementById('user-topbar-name');
   if(tb) tb.textContent=name;
   const sw=document.getElementById('switch-to-admin');
-  if(sw) sw.style.display=currentUser?.role==='both'?'inline-flex':'none';
+  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin')?'inline-flex':'none';
 
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {

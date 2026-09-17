@@ -407,7 +407,7 @@ textarea{resize:vertical;min-height:72px}
   <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
     <div style="font-size:14px;font-weight:600;color:var(--text)">ระบบข้อสอบตำรวจ</div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--accent);cursor:pointer">⚙️ Admin</button>
+      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:5px 12px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500">⚙️ กลับหน้า Admin</button>
       <span id="user-topbar-name" style="font-size:12px;color:var(--text2)"></span>
       <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer">ออกจากระบบ</button>
     </div>
@@ -669,11 +669,16 @@ textarea{resize:vertical;min-height:72px}
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.09 4.6h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 9v.09a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         ตั้งค่า
       </div>
+      <div class="nav-sep">จำลองสอบ</div>
+      <div class="nav-item" onclick="enterUser()" style="color:var(--accent);font-weight:500">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ทดสอบทำข้อสอบ
+      </div>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item" id="admin-switch-user" onclick="enterUser()" style="color:var(--accent);display:none">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        สลับเป็น User
+      <div class="nav-item" id="admin-switch-user" onclick="enterUser()" style="color:var(--accent)">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ทดสอบทำข้อสอบ
       </div>
       <div class="nav-item" onclick="doLogout()" style="color:var(--danger)">
         <svg viewBox="0 0 24 24" style="stroke:var(--danger)"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -686,6 +691,10 @@ textarea{resize:vertical;min-height:72px}
     <div class="topbar">
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-right">
+        <button class="btn btn-sm" onclick="enterUser()" style="background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);font-weight:500">
+          <svg viewBox="0 0 24 24" style="stroke:var(--accent);width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          ทดสอบทำข้อสอบ
+        </button>
         <span style="font-size:12px;color:var(--text2)">admin</span>
         <span id="admin-username" style="font-size:12px;color:var(--text2)">admin</span><div class="avatar" id="admin-avatar">AD</div>
       </div>
