@@ -1298,6 +1298,26 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('PWA Install prompt available');
+  document.querySelectorAll('.btn-pwa-install').forEach(function(b){ b.style.display='inline-flex'; });
+});
+
+function triggerPWAInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choice) {
+      if (choice.outcome === 'accepted') {
+        console.log('User installed PWA');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
 </script>
 </body>
 </html>
