@@ -279,8 +279,7 @@ function pickUnit(id,name,short){
   document.querySelectorAll('.unit-card').forEach(c=>c.classList.remove('sel'));
   const card = document.getElementById('u-'+id) || (id==1?document.getElementById('u-tm'):null);
   if(card) card.classList.add('sel');
-  const btn = document.getElementById('btn-home');
-  if(btn) btn.disabled=false;
+  goLevel();
 }
 
 function goLevel(){
@@ -291,8 +290,12 @@ function goLevel(){
   }
   document.getElementById('bc-level').innerHTML=makeBc([state.unitShort,'เลือกระดับ']);
   document.getElementById('sub-level').textContent=state.unitName;
-  ['lv-p','lv-s'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-level').disabled=true;
+  ['lv-p','lv-s'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('sel');
+  });
+  const btn = document.getElementById('btn-level');
+  if(btn) btn.disabled=true;
   state.level='';
   goScreen('s-level');
 }
@@ -301,15 +304,19 @@ function pickLevel(lv){
   state.level=lv;
   document.getElementById('lv-p').classList.toggle('sel',lv==='p');
   document.getElementById('lv-s').classList.toggle('sel',lv==='s');
-  document.getElementById('btn-level').disabled=false;
+  goType();
 }
 
 function goType(){
   const lvLabel=state.level==='p'?'ชั้นประทวน':'ชั้นสัญญาบัตร';
   document.getElementById('bc-type').innerHTML=makeBc([state.unitShort,lvLabel,'รูปแบบ']);
   document.getElementById('sub-type').textContent=state.unitName+' — '+lvLabel;
-  ['tp-sub','tp-full'].forEach(id=>document.getElementById(id).classList.remove('sel'));
-  document.getElementById('btn-type').disabled=true;
+  ['tp-sub','tp-full'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('sel');
+  });
+  const btn = document.getElementById('btn-type');
+  if(btn) btn.disabled=true;
   state.examType='';
   goScreen('s-type');
 }
@@ -318,7 +325,7 @@ function pickType(t){
   state.examType=t;
   document.getElementById('tp-sub').classList.toggle('sel',t==='sub');
   document.getElementById('tp-full').classList.toggle('sel',t==='full');
-  document.getElementById('btn-type').disabled=false;
+  goSubjOrRatio();
 }
 
 function goSubjOrRatio(){
@@ -334,7 +341,8 @@ async function goSubj(){
   list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">⏳ กำลังโหลดวิชา...</div>';
   state.selSubj='';
   state.selSubjName='';
-  document.getElementById('btn-subj').disabled=true;
+  const btn = document.getElementById('btn-subj');
+  if(btn) btn.disabled=true;
   goScreen('s-subj');
 
   // ดึงวิชาจากตาราง subjects + นับข้อสอบจริงจาก questions
@@ -370,18 +378,12 @@ async function goSubj(){
     const n=counts[subj.id]||0;
     const hasQs=n>0;
     if(!hasQs) row.style.opacity='0.6';
-    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon||'📄'}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${n} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">${hasQs?'เลือก':'ยังไม่มีข้อสอบ'}</span>`;
+    row.innerHTML=`<div class="subj-left"><div class="subj-ico">${subj.icon||'📄'}</div><div><div class="subj-name">${subj.name}</div><div class="subj-count">${n} ข้อในฐานข้อมูล</div></div></div><span class="tag tag-gray" id="stag-${subj.id}">${hasQs?'เลือก →':'ยังไม่มีข้อสอบ'}</span>`;
     if(hasQs){
       row.onclick=()=>{
         state.selSubj=subj.id;
         state.selSubjName=subj.name;
-        subjs.forEach(s=>{
-          const t=document.getElementById('stag-'+s.id);
-          if(t && counts[s.id]>0){t.className='tag tag-gray';t.textContent='เลือก';}
-        });
-        const tsel=document.getElementById('stag-'+subj.id);
-        if(tsel){tsel.className='tag tag-blue';tsel.textContent='✓ เลือกแล้ว';}
-        document.getElementById('btn-subj').disabled=false;
+        goMode('subj');
       };
     }
     list.appendChild(row);
