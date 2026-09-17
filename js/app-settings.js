@@ -352,12 +352,8 @@ function openSetForm(kind, id) {
     editing ? 'แก้ไขข้อมูลแล้วกดบันทึก' : 'กรอกข้อมูลให้ครบแล้วกดบันทึก';
 
   if (kind === 'units') {
-    const u = editing ? SET_DATA.units.find(x => x.id === setEditId) : null;
     const u = editing ? SET_DATA.units.find(x => String(x.id) === String(setEditId)) : null;
     fields.innerHTML =
-      fieldHtml('f-code', 'รหัสหน่วยงาน', u ? u.id : '', {
-        required: true, readonly: editing, placeholder: 'เช่น tm',
-        hint: editing ? 'แก้รหัสไม่ได้ เพราะถูกอ้างอิงในข้อสอบแล้ว' : 'ตัวพิมพ์เล็ก a-z, 0-9, _ เช่น tm หรือ jr'
       (editing ? fieldHtml('f-id', 'ID หน่วยงาน (ตัวเลข)', u ? u.id : '', { readonly: true }) : '') +
       fieldHtml('f-code', 'รหัสอ้างอิง (code)', u ? (u.code || u.id) : '', {
         required: true, placeholder: 'เช่น tm หรือ jr',
@@ -511,7 +507,6 @@ async function saveSubject(editing) {
   const unitId = fieldValue('f-unit');
   if (failIf(!unitId ? 'กรุณาเลือกหน่วยงาน' : null)) return;
 
-  const row = { name: name, unit_id: unitId, level: fieldValue('f-level') || 'p' };
   const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
   const row = { name: name, unit_id: parsedUnitId, level: fieldValue('f-level') || 'p' };
 
@@ -1086,14 +1081,12 @@ async function ensureSubjectForUnit(name, unitId, level) {
 
   // 1) หาในหน่วย+ระดับ ที่เลือกก่อน
   const lv = level === 'p' ? ['p', 'both'] : level === 's' ? ['s', 'both'] : ['p', 's', 'both'];
-  let found = SUBJ_LIST.filter(s => s.name === name && s.unit_id === unitId &&
   let found = SUBJ_LIST.filter(s => s.name === name && String(s.unit_id) === String(unitId) &&
     lv.indexOf(s.level) !== -1)[0];
   if (found) return { id: found.id, created: false, name: found.name };
 
   // 2) มีวิชานี้อยู่แล้วในหน่วยอื่น → คัดลอกมาให้หน่วยนี้
   const other = findSubjectAnyUnit(name, level);
-  const row = { name: name, unit_id: unitId, level: (level || 'p') };
   const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
   const row = { name: name, unit_id: parsedUnitId, level: (level || 'p') };
   if (other && other.ratio != null) row.ratio = other.ratio;
