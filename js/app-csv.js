@@ -82,6 +82,14 @@ function normalizeCsvNewlines(val) {
     .trim();
 }
 
+// ล้างค่า URL รูปภาพ ป้องกันค่าบูลีน 'true'/'false' หรือข้อความว่างหลุดเข้ามา
+function cleanImgUrl(val) {
+  if (val == null) return null;
+  const s = String(val).trim();
+  if (!s || /^(true|false|null|undefined|0|1|none)$/i.test(s)) return null;
+  return s;
+}
+
 // template เปล่า: หัวคอลัมน์ + ตัวอย่าง 3 แถว (อิงตาม Unit ID และ Subject ID จากทะเบียนวิชา subject_lookup เช่น 1=ตม., 1=กฎหมาย ตม.)
 function buildTemplateCsv() {
   const head = CSV_REQUIRED.concat(CSV_OPTIONAL);
@@ -303,7 +311,27 @@ function csvToObjects(rows) {
     'source': 'source',
     'ที่มา': 'source',
     'publish': 'publish',
-    'เผยแพร่': 'publish'
+    'เผยแพร่': 'publish',
+    'question_image_url': 'question_image_url',
+    'question_image': 'question_image_url',
+    'question image': 'question_image_url',
+    'image': 'question_image_url',
+    'รูป': 'question_image_url',
+    'รูปภาพ': 'question_image_url',
+    'รูปคำถาม': 'question_image_url',
+    'รูปภาพคำถาม': 'question_image_url',
+    'choice_a_image_url': 'choice_a_image_url',
+    'choice_a_image': 'choice_a_image_url',
+    'choice_b_image_url': 'choice_b_image_url',
+    'choice_b_image': 'choice_b_image_url',
+    'choice_c_image_url': 'choice_c_image_url',
+    'choice_c_image': 'choice_c_image_url',
+    'choice_d_image_url': 'choice_d_image_url',
+    'choice_d_image': 'choice_d_image_url',
+    'explanation_image_url': 'explanation_image_url',
+    'explanation_image': 'explanation_image_url',
+    'รูปเฉลย': 'explanation_image_url',
+    'รูปภาพเฉลย': 'explanation_image_url'
   };
 
   const head = rawHead.map(function (h) {
@@ -448,12 +476,12 @@ function validateCsvRow(o) {
     explanation: normalizeCsvNewlines(o.explanation),
     difficulty: o.difficulty || 'medium',
     source: o.source || '',
-    question_image: o.question_image_url || null,
-    choice_a_image: o.choice_a_image_url || null,
-    choice_b_image: o.choice_b_image_url || null,
-    choice_c_image: o.choice_c_image_url || null,
-    choice_d_image: o.choice_d_image_url || null,
-    explanation_image: o.explanation_image_url || null,
+    question_image: cleanImgUrl(o.question_image_url),
+    choice_a_image: cleanImgUrl(o.choice_a_image_url),
+    choice_b_image: cleanImgUrl(o.choice_b_image_url),
+    choice_c_image: cleanImgUrl(o.choice_c_image_url),
+    choice_d_image: cleanImgUrl(o.choice_d_image_url),
+    explanation_image: cleanImgUrl(o.explanation_image_url),
     published: /^(true|1|yes|y)$/i.test(o.publish || '')
   };
 

@@ -18,9 +18,17 @@ async function dbLoadQuestions(){
 
   const uMap = typeof getUnitsMap === 'function' ? await getUnitsMap() : {};
 
+  function cleanImgUrl(url){
+    if(!url) return '';
+    const s=String(url).trim();
+    if(!s || /^(true|false|null|undefined|0|1|none)$/i.test(s)) return '';
+    return s;
+  }
+
   return (data||[]).map(q=>{
     const unitList = [...new Set((q.question_units||[]).map(u=>u.unit_id))];
     const unitLabels = unitList.map(uId => (uMap[uId] ? (uMap[uId].short_name || uMap[uId].name) : uId));
+    const imgUrl = cleanImgUrl(q.question_image);
     return {
       id:q.id,
       question:q.question,
@@ -29,14 +37,14 @@ async function dbLoadQuestions(){
       explanation:q.explanation||'',
       difficulty:q.difficulty||'medium',
       source:q.source||'',
-      image:q.question_image||'',
+      image:imgUrl,
       subject_id:q.subject_id,
       unitsRaw:unitList,
       levelsRaw:[...new Set((q.question_units||[]).map(u=>u.level))],
       unit:unitLabels.join(','),
       level:[...new Set((q.question_units||[]).map(u=>u.level))].join(','),
       subject:q.subjects?.name||'',
-      type:q.question_image?'มีรูป':'ข้อความ',
+      type:imgUrl?'มีรูป':'ข้อความ',
       status:q.published?'เผยแพร่':'รอตรวจสอบ'
     };
   });

@@ -55,18 +55,25 @@ async function loadQuestions(unitId, level, subjId=null){
     const {data,error}=await q;
     if(error) throw error;
 
+function cleanImgUrl(url){
+  if(!url) return null;
+  const s=String(url).trim();
+  if(!s || /^(true|false|null|undefined|0|1|none)$/i.test(s)) return null;
+  return s;
+}
+
     // แปลงให้ตรงกับ format เดิม
     return (data||[]).map(row=>{
       const qq=row.questions;
       if(!qq) return null;
       const choices=[qq.choice_a,qq.choice_b,qq.choice_c,qq.choice_d];
-      const images=[qq.choice_a_image,qq.choice_b_image,qq.choice_c_image,qq.choice_d_image];
+      const images=[cleanImgUrl(qq.choice_a_image),cleanImgUrl(qq.choice_b_image),cleanImgUrl(qq.choice_c_image),cleanImgUrl(qq.choice_d_image)];
       const ansIdx={'a':0,'b':1,'c':2,'d':3}[qq.answer]??0;
       return {
         id:qq.id, q:qq.question,
         c:choices, cImg:images,
         a:ansIdx, e:qq.explanation||'',
-        img:qq.question_image||null,
+        img:cleanImgUrl(qq.question_image),
         subjId:qq.subject_id,
         subj:qq.subjects?.name||'', subjIcon:'📄'
       };
@@ -441,8 +448,15 @@ function renderQ(){
   document.getElementById('q-text').textContent=formatMultiline(q.q);
 
   const imgWrap=document.getElementById('q-img-wrap');
-  if(q.img){imgWrap.style.display='block';document.getElementById('q-img').src=q.img;}
-  else imgWrap.style.display='none';
+  const validImg=cleanImgUrl(q.img);
+  if(validImg){
+    imgWrap.style.display='block';
+    const imgEl=document.getElementById('q-img');
+    imgEl.src=validImg;
+    imgEl.onerror=()=>{imgWrap.style.display='none';};
+  } else {
+    imgWrap.style.display='none';
+  }
 
   const ch=document.getElementById('q-choices');
   ch.innerHTML='';
