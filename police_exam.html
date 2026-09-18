@@ -34,17 +34,20 @@
   --sar: env(safe-area-inset-right, 0px);
 }
 
-html, body {
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
-  position: relative;
+html {
+  box-sizing: border-box;
   -webkit-text-size-adjust: 100%;
-  overscroll-behavior-y: none;
-  touch-action: pan-y;
 }
-
-body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:15px;color:var(--text);line-height:1.6;min-height:100vh;min-height:100dvh}
+body {
+  overflow-x: hidden;
+  background: var(--bg);
+  font-family: 'Sarabun', system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 
 .screen{display:none;max-width:480px;margin:0 auto;padding:calc(16px + var(--sat)) 16px calc(24px + var(--sab));min-height:100vh;min-height:100dvh;box-sizing:border-box}
 .screen.active{display:block}
@@ -385,6 +388,10 @@ textarea{resize:vertical;min-height:72px}
 .toast.warning{background:var(--warning)}
 
 @media (max-width: 768px){
+  html, body {
+    touch-action: pan-y;
+    overscroll-behavior-y: none;
+  }
   input, select, textarea {
     font-size: 16px !important;
   }

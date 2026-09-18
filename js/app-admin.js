@@ -212,8 +212,8 @@ async function initAdminDashboard(){
         <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
       </div>
     </div>`).join('');
-  // กิจกรรมล่าสุดสร้างจากข้อสอบที่เพิ่มเข้ามาจริง
-  const recent=[...rows].slice(0,6);
+  // กิจกรรมล่าสุดสร้างจากข้อสอบที่เพิ่มเข้ามาจริง (แสดง 30 รายการล่าสุด พร้อมเลื่อนสกอร์เมาส์ได้)
+  const recent=[...rows].slice(0,30);
   document.getElementById('activity-log').innerHTML=recent.length===0
     ? '<div style="font-size:12px;color:var(--text2);padding:10px 0">ยังไม่มีกิจกรรม</div>'
     : recent.map(q=>`

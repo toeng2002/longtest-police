@@ -64,7 +64,7 @@ async function doLogin(){
     // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin)
     const {data,error}=await supa
       .from('users')
-      .select('id, username, password, role, display_name')
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email')
       .ilike('username', u)
       .maybeSingle();
 
@@ -83,8 +83,18 @@ async function doLogin(){
       return;
     }
 
-    // ล็อกอินผ่าน — เก็บผู้ใช้โดยไม่เก็บรหัสผ่านไว้
-    currentUser={ id:data.id, username:data.username, role:data.role, display_name:data.display_name };
+    // ล็อกอินผ่าน — เก็บผู้ใช้และข้อมูลแพ็กเกจโดยไม่เก็บรหัสผ่านไว้
+    currentUser={
+      id: data.id,
+      username: data.username,
+      role: data.role,
+      display_name: data.display_name,
+      plan: data.plan || 'free',
+      status: data.status || 'active',
+      subscription_until: data.subscription_until || null,
+      phone: data.phone || '',
+      email: data.email || ''
+    };
     _loginUser=currentUser;
 
     // เข้าโหมดตามสิทธิ์ (ห่อ try ไว้ ไม่ให้ error ของ UI กลบผลการ login)
@@ -217,4 +227,21 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', showLoginScreen);
 } else {
   showLoginScreen();
+}
+
+// ============================================================
+// ฟังก์ชันตรวจสอบสิทธิ์และสถานะการต่ออายุ (Subscription Helpers)
+// เตรียมพร้อมสำหรับระบบต่ออายุและจำกัดสิทธิ์ในอนาคต
+// ============================================================
+function isSubscriptionActive(user) {
+  if (!user) return false;
+  if (user.role === 'admin' || user.role === 'both' || user.plan === 'vip') return true;
+  if (!user.subscription_until) return false;
+  return new Date(user.subscription_until) > new Date();
+}
+
+function getSubscriptionDaysRemaining(user) {
+  if (!user || !user.subscription_until) return 0;
+  const diff = new Date(user.subscription_until) - new Date();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
