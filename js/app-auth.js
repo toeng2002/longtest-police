@@ -83,73 +83,8 @@ async function doLogin(){
       return;
     }
 
-    // ล็อกอินผ่าน — เก็บผู้ใช้และข้อมูลแพ็กเกจโดยไม่เก็บรหัสผ่านไว้
-    const defaultAdminPerms = ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
-    let userPerms = data.permissions;
-    if (!userPerms || !Array.isArray(userPerms)) {
-      userPerms = defaultAdminPerms;
-    }
-
-    currentUser={
-      id: data.id,
-      username: data.username,
-      role: data.role,
-      display_name: data.display_name,
-      plan: data.plan || 'free',
-      status: data.status || 'active',
-      subscription_until: data.subscription_until || null,
-      phone: data.phone || '',
-      email: data.email || '',
-      permissions: userPerms
-    };
-    _loginUser=currentUser;
-
-    // --- ระบบความปลอดภัย: จำกัด 1 ID เข้าใช้งานได้ 1 อุปกรณ์/IP ---
-    try {
-      const mySessionToken = typeof generateUUID === 'function' ? generateUUID() : ('sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9));
-      sessionStorage.setItem('police_current_session_token', mySessionToken);
-      
-      // ดึง IP ปัจจุบัน (แบบจำกัดเวลาไม่เกิน 2 วิ)
-      const clientIp = await getClientIP();
-      sessionStorage.setItem('police_client_ip', clientIp);
-      
-      // บันทึกลง Supabase เพื่อให้เครื่องอื่นตรวจจับได้ทันที
-      const { error: sessErr } = await supa
-        .from('users')
-        .update({
-          current_session_token: mySessionToken,
-          last_login_ip: clientIp,
-          last_active_at: new Date().toISOString()
-        })
-        .eq('id', data.id);
-
-      if (sessErr) {
-        console.warn('บันทึก Session ล้มเหลว (อาจยังไม่ได้รัน setup_security.sql):', sessErr.message);
-      }
-
-      // เริ่มระบบเฝ้าระวัง: หากมีเครื่องอื่นล็อกอินซ้ำ จะดีดเครื่องนี้ออกทันที
-      startActiveSessionWatcher(data.id, mySessionToken);
-    } catch (secErr) {
-      console.warn('เกิดข้อผิดพลาดในการตั้งค่า Session Security:', secErr);
-    }
-
-    // แสดงลายน้ำระบุตัวตนบนหน้าจอ
-    if (typeof updateSecurityWatermark === 'function') {
-      try { updateSecurityWatermark(); } catch (e) {}
-    }
-
-    // เข้าโหมดตามสิทธิ์ (ห่อ try ไว้ ไม่ให้ error ของ UI กลบผลการ login)
-    try{
-      if(currentUser.role==='both'){
-        showPickRole(currentUser);
-      } else if(currentUser.role==='admin' || currentUser.role==='superadmin'){
-        enterAdmin();
-      } else {
-        enterUser();
-      }
-    }catch(uiErr){
-      console.error('สลับหน้าหลังล็อกอินไม่สำเร็จ', uiErr);
-    }
+    // ล็อกอินผ่าน — บันทึกข้อมูลและสลับหน้า
+    await completeLoginSuccess(data);
   }catch(e){
     console.error('doLogin error', e);
     err.style.display='block';
@@ -157,6 +92,84 @@ async function doLogin(){
   }finally{
     btn.textContent='เข้าสู่ระบบ';
     btn.disabled=false;
+  }
+}
+
+// ฟังก์ชันบันทึก Session และเริ่มต้นสถานะผู้ใช้ (ใช้ร่วมกันทั้ง Username/Password และ Google OAuth)
+async function completeLoginSuccess(data){
+  if (!data) return;
+
+  const defaultAdminPerms = ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+  let userPerms = data.permissions;
+  if (!userPerms || !Array.isArray(userPerms)) {
+    userPerms = defaultAdminPerms;
+  }
+
+  currentUser={
+    id: data.id,
+    username: data.username,
+    role: data.role,
+    display_name: data.display_name,
+    plan: data.plan || 'free',
+    status: data.status || 'active',
+    subscription_until: data.subscription_until || null,
+    phone: data.phone || '',
+    email: data.email || '',
+    permissions: userPerms,
+    auth_id: data.auth_id || null,
+    avatar_url: data.avatar_url || null
+  };
+  _loginUser=currentUser;
+
+  // --- ระบบความปลอดภัย: จำกัด 1 ID เข้าใช้งานได้ 1 อุปกรณ์/IP ---
+  try {
+    const mySessionToken = typeof generateUUID === 'function' ? generateUUID() : ('sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9));
+    sessionStorage.setItem('police_current_session_token', mySessionToken);
+    
+    // ดึง IP ปัจจุบัน (แบบจำกัดเวลาไม่เกิน 2 วิ)
+    const clientIp = await getClientIP();
+    sessionStorage.setItem('police_client_ip', clientIp);
+    
+    // บันทึกลง Supabase เพื่อให้เครื่องอื่นตรวจจับได้ทันที
+    const { error: sessErr } = await supa
+      .from('users')
+      .update({
+        current_session_token: mySessionToken,
+        last_login_ip: clientIp,
+        last_active_at: new Date().toISOString()
+      })
+      .eq('id', data.id);
+
+    if (sessErr) {
+      console.warn('บันทึก Session ล้มเหลว (อาจยังไม่ได้รัน setup_security.sql):', sessErr.message);
+    }
+
+    // เริ่มระบบเฝ้าระวัง: หากมีเครื่องอื่นล็อกอินซ้ำ จะดีดเครื่องนี้ออกทันที
+    startActiveSessionWatcher(data.id, mySessionToken);
+  } catch (secErr) {
+    console.warn('เกิดข้อผิดพลาดในการตั้งค่า Session Security:', secErr);
+  }
+
+  // แสดงลายน้ำระบุตัวตนบนหน้าจอ
+  if (typeof updateSecurityWatermark === 'function') {
+    try { updateSecurityWatermark(); } catch (e) {}
+  }
+
+  // ซ่อนหน้า login
+  const login = document.getElementById('s-login');
+  if (login) login.style.display = 'none';
+
+  // เข้าโหมดตามสิทธิ์ (ห่อ try ไว้ ไม่ให้ error ของ UI กลบผลการ login)
+  try{
+    if(currentUser.role==='both'){
+      showPickRole(currentUser);
+    } else if(currentUser.role==='admin' || currentUser.role==='superadmin'){
+      enterAdmin();
+    } else {
+      enterUser();
+    }
+  }catch(uiErr){
+    console.error('สลับหน้าหลังล็อกอินไม่สำเร็จ', uiErr);
   }
 }
 
@@ -284,6 +297,14 @@ function doLogout(){
   }
   currentUser=null;
   _loginUser=null;
+
+  // ออกจากระบบ Supabase Auth ด้วย (หากล็อกอินผ่าน Google)
+  try {
+    if (supa && supa.auth) {
+      supa.auth.signOut().catch(() => {});
+    }
+  } catch (e) {}
+
   document.getElementById('s-pick-role').style.display='none';
   document.getElementById('user-layout').style.display='none';
   document.getElementById('admin-layout').style.display='none';
@@ -292,6 +313,10 @@ function doLogout(){
   document.getElementById('inp-pass').value='';
   const err=document.getElementById('login-err');
   if(err) err.style.display='none';
+  const gBtn = document.getElementById('btn-google-login');
+  const gTxt = document.getElementById('btn-google-text');
+  if(gBtn) gBtn.disabled = false;
+  if(gTxt) gTxt.textContent = 'เข้าสู่ระบบด้วย Google';
 }
 
 // ============================================================
@@ -443,6 +468,7 @@ document.addEventListener('keydown', e=>{
 // (ใน HTML ตั้ง display:none ไว้ กันหน้า login แวบขึ้นมาก่อนสคริปต์โหลด)
 // ============================================================
 function showLoginScreen(){
+  if (currentUser) return;
   const login = document.getElementById('s-login');
   const pick = document.getElementById('s-pick-role');
   const user = document.getElementById('user-layout');
@@ -453,10 +479,167 @@ function showLoginScreen(){
   if (login) login.style.display = 'flex';
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', showLoginScreen);
-} else {
+// ============================================================
+// ระบบเข้าสู่ระบบด้วย Google (Google OAuth 2.0 via Supabase)
+// ============================================================
+
+async function loginWithGoogle() {
+  const btn = document.getElementById('btn-google-login');
+  const txt = document.getElementById('btn-google-text');
+  const err = document.getElementById('login-err');
+  if (err) err.style.display = 'none';
+
+  if (!navigator.onLine) {
+    if (err) {
+      err.style.display = 'block';
+      err.textContent = 'ไม่พบสัญญาณอินเทอร์เน็ต กรุณาตรวจสอบการเชื่อมต่อ';
+    }
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (txt) txt.textContent = 'กำลังเชื่อมต่อ Google...';
+
+  try {
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const { data, error } = await supa.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account'
+        }
+      }
+    });
+
+    if (error) throw error;
+    // เบราว์เซอร์จะ redirect ไปยังหน้า OAuth ของ Google
+  } catch (e) {
+    console.error('Google login error:', e);
+    if (err) {
+      err.style.display = 'block';
+      err.textContent = 'เชื่อมต่อ Google ไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง');
+    }
+    if (btn) btn.disabled = false;
+    if (txt) txt.textContent = 'เข้าสู่ระบบด้วย Google';
+  }
+}
+
+async function syncAndLoginOAuthUser(authUser) {
+  if (!authUser) return;
+  try {
+    // 1) ค้นหาด้วย auth_id ก่อน
+    let { data: userRow, error: qErr } = await supa
+      .from('users')
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+      .eq('auth_id', authUser.id)
+      .maybeSingle();
+
+    // 2) ถ้าไม่เจอด้วย auth_id ให้ค้นหาด้วย email (กรณีเป็นผู้ใช้เดิม)
+    if (!userRow && authUser.email) {
+      const { data: emailMatch } = await supa
+        .from('users')
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .ilike('email', authUser.email)
+        .maybeSingle();
+
+      if (emailMatch) {
+        userRow = emailMatch;
+        try {
+          await supa.from('users').update({
+            auth_id: authUser.id,
+            avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null
+          }).eq('id', userRow.id);
+          userRow.auth_id = authUser.id;
+        } catch (linkErr) {
+          console.warn('เชื่อมต่อ auth_id กับบัญชีเดิมไม่สำเร็จ:', linkErr);
+        }
+      }
+    }
+
+    // 3) ถ้ายังไม่มีในระบบเลย -> ลงทะเบียนให้อัตโนมัติ (Auto-register)
+    if (!userRow) {
+      const emailPrefix = (authUser.email ? authUser.email.split('@')[0] : 'user').replace(/[^a-zA-Z0-9_]/g, '_');
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      const newUsername = (emailPrefix.substring(0, 15) + '_' + randomSuffix).toLowerCase();
+      const displayName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || emailPrefix;
+      const avatarUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null;
+
+      const newUserObj = {
+        username: newUsername,
+        display_name: displayName,
+        email: authUser.email || '',
+        auth_id: authUser.id,
+        avatar_url: avatarUrl,
+        role: 'user',
+        plan: 'free',
+        status: 'active',
+        permissions: []
+      };
+
+      const { data: createdUser, error: insertErr } = await supa
+        .from('users')
+        .insert([newUserObj])
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .single();
+
+      if (insertErr) {
+        console.error('ลงทะเบียนผู้ใช้ Google อัตโนมัติไม่สำเร็จ:', insertErr);
+        if (typeof showToast === 'function') {
+          showToast('ไม่สามารถสร้างบัญชีผู้ใช้ใหม่ได้: ' + (insertErr.message || ''), 'danger');
+        }
+        return;
+      }
+      userRow = createdUser;
+    }
+
+    // ล้าง URL hash กรณีมี access_token จาก redirect เพื่อให้ URL สะอาด
+    if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (hErr) {}
+    }
+
+    await completeLoginSuccess(userRow);
+  } catch (err) {
+    console.error('syncAndLoginOAuthUser error:', err);
+  }
+}
+
+async function initGoogleAuth() {
+  try {
+    if (!supa || !supa.auth) return;
+
+    // 1) ตรวจสอบ session ปัจจุบัน
+    const { data: { session }, error } = await supa.auth.getSession();
+    if (!error && session && session.user) {
+      await syncAndLoginOAuthUser(session.user);
+      return;
+    }
+
+    // 2) ดักฟัง authStateChange เผื่อกรณี redirect กลับมาจาก Google
+    supa.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session && session.user) {
+        if (!currentUser || currentUser.auth_id !== session.user.id) {
+          await syncAndLoginOAuthUser(session.user);
+        }
+      }
+    });
+  } catch (e) {
+    console.warn('initGoogleAuth error:', e);
+  }
+}
+
+function initAppAuth() {
   showLoginScreen();
+  initGoogleAuth();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAppAuth);
+} else {
+  initAppAuth();
 }
 
 // ============================================================
