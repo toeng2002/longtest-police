@@ -128,7 +128,7 @@ function initSettingsPage() {
 async function loadSetCounts() {
   const empty = { units: {}, subjects: {}, difficulty: {} };
   try {
-    const qu = await supa.from('question_units').select('unit_id, questions(subject_id)');
+    const qu = await supa.from('question_units').select('unit_id, questions!inner(subject_id, removed_by)').eq('questions.removed_by', 0);
     if (qu.error) throw qu.error;
     const counts = { units: {}, subjects: {}, difficulty: {} };
     (qu.data || []).forEach(r => {
@@ -136,7 +136,7 @@ async function loadSetCounts() {
       const sid = r.questions && r.questions.subject_id;
       if (sid) counts.subjects[sid] = (counts.subjects[sid] || 0) + 1;
     });
-    const qq = await supa.from('questions').select('difficulty');
+    const qq = await supa.from('questions').select('difficulty').eq('removed_by', 0);
     (qq.data || []).forEach(q => {
       if (q.difficulty) counts.difficulty[q.difficulty] = (counts.difficulty[q.difficulty] || 0) + 1;
     });
@@ -156,7 +156,7 @@ async function loadSetSubjectUnits() {
   const keep = sel.value;
 
   if (SET_DATA.units.length === 0) {
-    const { data } = await supa.from('units').select('*').order('id');
+    const { data } = await supa.from('units').select('*').eq('removed_by', 0).order('id');
     SET_DATA.units = data || [];
   }
   const opts = SET_DATA.units.map(u =>
@@ -172,7 +172,7 @@ async function loadSetUnits() {
   setBody('set-units-body', loadingRow(7));
   await loadSetCounts();
 
-  const { data, error } = await supa.from('units').select('*').order('id');
+  const { data, error } = await supa.from('units').select('*').eq('removed_by', 0).order('id');
   if (error) { setBody('set-units-body', errorRow(7, error.message)); return; }
 
   SET_DATA.units = data || [];
@@ -212,6 +212,9 @@ async function toggleUnitActive(id, newStatus) {
       }
       return;
     }
+    if (typeof logAdminAction === 'function') {
+      logAdminAction('toggle_active', 'units', parsedId, newStatus ? 'เปิดใช้งานหน่วยงาน' : 'ปิดการเข้าใช้งานหน่วยงาน');
+    }
     showToast((newStatus ? 'เปิดใช้งานหน่วยงานแล้ว' : 'ปิดการเข้าใช้งานหน่วยงานแล้ว'), 'success');
     await loadSetUnits();
     if (typeof _unitsCache !== 'undefined') _unitsCache = null;
@@ -229,7 +232,7 @@ async function loadSetSubjects() {
   setBody('set-subjects-body', loadingRow(6));
   await loadSetCounts();
 
-  let q = supa.from('subjects').select('*').order('unit_id').order('id');
+  let q = supa.from('subjects').select('*').eq('removed_by', 0).order('unit_id').order('id');
   const unitFilter = document.getElementById('set-subj-unit').value;
   const levelFilter = document.getElementById('set-subj-level').value;
   if (unitFilter) q = q.eq('unit_id', unitFilter);
@@ -268,7 +271,7 @@ async function loadSetDifficulty() {
   const warn = document.getElementById('set-diff-warning');
 
   const { data, error } = await supa.from('difficulty_levels')
-    .select('*').order('sort_order').order('id');
+    .select('*').eq('removed_by', 0).order('sort_order').order('id');
 
   if (error) {
     setDiffTableMissing = true;
@@ -314,7 +317,8 @@ async function loadSetUsers() {
   setBody('set-users-body', loadingRow(5));
 
   const { data, error } = await supa.from('users')
-    .select('id, username, role, display_name, created_at').order('id');
+    .select('id, username, role, display_name, created_at').eq('removed_by', 0).order('id');
+
   if (error) { setBody('set-users-body', errorRow(5, error.message)); return; }
 
   SET_DATA.users = data || [];
@@ -531,6 +535,8 @@ async function saveUnit(editing) {
     icon: fieldValue('f-icon') || null,
     active: activeVal
   };
+  if (!editing) row.removed_by = 0;
+
   const res = editing
     ? await supa.from('units').update(row).eq('id', setEditId)
     : await supa.from('units').insert(row);
@@ -541,6 +547,10 @@ async function saveUnit(editing) {
       showSetError(res.error.message);
     }
     return;
+  }
+
+  if (typeof logAdminAction === 'function') {
+    logAdminAction(editing ? 'update' : 'create', 'units', setEditId || code, name);
   }
 
   showToast(editing ? 'แก้ไขหน่วยงานแล้ว' : 'เพิ่มหน่วยงานแล้ว', 'success');
@@ -559,6 +569,7 @@ async function saveSubject(editing) {
 
   const parsedUnitId = isNaN(Number(unitId)) ? unitId : Number(unitId);
   const row = { name: name, unit_id: parsedUnitId, level: fieldValue('f-level') || 'p' };
+  if (!editing) row.removed_by = 0;
 
   const ratioRaw = fieldValue('f-ratio');
   if (ratioRaw !== '') {
@@ -571,6 +582,10 @@ async function saveSubject(editing) {
     ? await supa.from('subjects').update(row).eq('id', setEditId)
     : await supa.from('subjects').insert(row);
   if (failIf(res.error ? res.error.message : null)) return;
+
+  if (typeof logAdminAction === 'function') {
+    logAdminAction(editing ? 'update' : 'create', 'subjects', setEditId, name);
+  }
 
   showToast(editing ? 'แก้ไขวิชาแล้ว' : 'เพิ่มวิชาแล้ว', 'success');
   closeSetModal();
@@ -591,10 +606,16 @@ async function saveDifficulty(editing) {
     color: fieldValue('f-color') || 'gray',
     sort_order: orderRaw === '' ? 0 : Number(orderRaw)
   };
+  if (!editing) row.removed_by = 0;
+
   const res = editing
     ? await supa.from('difficulty_levels').update(row).eq('id', setEditId)
     : await supa.from('difficulty_levels').insert(row);
   if (failIf(res.error ? res.error.message : null)) return;
+
+  if (typeof logAdminAction === 'function') {
+    logAdminAction(editing ? 'update' : 'create', 'difficulty_levels', setEditId || code, name);
+  }
 
   showToast(editing ? 'แก้ไขระดับความยากแล้ว' : 'เพิ่มระดับความยากแล้ว', 'success');
   closeSetModal();
@@ -618,12 +639,17 @@ async function saveUser(editing) {
 
   const role = fieldValue('f-role') || 'user';
   const row = { username: username, role: role, display_name: fieldValue('f-display') || null };
+  if (!editing) row.removed_by = 0;
   if (pass) row.password = pass;
 
   const res = editing
     ? await supa.from('users').update(row).eq('id', setEditId)
     : await supa.from('users').insert(row);
   if (failIf(res.error ? res.error.message : null)) return;
+
+  if (typeof logAdminAction === 'function') {
+    logAdminAction(editing ? 'update' : 'create', 'users', setEditId || username, `${username} (${role})`);
+  }
 
   // แก้ข้อมูลของตัวเอง → อัปเดตชื่อบน topbar ด้วย
   if (editing && currentUser && currentUser.id === setEditId) {
@@ -773,11 +799,16 @@ async function confirmSetDelete() {
       return;
     }
 
-    const res = await supa.from(target.info.table).delete().eq(target.info.col, target.info.val);
+    const adminId = (currentUser && currentUser.id) ? currentUser.id : 1;
+    const res = await supa.from(target.info.table).update({ removed_by: adminId }).eq(target.info.col, target.info.val);
     if (res.error) {
       showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger');
       closeSetDelModal();
       return;
+    }
+
+    if (typeof logAdminAction === 'function') {
+      logAdminAction('delete', target.info.table, String(target.info.val), `ลบ ${target.info.label || target.kind}`);
     }
 
     showToast('ลบแล้ว', 'success');

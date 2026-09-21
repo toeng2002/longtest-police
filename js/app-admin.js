@@ -13,6 +13,7 @@ async function dbLoadQuestions(){
              question_image, subject_id,
              subjects(name),
              question_units(unit_id, level)`)
+    .eq('removed_by', 0)
     .order('id',{ascending:false});
   if(error){console.error(error);return[];}
 
@@ -74,7 +75,8 @@ async function dbInsertQuestion(formData){
   const {data:q,error:e1}=await supa.from('questions').insert({
     question,choice_a,choice_b,choice_c,choice_d,
     answer,explanation:explanation||null,difficulty,source:source||null,
-    published,subject_id,question_image:image||null
+    published,subject_id,question_image:image||null,
+    removed_by: 0
   }).select().single();
   if(e1){ console.error(e1); return { ok:false, error:e1.message }; }
 
@@ -87,6 +89,12 @@ async function dbInsertQuestion(formData){
       return { ok:false, error:'ผูกหน่วยงานไม่สำเร็จ: '+e2.message };
     }
   }
+
+  // บันทึก Log การเพิ่มข้อสอบ
+  if (typeof logAdminAction === 'function') {
+    logAdminAction('create', 'questions', q.id, String(question).substring(0, 60));
+  }
+
   return { ok:true, id:q.id };
 }
 
@@ -112,17 +120,32 @@ async function dbUpdateQuestion(id, formData){
     const {error:e2}=await supa.from('question_units').insert(rows);
     if(e2){ return { ok:false, error:'ผูกหน่วยงานไม่สำเร็จ: '+e2.message }; }
   }
+
+  // บันทึก Log การแก้ไขข้อสอบ
+  if (typeof logAdminAction === 'function') {
+    logAdminAction('update', 'questions', id, String(question).substring(0, 60));
+  }
+
   return { ok:true, id:id };
 }
 
+// ลบข้อสอบแบบ Soft Delete (อัปเดต removed_by แทนการลบจริงจากฐานข้อมูล)
 async function dbDeleteQuestions(ids){
-  const {error}=await supa.from('questions').delete().in('id',ids);
+  const adminId = (currentUser && currentUser.id) ? currentUser.id : 1;
+  const {error}=await supa.from('questions').update({ removed_by: adminId }).in('id',ids);
+  if (!error && typeof logAdminAction === 'function') {
+    logAdminAction('delete', 'questions', ids.join(','), `ลบข้อสอบ ${ids.length} ข้อ`);
+  }
   return !error;
 }
 
 async function dbTogglePublish(id,published){
   await supa.from('questions').update({published}).eq('id',id);
+  if (typeof logAdminAction === 'function') {
+    logAdminAction('toggle_publish', 'questions', id, published ? 'เผยแพร่ข้อสอบ' : 'ยกเลิกการเผยแพร่');
+  }
 }
+
 
 // รายการข้อสอบสำหรับตาร admin — โหลดจาก Supabase ใน initQuestions()
 let questions=[];
@@ -212,15 +235,57 @@ async function initAdminDashboard(){
         <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
       </div>
     </div>`).join('');
-  // กิจกรรมล่าสุดสร้างจากข้อสอบที่เพิ่มเข้ามาจริง (แสดง 30 รายการล่าสุด พร้อมเลื่อนสกอร์เมาส์ได้)
-  const recent=[...rows].slice(0,30);
-  document.getElementById('activity-log').innerHTML=recent.length===0
-    ? '<div style="font-size:12px;color:var(--text2);padding:10px 0">ยังไม่มีกิจกรรม</div>'
-    : recent.map(q=>`
-    <div class="activity-item">
-      <div class="act-dot" style="background:${q.status==='เผยแพร่'?'var(--success)':'var(--warning)'}"></div>
-      <div><div class="act-text">${q.status==='เผยแพร่'?'เผยแพร่':'ร่าง'}ข้อสอบ #${q.id} · ${q.subject||'ไม่ระบุวิชา'}</div><div class="act-time">${q.unit||''}</div></div>
-    </div>`).join('');
+  // กิจกรรมล่าสุด: ดึงจากตาราง admin_logs หากมีข้อมูล หรือ fallback จากรายการข้อสอบ
+  let logsHtml = '';
+  try {
+    const { data: logs, error: lErr } = await supa
+      .from('admin_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (!lErr && logs && logs.length > 0) {
+      const actionLabels = {
+        create: { text: 'เพิ่ม', color: 'var(--success)' },
+        update: { text: 'แก้ไข', color: 'var(--accent)' },
+        delete: { text: 'ลบ', color: 'var(--danger)' },
+        import_csv: { text: 'นำเข้า CSV', color: 'var(--accent)' },
+        toggle_publish: { text: 'สถานะเผยแพร่', color: 'var(--warning)' },
+        toggle_active: { text: 'เปิด/ปิดการใช้งาน', color: 'var(--warning)' }
+      };
+
+      logsHtml = logs.map(l => {
+        const info = actionLabels[l.action] || { text: l.action, color: 'var(--text2)' };
+        const timeStr = l.created_at ? new Date(l.created_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '';
+        const targetName = l.target_table === 'questions' ? 'ข้อสอบ' :
+                           l.target_table === 'units' ? 'หน่วยงาน' :
+                           l.target_table === 'subjects' ? 'วิชา' :
+                           l.target_table === 'users' ? 'ผู้ใช้งาน' : l.target_table;
+        return `
+        <div class="activity-item">
+          <div class="act-dot" style="background:${info.color}"></div>
+          <div>
+            <div class="act-text"><b>${esc(l.admin_username || 'Admin')}</b>: ${info.text} ${targetName} ${l.target_id ? '#' + esc(l.target_id) : ''} · ${esc(l.details || '')}</div>
+            <div class="act-time">${timeStr} ${l.ip_address && l.ip_address !== 'unknown' ? '· IP: ' + esc(l.ip_address) : ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch (e) {}
+
+  if (!logsHtml) {
+    const recent = [...rows].slice(0, 30);
+    logsHtml = recent.length === 0
+      ? '<div style="font-size:12px;color:var(--text2);padding:10px 0">ยังไม่มีกิจกรรม</div>'
+      : recent.map(q => `
+      <div class="activity-item">
+        <div class="act-dot" style="background:${q.status==='เผยแพร่'?'var(--success)':'var(--warning)'}"></div>
+        <div><div class="act-text">${q.status==='เผยแพร่'?'เผยแพร่':'ร่าง'}ข้อสอบ #${q.id} · ${esc(q.subject||'ไม่ระบุวิชา')}</div><div class="act-time">${esc(q.unit||'')}</div></div>
+      </div>`).join('');
+  }
+
+  const actEl = document.getElementById('activity-log');
+  if (actEl) actEl.innerHTML = logsHtml;
 }
 
 async function initQuestions(){

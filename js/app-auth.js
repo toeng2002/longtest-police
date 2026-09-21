@@ -104,6 +104,7 @@ async function doLogin(){
       
       // ดึง IP ปัจจุบัน (แบบจำกัดเวลาไม่เกิน 2 วิ)
       const clientIp = await getClientIP();
+      sessionStorage.setItem('police_client_ip', clientIp);
       
       // บันทึกลง Supabase เพื่อให้เครื่องอื่นตรวจจับได้ทันที
       const { error: sessErr } = await supa

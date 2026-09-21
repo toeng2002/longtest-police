@@ -50,7 +50,8 @@ async function loadQuestions(unitId, level, subjId=null){
         )
       `)
       .eq('unit_id', resolvedUnitId)
-      .eq('questions.published', true);
+      .eq('questions.published', true)
+      .eq('questions.removed_by', 0);
 
     if(level && level!=='both') q=q.in('level',[level,'both']);
     // กรองตามวิชา — ใช้ subject_id เท่านั้น
@@ -91,7 +92,7 @@ function cleanImgUrl(url){
 // โหลดหน่วยงานจาก Supabase
 async function loadUnits(){
   try {
-    const {data,error}=await supa.from('units').select('*').order('id');
+    const {data,error}=await supa.from('units').select('*').eq('removed_by', 0).order('id');
     if(error) throw error;
     return data||[];
   } catch(e){ return []; }
@@ -108,6 +109,7 @@ async function loadSubjects(unitId, level){
     const {data,error}=await supa
       .from('subjects')
       .select('*')
+      .eq('removed_by', 0)
       .eq('unit_id',resolvedUnitId)
       .in('level',lv)
       .order('id');

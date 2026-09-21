@@ -859,7 +859,8 @@ async function runCsvImport() {
           difficulty: d.difficulty || 'medium',
           source: d.source || null,
           published: d.published,
-          subject_id: primarySubjectId
+          subject_id: primarySubjectId,
+          removed_by: 0
         }).select().single();
 
 
@@ -895,6 +896,10 @@ function renderCsvResult(result) {
   const btn = document.getElementById('csv-import-btn');
   btn.textContent = 'นำเข้าข้อมูล';
   btn.disabled = false;
+
+  if (result.ok > 0 && typeof logAdminAction === 'function') {
+    logAdminAction('import_csv', 'questions', null, `นำเข้าข้อสอบจาก CSV สำเร็จ ${result.ok} ข้อ (ล้มเหลว ${result.failed} ข้อ)`);
+  }
 
   let html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">';
   html += '<div class="hist-stat" style="flex:1;min-width:110px"><div class="hist-stat-val" style="color:var(--success)">' + result.ok + '</div><div class="hist-stat-lbl">นำเข้าสำเร็จ</div></div>';

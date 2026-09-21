@@ -61,3 +61,40 @@ function showToast(msg, type = '') {
   }, 3000);
 }
 
+// ตัวช่วย Escape HTML ป้องกัน XSS
+function esc(s) {
+  return String(s == null ? '' : s)
+    .split('&').join('&amp;')
+    .split('<').join('&lt;')
+    .split('>').join('&gt;')
+    .split('"').join('&quot;');
+}
+
+// ============================================================
+// ฟังก์ชันบันทึกประวัติการทำงานของผู้ดูแลระบบ (Admin Audit Logs)
+// ============================================================
+async function logAdminAction(action, targetTable, targetId = null, details = '') {
+  try {
+    const adminId = (currentUser && currentUser.id) ? currentUser.id : null;
+    const adminUser = (currentUser && (currentUser.username || currentUser.display_name)) ? (currentUser.username || currentUser.display_name) : 'system';
+    const clientIp = sessionStorage.getItem('police_client_ip') || 'unknown';
+
+    const payload = {
+      admin_id: adminId,
+      admin_username: adminUser,
+      action: action,
+      target_table: targetTable,
+      target_id: targetId ? String(targetId) : null,
+      details: details ? String(details) : '',
+      ip_address: clientIp
+    };
+
+    const { error } = await supa.from('admin_logs').insert(payload);
+    if (error) {
+      console.warn('บันทึก admin_logs ไม่สำเร็จ (อาจยังไม่ได้รัน setup_admin_logs_and_soft_delete.sql):', error.message);
+    }
+  } catch (e) {
+    console.warn('logAdminAction error:', e);
+  }
+}
+
