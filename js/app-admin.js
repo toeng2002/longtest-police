@@ -313,6 +313,10 @@ async function initAdminDashboard(){
 
   const actEl = document.getElementById('activity-log');
   if (actEl) actEl.innerHTML = logsHtml;
+  const actTitleEl = actEl?.closest('.card')?.querySelector('.card-title');
+  if (actTitleEl) {
+    actTitleEl.textContent = isSuper ? 'ประวัติกิจกรรมล่าสุด (Audit Log)' : 'ข้อสอบที่มีการแก้ไขล่าสุด';
+  }
 }
 
 // ============================================================

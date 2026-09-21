@@ -206,6 +206,12 @@ function enterAdmin(){
     badgeEl.textContent = isSuper ? 'SUPER ADMIN' : 'ADMIN';
     badgeEl.style.background = isSuper ? '#dc2626' : '';
   }
+  const topbarBadge = document.getElementById('admin-role-badge');
+  if(topbarBadge){
+    topbarBadge.textContent = isSuper ? 'SUPER ADMIN' : 'ADMIN';
+    topbarBadge.style.background = isSuper ? '#fee2e2' : '#e2e8f0';
+    topbarBadge.style.color = isSuper ? '#dc2626' : '#475569';
+  }
 
   // แสดงหรือซ่อนเมนู Audit Log ตามสิทธิ์ (เฉพาะ superadmin เท่านั้น)
   const navAudit = document.getElementById('nav-audit-logs');

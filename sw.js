@@ -2,7 +2,7 @@
 // Service Worker — ระบบจำลองข้อสอบตำรวจ PWA
 // ============================================================
 
-const CACHE_NAME = 'police-exam-v6';
+const CACHE_NAME = 'police-exam-v7';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -25,12 +25,13 @@ const PRECACHE_URLS = [
 
 // ติดตั้ง Service Worker และบันทึกไฟล์แคชเริ่มต้น
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(PRECACHE_URLS).catch(err => {
+      return cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: 'reload' }))).catch(err => {
         console.warn('Precache partial fail:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
