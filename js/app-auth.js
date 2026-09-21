@@ -467,8 +467,10 @@ document.addEventListener('keydown', e=>{
 // แสดงหน้า login ทันทีที่โหลดเสร็จ
 // (ใน HTML ตั้ง display:none ไว้ กันหน้า login แวบขึ้นมาก่อนสคริปต์โหลด)
 // ============================================================
+let _isOAuthProcessing = false;
+
 function showLoginScreen(){
-  if (currentUser) return;
+  if (currentUser || _isOAuthProcessing) return;
   const login = document.getElementById('s-login');
   const pick = document.getElementById('s-pick-role');
   const user = document.getElementById('user-layout');
@@ -482,6 +484,34 @@ function showLoginScreen(){
 // ============================================================
 // ระบบเข้าสู่ระบบด้วย Google (Google OAuth 2.0 via Supabase)
 // ============================================================
+
+function showOAuthLoading(msg) {
+  let el = document.getElementById('oauth-loading-box');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'oauth-loading-box';
+    el.style.cssText = 'background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--accent);text-align:center;margin-bottom:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px';
+    const loginCard = document.querySelector('#s-login > div');
+    const loginErr = document.getElementById('login-err');
+    if (loginErr && loginErr.parentNode) {
+      loginErr.parentNode.insertBefore(el, loginErr.nextSibling);
+    } else if (loginCard) {
+      loginCard.prepend(el);
+    }
+  }
+  el.innerHTML = '<span style="font-size:16px">🔄</span> ' + (msg || 'กำลังเข้าสู่ระบบด้วย Google กรุณารอสักครู่...');
+  el.style.display = 'flex';
+  
+  const btn = document.getElementById('btn-google-login');
+  if (btn) btn.style.display = 'none';
+}
+
+function hideOAuthLoading() {
+  const el = document.getElementById('oauth-loading-box');
+  if (el) el.style.display = 'none';
+  const btn = document.getElementById('btn-google-login');
+  if (btn) btn.style.display = 'flex';
+}
 
 async function loginWithGoogle() {
   const btn = document.getElementById('btn-google-login');
@@ -529,12 +559,18 @@ async function loginWithGoogle() {
 async function syncAndLoginOAuthUser(authUser) {
   if (!authUser) return;
   try {
+    showOAuthLoading('กำลังซิงค์ข้อมูลบัญชีผู้ใช้...');
+
     // 1) ค้นหาด้วย auth_id ก่อน
     let { data: userRow, error: qErr } = await supa
       .from('users')
       .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
       .eq('auth_id', authUser.id)
       .maybeSingle();
+
+    if (qErr) {
+      console.warn('ค้นหา auth_id ไม่สำเร็จ:', qErr);
+    }
 
     // 2) ถ้าไม่เจอด้วย auth_id ให้ค้นหาด้วย email (กรณีเป็นผู้ใช้เดิม)
     if (!userRow && authUser.email) {
@@ -560,6 +596,7 @@ async function syncAndLoginOAuthUser(authUser) {
 
     // 3) ถ้ายังไม่มีในระบบเลย -> ลงทะเบียนให้อัตโนมัติ (Auto-register)
     if (!userRow) {
+      showOAuthLoading('กำลังสร้างบัญชีผู้ใช้ใหม่...');
       const emailPrefix = (authUser.email ? authUser.email.split('@')[0] : 'user').replace(/[^a-zA-Z0-9_]/g, '_');
       const randomSuffix = Math.random().toString(36).substring(2, 6);
       const newUsername = (emailPrefix.substring(0, 15) + '_' + randomSuffix).toLowerCase();
@@ -586,24 +623,42 @@ async function syncAndLoginOAuthUser(authUser) {
 
       if (insertErr) {
         console.error('ลงทะเบียนผู้ใช้ Google อัตโนมัติไม่สำเร็จ:', insertErr);
-        if (typeof showToast === 'function') {
-          showToast('ไม่สามารถสร้างบัญชีผู้ใช้ใหม่ได้: ' + (insertErr.message || ''), 'danger');
+        hideOAuthLoading();
+        _isOAuthProcessing = false;
+        const errEl = document.getElementById('login-err');
+        if (errEl) {
+          errEl.style.display = 'block';
+          errEl.textContent = 'ไม่สามารถสร้างบัญชีผู้ใช้ใหม่ได้: ' + (insertErr.message || 'โปรดติดต่อผู้ดูแลระบบ');
         }
         return;
       }
       userRow = createdUser;
     }
 
-    // ล้าง URL hash กรณีมี access_token จาก redirect เพื่อให้ URL สะอาด
+    // ล้าง URL hash และ search หลังล็อกอินสำเร็จ เพื่อให้ URL สวยงามและไม่ค้าง token
     if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
       try {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       } catch (hErr) {}
     }
+    if (window.location.search && (window.location.search.includes('code=') || window.location.search.includes('error='))) {
+      try {
+        history.replaceState(null, '', window.location.pathname);
+      } catch (sErr) {}
+    }
 
+    hideOAuthLoading();
+    _isOAuthProcessing = false;
     await completeLoginSuccess(userRow);
   } catch (err) {
     console.error('syncAndLoginOAuthUser error:', err);
+    hideOAuthLoading();
+    _isOAuthProcessing = false;
+    const errEl = document.getElementById('login-err');
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง');
+    }
   }
 }
 
@@ -611,23 +666,65 @@ async function initGoogleAuth() {
   try {
     if (!supa || !supa.auth) return;
 
-    // 1) ตรวจสอบ session ปัจจุบัน
-    const { data: { session }, error } = await supa.auth.getSession();
-    if (!error && session && session.user) {
-      await syncAndLoginOAuthUser(session.user);
+    // ตรวจสอบว่า URL มีพารามิเตอร์ OAuth callback หรือไม่
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const hasOAuthParams = hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=');
+    const hasOAuthError = hash.includes('error') || search.includes('error=');
+
+    if (hasOAuthError) {
+      const urlParams = new URLSearchParams(hash.startsWith('#') ? hash.substring(1) : search);
+      const errDesc = urlParams.get('error_description') || urlParams.get('error') || 'การยืนยันตัวตนล้มเหลว';
+      const errEl = document.getElementById('login-err');
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = 'Google Login: ' + decodeURIComponent(errDesc.replace(/\+/g, ' '));
+      }
+      history.replaceState(null, '', window.location.pathname);
       return;
     }
 
-    // 2) ดักฟัง authStateChange เผื่อกรณี redirect กลับมาจาก Google
+    if (hasOAuthParams) {
+      _isOAuthProcessing = true;
+      showOAuthLoading('กำลังยืนยันตัวตนกับ Google กรุณารอสักครู่...');
+    }
+
+    // 1) ลงทะเบียน listener ดักฟังเหตุการณ์การเปลี่ยนสถานะ Auth ก่อนเสมอ
     supa.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session && session.user) {
+      console.log('Supabase Auth Event:', event, session ? session.user?.email : 'no-session');
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session && session.user) {
         if (!currentUser || currentUser.auth_id !== session.user.id) {
+          _isOAuthProcessing = true;
           await syncAndLoginOAuthUser(session.user);
         }
+      } else if (event === 'SIGNED_OUT') {
+        hideOAuthLoading();
+        _isOAuthProcessing = false;
       }
     });
+
+    // 2) ตรวจสอบ getSession() ซ้ำ
+    const { data: { session }, error } = await supa.auth.getSession();
+    if (error) {
+      console.warn('supa.auth.getSession error:', error);
+      hideOAuthLoading();
+      _isOAuthProcessing = false;
+      return;
+    }
+
+    if (session && session.user) {
+      if (!currentUser || currentUser.auth_id !== session.user.id) {
+        _isOAuthProcessing = true;
+        await syncAndLoginOAuthUser(session.user);
+      }
+    } else if (!hasOAuthParams) {
+      hideOAuthLoading();
+      _isOAuthProcessing = false;
+    }
   } catch (e) {
     console.warn('initGoogleAuth error:', e);
+    hideOAuthLoading();
+    _isOAuthProcessing = false;
   }
 }
 
