@@ -97,6 +97,39 @@ async function doLogin(){
     };
     _loginUser=currentUser;
 
+    // --- ระบบความปลอดภัย: จำกัด 1 ID เข้าใช้งานได้ 1 อุปกรณ์/IP ---
+    try {
+      const mySessionToken = typeof generateUUID === 'function' ? generateUUID() : ('sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9));
+      sessionStorage.setItem('police_current_session_token', mySessionToken);
+      
+      // ดึง IP ปัจจุบัน (แบบจำกัดเวลาไม่เกิน 2 วิ)
+      const clientIp = await getClientIP();
+      
+      // บันทึกลง Supabase เพื่อให้เครื่องอื่นตรวจจับได้ทันที
+      const { error: sessErr } = await supa
+        .from('users')
+        .update({
+          current_session_token: mySessionToken,
+          last_login_ip: clientIp,
+          last_active_at: new Date().toISOString()
+        })
+        .eq('id', data.id);
+
+      if (sessErr) {
+        console.warn('บันทึก Session ล้มเหลว (อาจยังไม่ได้รัน setup_security.sql):', sessErr.message);
+      }
+
+      // เริ่มระบบเฝ้าระวัง: หากมีเครื่องอื่นล็อกอินซ้ำ จะดีดเครื่องนี้ออกทันที
+      startActiveSessionWatcher(data.id, mySessionToken);
+    } catch (secErr) {
+      console.warn('เกิดข้อผิดพลาดในการตั้งค่า Session Security:', secErr);
+    }
+
+    // แสดงลายน้ำระบุตัวตนบนหน้าจอ
+    if (typeof updateSecurityWatermark === 'function') {
+      try { updateSecurityWatermark(); } catch (e) {}
+    }
+
     // เข้าโหมดตามสิทธิ์ (ห่อ try ไว้ ไม่ให้ error ของ UI กลบผลการ login)
     try{
       if(currentUser.role==='both'){
@@ -189,6 +222,11 @@ function enterAdmin(){
 }
 
 function doLogout(){
+  stopActiveSessionWatcher();
+  sessionStorage.removeItem('police_current_session_token');
+  if (typeof updateSecurityWatermark === 'function') {
+    try { updateSecurityWatermark(); } catch (e) {}
+  }
   currentUser=null;
   _loginUser=null;
   document.getElementById('s-pick-role').style.display='none';
@@ -200,6 +238,143 @@ function doLogout(){
   const err=document.getElementById('login-err');
   if(err) err.style.display='none';
 }
+
+// ============================================================
+// ระบบจัดการ 1 ID ใช้งานได้ 1 อุปกรณ์ / 1 IP พร้อมดีดเครื่องเก่าทันที
+// ============================================================
+let _securityChannel = null;
+let _securityHeartbeat = null;
+
+async function getClientIP() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000); // ไม่ค้างเกิน 2 วิ
+    const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.ok) {
+      const d = await res.json();
+      return d.ip || 'unknown';
+    }
+  } catch (e) {}
+  return 'unknown';
+}
+
+function startActiveSessionWatcher(userId, mySessionToken) {
+  stopActiveSessionWatcher();
+
+  // 1) Realtime Listener จาก Supabase (เด้งทันทีระดับเสี้ยววินาที)
+  try {
+    if (typeof supa.channel === 'function') {
+      const chanName = 'sess-watch-' + userId + '-' + Math.floor(Math.random() * 10000);
+      _securityChannel = supa
+        .channel(chanName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: 'id=eq.' + userId
+          },
+          (payload) => {
+            const newRow = payload.new;
+            if (newRow && newRow.current_session_token && newRow.current_session_token !== mySessionToken) {
+              console.warn('ตรวจพบการเข้าสู่ระบบจากอุปกรณ์อื่น (Realtime Kick)');
+              triggerForcedLogout(newRow.last_login_ip);
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Realtime Single-Session Monitor: Active');
+          }
+        });
+    }
+  } catch (rtErr) {
+    console.warn('Supabase Realtime not available, fallback to heartbeat', rtErr);
+  }
+
+  // 2) Heartbeat Polling ตรวจสอบซ้ำทุก 15 วินาที (ป้องกันกรณีหลุดการเชื่อมต่อ Realtime บนมือถือ)
+  _securityHeartbeat = setInterval(async () => {
+    if (!currentUser || currentUser.id !== userId) {
+      stopActiveSessionWatcher();
+      return;
+    }
+    try {
+      const { data, error } = await supa
+        .from('users')
+        .select('current_session_token, last_login_ip')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!error && data && data.current_session_token && data.current_session_token !== mySessionToken) {
+        console.warn('ตรวจพบการเข้าสู่ระบบจากอุปกรณ์อื่น (Heartbeat Kick)');
+        triggerForcedLogout(data.last_login_ip);
+      }
+    } catch (e) {}
+  }, 15000);
+}
+
+function stopActiveSessionWatcher() {
+  if (_securityChannel) {
+    try { supa.removeChannel(_securityChannel); } catch (e) {}
+    _securityChannel = null;
+  }
+  if (_securityHeartbeat) {
+    clearInterval(_securityHeartbeat);
+    _securityHeartbeat = null;
+  }
+}
+
+function triggerForcedLogout(newIp) {
+  stopActiveSessionWatcher();
+  sessionStorage.removeItem('police_current_session_token');
+  doLogout();
+  showForcedLogoutModal(newIp);
+}
+
+function showForcedLogoutModal(newIp) {
+  let m = document.getElementById('modal-forced-logout');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'modal-forced-logout';
+    m.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    `;
+    m.innerHTML = `
+      <div style="background: #ffffff; border-radius: 18px; padding: 28px 24px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); border: 1px solid #e2e8f0; font-family: 'Sarabun', system-ui, sans-serif;">
+        <div style="font-size: 48px; margin-bottom: 12px; line-height: 1;">⚡</div>
+        <div style="font-size: 17px; font-weight: 700; color: #dc2626; margin-bottom: 8px;">มีการเข้าสู่ระบบจากอุปกรณ์อื่น</div>
+        <div id="forced-logout-desc" style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 22px;">
+          บัญชีของคุณได้ถูกเข้าสู่ระบบจากเครื่องอื่น ระบบจึงได้นำคุณออกจากระบบในอุปกรณ์นี้ เพื่อความปลอดภัย
+        </div>
+        <button onclick="closeForcedLogoutModal()" style="background: #2563eb; color: #ffffff; border: none; border-radius: 10px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.25);">
+          รับทราบและกลับสู่หน้าล็อกอิน
+        </button>
+      </div>
+    `;
+    document.body.appendChild(m);
+  }
+  const desc = document.getElementById('forced-logout-desc');
+  if (desc) {
+    desc.innerHTML = `บัญชีของคุณได้ถูกเข้าสู่ระบบจากอุปกรณ์อื่น หรือเบราว์เซอร์อื่น${newIp && newIp !== 'unknown' ? '<br>(IP ล่าสุด: <b>' + newIp + '</b>)' : ''}<br>ระบบจึงได้นำคุณออกจากระบบโดยอัตโนมัติ เพื่อป้องกันการใช้งานซ้อนกัน`;
+  }
+  m.style.display = 'flex';
+}
+
+function closeForcedLogoutModal() {
+  const m = document.getElementById('modal-forced-logout');
+  if (m) m.style.display = 'none';
+  showLoginScreen();
+}
+
+
 
 // ล็อกอินด้วยปุ่ม Enter
 document.addEventListener('keydown', e=>{

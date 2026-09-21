@@ -2,7 +2,7 @@
 // Service Worker — ระบบจำลองข้อสอบตำรวจ PWA
 // ============================================================
 
-const CACHE_NAME = 'police-exam-v3';
+const CACHE_NAME = 'police-exam-v4';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -19,7 +19,8 @@ const PRECACHE_URLS = [
   './js/app-admin.js',
   './js/app-settings.js',
   './js/app-auth.js',
-  './js/app-csv.js'
+  './js/app-csv.js',
+  './js/anti-cheat.js'
 ];
 
 // ติดตั้ง Service Worker และบันทึกไฟล์แคชเริ่มต้น
