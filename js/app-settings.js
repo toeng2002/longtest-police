@@ -380,11 +380,31 @@ async function loadSetUsers() {
   setBody('set-users-body', loadingRow(5));
 
   const { data, error } = await supa.from('users')
-    .select('id, username, role, display_name, created_at, permissions').eq('removed_by', 0).order('id');
+    .select('id, username, role, display_name, created_at, permissions, password').eq('removed_by', 0).order('id');
 
   if (error) { setBody('set-users-body', errorRow(5, error.message)); return; }
 
-  SET_DATA.users = data || [];
+  // ตรวจสอบว่ามีผู้ใช้รายใดที่รหัสผ่านยังไม่ได้เข้ารหัส bcrypt หรือไม่
+  const warnEl = document.getElementById('set-users-hash-warn');
+  if (warnEl) {
+    const unhashedUsers = (data || []).filter(u => u.password && (typeof isBcryptHash === 'function' ? !isBcryptHash(u.password) : !/^\$2[aby]?\$/.test(u.password)));
+    if (unhashedUsers.length > 0) {
+      warnEl.style.display = 'flex';
+      const names = unhashedUsers.map(x => x.username).slice(0, 3).join(', ');
+      const textEl = warnEl.querySelector('.warn-text') || warnEl;
+      textEl.innerHTML = 'พบผู้ใช้ <b>' + unhashedUsers.length + ' บัญชี</b> ที่รหัสผ่านยังไม่ได้เข้ารหัส bcrypt (เช่น ' + esc(names) + ') — แนะนำให้กดแก้ไขรหัสผ่านหรือรัน <b>setup_users.sql</b> ใน Supabase เพื่อความปลอดภัย';
+    } else {
+      warnEl.style.display = 'none';
+    }
+  }
+
+  // ป้องกันการค้าง password ไว้ในตัวแปร state ของระบบ
+  SET_DATA.users = (data || []).map(u => {
+    const copy = Object.assign({}, u);
+    delete copy.password;
+    return copy;
+  });
+
   if (SET_DATA.users.length === 0) {
     setBody('set-users-body', emptyRow(5, 'ยังไม่มีผู้ใช้'));
     return;

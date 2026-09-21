@@ -17,3 +17,4 @@ where permissions is null and (role = 'admin' or role = 'superadmin' or role = '
 select id, username, role, display_name, permissions
 from users
 order by id;
+
