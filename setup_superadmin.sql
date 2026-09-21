@@ -1,8 +1,8 @@
 -- ============================================================
 -- setup_superadmin.sql
 -- สร้างหรืออัปเดตผู้ดูแลระบบระดับสูงสุด (Superadmin)
--- Username: toeng2002
--- Password: vpjkglnvd@Aa1 (เก็บเป็น bcrypt hash อย่างปลอดภัย)
+-- Username: xxxxxxxxxx
+-- Password: xxxxxxxxxx (เก็บเป็น bcrypt hash อย่างปลอดภัย)
 -- ============================================================
 
 -- 1. ตรวจสอบและเปิดส่วนขยาย pgcrypto สำหรับการทำ bcrypt hash
