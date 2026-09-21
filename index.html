@@ -313,11 +313,19 @@ textarea{resize:vertical;min-height:72px}
 .bulk-bar{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:8px 14px;display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--accent)}
 
 /* --- Modal / overlay --- */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none;padding:20px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.15)}
-.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
-.modal-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px;max-width:480px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.15);position:relative;margin:auto;max-height:calc(100vh - 40px);display:flex;flex-direction:column}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;flex-shrink:0;padding-right:28px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:14px;flex-shrink:0;padding-right:28px}
+.modal-close-btn{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:var(--r);border:none;background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+.modal-close-btn:hover{background:var(--surface2);color:var(--text)}
+.modal-close-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modal-fields-scroll{overflow-y:auto;flex:1;min-height:0;padding-right:6px;margin-bottom:4px}
+.modal-fields-scroll::-webkit-scrollbar{width:6px}
+.modal-fields-scroll::-webkit-scrollbar-track{background:transparent}
+.modal-fields-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.modal-fields-scroll::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 .del-list{background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;max-height:140px;overflow-y:auto}
 .del-item{font-size:12px;color:var(--danger);padding:3px 0;border-bottom:1px solid var(--danger-border);display:flex;gap:6px;align-items:flex-start}
 .del-item:last-child{border-bottom:none}
@@ -333,7 +341,7 @@ textarea{resize:vertical;min-height:72px}
 .notice.info{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
 .notice.warn{background:var(--warning-bg);border:1px solid var(--warning-bd);color:var(--warning)}
 .notice.danger{background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger)}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
 
 /* --- CSV --- */
 .csv-steps{display:flex;gap:0;margin-bottom:20px}
@@ -1310,11 +1318,14 @@ body {
   <!-- Modal: เพิ่ม/แก้ไขข้อมูลในหน้าตั้งค่า -->
  <div class="overlay" id="set-modal">
     <div class="modal">
+      <button class="modal-close-btn" onclick="closeSetModal()" title="ปิด (Esc)" aria-label="ปิด">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <div class="modal-title" id="set-modal-title">เพิ่มข้อมูล</div>
       <div class="modal-sub" id="set-modal-sub"></div>
       <div id="set-modal-error" class="err-msg" style="display:none"></div>
-      <div id="set-modal-fields"></div>
-      <div class="modal-btns" style="margin-top:18px">
+      <div id="set-modal-fields" class="modal-fields-scroll"></div>
+      <div class="modal-btns" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
         <button class="btn" onclick="closeSetModal()">ยกเลิก</button>
         <button class="btn btn-primary" id="set-modal-save" onclick="saveSetForm()">บันทึก</button>
       </div>
@@ -1324,12 +1335,15 @@ body {
   <!-- Modal: ยืนยันการลบข้อมูลในหน้าตั้งค่า -->
  <div class="overlay" id="set-del-modal">
     <div class="modal">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button class="modal-close-btn" onclick="closeSetDelModal()" title="ปิด (Esc)" aria-label="ปิด">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-right:28px">
         <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
         </div>
         <div>
-          <div class="modal-title">ยืนยันการลบ</div>
+          <div class="modal-title" style="padding-right:0">ยืนยันการลบ</div>
           <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
         </div>
       </div>
@@ -1349,12 +1363,15 @@ body {
     <!-- Delete Modal (ใช้ร่วมกันทั้งโหมด admin) -->
     <div class="overlay" id="delete-modal">
      <div class="modal">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button class="modal-close-btn" onclick="closeDeleteModal()" title="ปิด (Esc)" aria-label="ปิด">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-right:28px">
           <div style="width:38px;height:38px;border-radius:var(--r);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--danger);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           </div>
           <div>
-            <div class="modal-title">ยืนยันการลบข้อสอบ</div>
+            <div class="modal-title" style="padding-right:0">ยืนยันการลบข้อสอบ</div>
             <div style="font-size:12px;color:var(--text2)">การดำเนินการนี้ไม่สามารถยกเลิกได้</div>
           </div>
         </div>
@@ -1383,13 +1400,13 @@ body {
 
     <script src="js/bcrypt.min.js"></script>
     <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
-<script src="js/exam-db.js?v=20260921_rbac"></script>
-<script src="js/app-quiz.js?v=20260921_rbac"></script>
-<script src="js/app-admin.js?v=20260921_rbac"></script>
-<script src="js/app-settings.js?v=20260921_rbac"></script>
-<script src="js/app-csv.js?v=20260921_rbac"></script>
-<script src="js/app-auth.js?v=20260921_rbac"></script>
-<script src="js/anti-cheat.js?v=20260921_rbac"></script>
+<script src="js/exam-db.js?v=20260921_modal_scroll"></script>
+<script src="js/app-quiz.js?v=20260921_modal_scroll"></script>
+<script src="js/app-admin.js?v=20260921_modal_scroll"></script>
+<script src="js/app-settings.js?v=20260921_modal_scroll"></script>
+<script src="js/app-csv.js?v=20260921_modal_scroll"></script>
+<script src="js/app-auth.js?v=20260921_modal_scroll"></script>
+<script src="js/anti-cheat.js?v=20260921_modal_scroll"></script>
 
 <script>
 /* ============================================================

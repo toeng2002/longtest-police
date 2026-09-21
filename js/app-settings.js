@@ -553,9 +553,9 @@ function openSetForm(kind, id) {
     const permItemsHtml = ADMIN_PERMISSIONS_LIST.map(p => {
       const isChecked = userPerms.includes(p.key);
       const disabledAttr = !isSuperAdmin ? ' disabled' : '';
-      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:12px">' +
+      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:12px;transition:background .1s">' +
         '<input type="checkbox" class="perm-chk" value="' + esc(p.key) + '" ' + (isChecked ? 'checked' : '') + disabledAttr + ' style="width:16px;height:16px;margin-top:2px;accent-color:var(--accent);cursor:pointer">' +
-        '<div style="line-height:1.3">' +
+        '<div style="line-height:1.3;flex:1">' +
           '<div style="font-weight:600;color:var(--text)">' + esc(p.label) + '</div>' +
           '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + esc(p.desc) + '</div>' +
         '</div>' +
@@ -602,6 +602,7 @@ function openSetForm(kind, id) {
 
   modal.dataset.kind = kind;
   modal.classList.add('open');
+  if (fields) fields.scrollTop = 0;
   setTimeout(() => {
     const f = fields.querySelector('input:not([readonly]), select');
     if (f) f.focus();
