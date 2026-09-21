@@ -27,6 +27,32 @@ const ROLE_LABEL = { superadmin: 'ผู้ดูแลระบบสูงส�
 const ROLE_COLOR = { superadmin: 'red', admin: 'red', user: 'blue', both: 'purple' };
 const DIFF_COLORS = ['gray', 'green', 'yellow', 'red', 'blue', 'purple'];
 
+const ADMIN_PERMISSIONS_LIST = [
+  { key: 'dashboard', label: '📊 ดูสถิติภาพรวม (Dashboard)', desc: 'เข้าหน้า Dashboard ดูสถิติข้อสอบและกิจกรรม' },
+  { key: 'questions', label: '📚 คลังข้อสอบ (ดู/ค้นหา/ลบ)', desc: 'ดูรายการข้อสอบ ค้นหา และลบข้อสอบ' },
+  { key: 'add_question', label: '➕ เพิ่มข้อสอบรายข้อ', desc: 'สร้างและแก้ไขข้อสอบทีละข้อ' },
+  { key: 'import_csv', label: '📥 นำเข้าข้อสอบ CSV', desc: 'ดาวน์โหลด template และนำเข้าข้อสอบจากไฟล์ CSV' },
+  { key: 'settings', label: '⚙️ ตั้งค่าระบบ (หน่วย/วิชา/ความยาก)', desc: 'จัดการหน่วยงาน วิชา และระดับความยาก' },
+  { key: 'manage_users', label: '👥 จัดการบัญชีผู้ใช้งาน', desc: 'เพิ่ม/แก้ไข/ลบบัญชีผู้ใช้ในระบบ' },
+  { key: 'test_exam', label: '📝 ทดสอบทำข้อสอบ (โหมดสอบจริง)', desc: 'สลับไปยังหน้าทำข้อสอบจริง' }
+];
+
+function toggleAllPerms(check) {
+  document.querySelectorAll('.perm-chk').forEach(cb => {
+    cb.checked = !!check;
+  });
+}
+
+function onRoleChanged(newRole) {
+  const box = document.getElementById('f-perm-box');
+  if (!box) return;
+  if (newRole === 'admin' || newRole === 'both') {
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
 // ตัวช่วยสร้าง HTML (กันเครื่องหมายพิเศษในข้อความ)
 function esc(s) {
   return String(s == null ? '' : s)
@@ -100,7 +126,42 @@ function setBody(id, html) {
 /* ============================================================
    แท็บ
    ============================================================ */
+function updateSettingsTabVisibility() {
+  const isSuper = currentUser?.role === 'superadmin';
+  const canSettings = isSuper || (typeof hasPermission === 'function' && hasPermission('settings'));
+  const canUsers = isSuper || (typeof hasPermission === 'function' && hasPermission('manage_users'));
+
+  const tabUnits = document.querySelector('#set-tabs button[data-tab="units"]');
+  const tabSubj = document.querySelector('#set-tabs button[data-tab="subjects"]');
+  const tabDiff = document.querySelector('#set-tabs button[data-tab="difficulty"]');
+  const tabUsers = document.querySelector('#set-tabs button[data-tab="users"]');
+
+  if (tabUnits) tabUnits.style.display = canSettings ? 'inline-flex' : 'none';
+  if (tabSubj) tabSubj.style.display = canSettings ? 'inline-flex' : 'none';
+  if (tabDiff) tabDiff.style.display = canSettings ? 'inline-flex' : 'none';
+  if (tabUsers) tabUsers.style.display = canUsers ? 'inline-flex' : 'none';
+
+  if (!canSettings && canUsers) {
+    setTab = 'users';
+  } else if (canSettings && !canUsers && setTab === 'users') {
+    setTab = 'units';
+  }
+}
+
 function switchSetTab(tab) {
+  const isSuper = currentUser?.role === 'superadmin';
+  const canSettings = isSuper || (typeof hasPermission === 'function' && hasPermission('settings'));
+  const canUsers = isSuper || (typeof hasPermission === 'function' && hasPermission('manage_users'));
+
+  if (tab === 'users' && !canUsers) {
+    if (canSettings) tab = 'units';
+    else return;
+  }
+  if ((tab === 'units' || tab === 'subjects' || tab === 'difficulty') && !canSettings) {
+    if (canUsers) tab = 'users';
+    else return;
+  }
+
   setTab = tab;
   document.querySelectorAll('#set-tabs .filter-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tab);
@@ -119,8 +180,9 @@ function loadSetTab(tab) {
   else if (tab === 'users') loadSetUsers();
 }
 
-// เข้าเมนูตั้งค่าครั้งแรก → เตรียม dropdown หน่วยงานก่อน แล้วโหลดแท็บ
+// เข้าเมนูตั้งค่าครั้งแรก → ปรับสิทธิ์แท็บ แล้วโหลดแท็บที่อนุญาต
 function initSettingsPage() {
+  updateSettingsTabVisibility();
   loadSetSubjectUnits().then(() => switchSetTab(setTab));
 }
 /* ============================================================
@@ -318,7 +380,7 @@ async function loadSetUsers() {
   setBody('set-users-body', loadingRow(5));
 
   const { data, error } = await supa.from('users')
-    .select('id, username, role, display_name, created_at').eq('removed_by', 0).order('id');
+    .select('id, username, role, display_name, created_at, permissions').eq('removed_by', 0).order('id');
 
   if (error) { setBody('set-users-body', errorRow(5, error.message)); return; }
 
@@ -330,17 +392,34 @@ async function loadSetUsers() {
 
   setBody('set-users-body', SET_DATA.users.map(u => {
     const isMe = currentUser && currentUser.id === u.id;
-    const isSuper = u.role === 'superadmin';
-    const canDelete = !isMe && (currentUser?.role === 'superadmin' || !isSuper);
-    const canEdit = currentUser?.role === 'superadmin' || !isSuper || isMe;
+    const isCurrentUserSuper = currentUser?.role === 'superadmin';
+    const targetIsSuper = u.role === 'superadmin';
+    const targetIsAdmin = (u.role === 'admin' || u.role === 'both');
+
+    const canDelete = !isMe && (isCurrentUserSuper || (!targetIsSuper && !targetIsAdmin));
+    const canEdit = isCurrentUserSuper || (!targetIsSuper && !targetIsAdmin) || isMe;
+
     const created = u.created_at
       ? new Date(u.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
       : '-';
     const meTag = isMe ? tagHtml('คุณ', 'green') : '';
+
+    let permSummary = '';
+    if (targetIsAdmin) {
+      const perms = Array.isArray(u.permissions) ? u.permissions : ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+      if (perms.length === 7) {
+        permSummary = '<div style="font-size:11px;color:var(--text3);margin-top:2px">สิทธิ์: ครบทุกเมนู (7)</div>';
+      } else if (perms.length === 0) {
+        permSummary = '<div style="font-size:11px;color:var(--danger);margin-top:2px">ไม่มีสิทธิ์เมนูใดๆ</div>';
+      } else {
+        permSummary = '<div style="font-size:11px;color:var(--accent);margin-top:2px">สิทธิ์: ' + perms.length + '/7 เมนู</div>';
+      }
+    }
+
     return '<tr>' +
       '<td>' + esc(u.username) + meTag + '</td>' +
       '<td style="color:var(--text2);font-size:12px">' + esc(u.display_name || '-') + '</td>' +
-      '<td>' + tagHtml(ROLE_LABEL[u.role] || u.role, ROLE_COLOR[u.role] || 'gray') + '</td>' +
+      '<td>' + tagHtml(ROLE_LABEL[u.role] || u.role, ROLE_COLOR[u.role] || 'gray') + permSummary + '</td>' +
       '<td style="font-size:12px;color:var(--text2)">' + esc(created) + '</td>' +
       '<td>' + actionCell('users', u.id, canDelete, canEdit) + '</td>' +
       '</tr>';
@@ -447,23 +526,73 @@ function openSetForm(kind, id) {
   }
 
   else if (kind === 'users') {
-    const u = editing ? SET_DATA.users.find(x => x.id === setEditId) : null;
-    if (editing && u && u.role === 'superadmin' && currentUser?.role !== 'superadmin') {
+    const u = editing ? SET_DATA.users.find(x => String(x.id) === String(setEditId)) : null;
+    const isSuperAdmin = currentUser?.role === 'superadmin';
+    if (editing && u && u.role === 'superadmin' && !isSuperAdmin) {
       showToast('ไม่สามารถแก้ไขข้อมูลของผู้ดูแลระบบสูงสุดได้', 'warn');
       return;
     }
-    const roleList = (currentUser?.role === 'superadmin')
+    if (editing && u && (u.role === 'admin' || u.role === 'both') && !isSuperAdmin && currentUser?.id !== u.id) {
+      showToast('เฉพาะ Superadmin เท่านั้นที่สามารถแก้ไขบัญชีผู้ดูแลระบบได้', 'warn');
+      return;
+    }
+
+    const roleList = isSuperAdmin
       ? ['user', 'admin', 'both', 'superadmin']
-      : (u && u.role === 'superadmin' ? ['user', 'admin', 'both', 'superadmin'] : ['user', 'admin', 'both']);
+      : (u && (u.role === 'admin' || u.role === 'both') ? [u.role] : ['user']);
+
+    const currentRole = u ? u.role : 'user';
     const roleOpts = roleList.map(r =>
-      optionHtml(r, ROLE_LABEL[r] || r, u && u.role === r)).join('');
+      optionHtml(r, ROLE_LABEL[r] || r, currentRole === r)).join('');
+
+    // สิทธิ์การเข้าถึงเมนู
+    const userPerms = (u && Array.isArray(u.permissions))
+      ? u.permissions
+      : ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+
+    const permItemsHtml = ADMIN_PERMISSIONS_LIST.map(p => {
+      const isChecked = userPerms.includes(p.key);
+      const disabledAttr = !isSuperAdmin ? ' disabled' : '';
+      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:12px">' +
+        '<input type="checkbox" class="perm-chk" value="' + esc(p.key) + '" ' + (isChecked ? 'checked' : '') + disabledAttr + ' style="width:16px;height:16px;margin-top:2px;accent-color:var(--accent);cursor:pointer">' +
+        '<div style="line-height:1.3">' +
+          '<div style="font-weight:600;color:var(--text)">' + esc(p.label) + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + esc(p.desc) + '</div>' +
+        '</div>' +
+      '</label>';
+    }).join('');
+
+    const showPerms = (currentRole === 'admin' || currentRole === 'both');
+
+    const permBoxHtml = 
+      '<div id="f-perm-box" class="form-group" style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r);padding:12px;background:var(--surface2);display:' + (showPerms ? 'block' : 'none') + '">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+          '<label class="form-label" style="font-weight:600;margin-bottom:0">สิทธิ์การเข้าถึงเมนูของผู้ดูแลระบบ (RBAC)</label>' +
+          (isSuperAdmin ? 
+            '<div style="display:flex;gap:6px">' +
+              '<button type="button" class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="toggleAllPerms(true)">เลือกทั้งหมด</button>' +
+              '<button type="button" class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="toggleAllPerms(false)">ล้างทั้งหมด</button>' +
+            '</div>' : '') +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-bottom:10px">' + 
+          (isSuperAdmin ? 'เลือกเปิด/ปิดเมนูที่แอดมินคนนี้ได้รับอนุญาตให้เข้าใช้งานได้' : 'เฉพาะ Superadmin เท่านั้นที่สามารถแก้ไขสิทธิ์เมนูได้') + 
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr;gap:6px" id="f-perm-list">' +
+          permItemsHtml +
+        '</div>' +
+      '</div>';
+
     fields.innerHTML =
       fieldHtml('f-username', 'ชื่อผู้ใช้ (username)', u ? u.username : '', {
         required: true, readonly: editing, placeholder: 'เช่น user001',
         hint: editing ? 'แก้ username ไม่ได้' : 'ใช้สำหรับล็อกอิน ต้องไม่ซ้ำกับคนอื่น'
       }) +
       fieldHtml('f-display', 'ชื่อที่แสดง', u ? u.display_name : '', { placeholder: 'เช่น สมชาย ใจดี' }) +
-      fieldHtml('f-role', 'สิทธิ์การใช้งาน', null, { type: 'select', options: roleOpts, required: true }) +
+      '<div class="form-group" style="margin-bottom:14px">' +
+        '<label class="form-label">สิทธิ์การใช้งาน <span class="required">*</span></label>' +
+        '<select id="f-role" onchange="onRoleChanged(this.value)">' + roleOpts + '</select>' +
+      '</div>' +
+      permBoxHtml +
       fieldHtml('f-pass', editing ? 'รหัสผ่านใหม่' : 'รหัสผ่าน', '', {
         type: 'password', required: !editing,
         placeholder: editing ? 'เว้นว่าง = ใช้รหัสเดิม' : 'อย่างน้อย 6 ตัวอักษร',
@@ -648,21 +777,52 @@ async function saveUser(editing) {
     if (dup.data) { showSetError('มีชื่อผู้ใช้นี้อยู่แล้ว'); return; }
   }
 
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
   if (editing) {
-    const targetUser = SET_DATA.users.find(x => x.id === setEditId);
-    if (targetUser && targetUser.role === 'superadmin' && currentUser?.role !== 'superadmin') {
+    const targetUser = SET_DATA.users.find(x => String(x.id) === String(setEditId));
+    if (targetUser && targetUser.role === 'superadmin' && !isSuperAdmin) {
       showSetError('ไม่อนุญาตให้แก้ไขข้อมูลของผู้ดูแลระบบสูงสุด');
+      return;
+    }
+    if (targetUser && (targetUser.role === 'admin' || targetUser.role === 'both') && !isSuperAdmin && currentUser?.id !== targetUser.id) {
+      showSetError('เฉพาะ Superadmin เท่านั้นที่สามารถแก้ไขบัญชีผู้ดูแลระบบได้');
       return;
     }
   }
 
   const role = fieldValue('f-role') || 'user';
-  if (role === 'superadmin' && currentUser?.role !== 'superadmin') {
+  if (role === 'superadmin' && !isSuperAdmin) {
     showSetError('เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่สามารถกำหนดสิทธิ์ Superadmin ได้');
     return;
   }
+  if ((role === 'admin' || role === 'both') && !isSuperAdmin) {
+    const targetUser = editing ? SET_DATA.users.find(x => String(x.id) === String(setEditId)) : null;
+    if (!targetUser || (targetUser.role !== 'admin' && targetUser.role !== 'both')) {
+      showSetError('เฉพาะ Superadmin เท่านั้นที่สามารถสร้างหรือกำหนดบทบาทผู้ดูแลระบบได้');
+      return;
+    }
+  }
 
-  const row = { username: username, role: role, display_name: fieldValue('f-display') || null };
+  // รวบรวมสิทธิ์ (permissions)
+  let permissions = null;
+  if (role === 'admin' || role === 'both') {
+    if (isSuperAdmin) {
+      permissions = [];
+      document.querySelectorAll('.perm-chk:checked').forEach(cb => {
+        permissions.push(cb.value);
+      });
+    } else {
+      const targetUser = SET_DATA.users.find(x => String(x.id) === String(setEditId));
+      permissions = targetUser?.permissions || ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+    }
+  } else if (role === 'superadmin') {
+    permissions = ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+  } else {
+    permissions = [];
+  }
+
+  const row = { username: username, role: role, display_name: fieldValue('f-display') || null, permissions: permissions };
   if (!editing) row.removed_by = 0;
   if (pass) {
     const bcryptLib = (typeof dcodeIO !== 'undefined' && dcodeIO.bcrypt)
@@ -682,19 +842,30 @@ async function saveUser(editing) {
   const res = editing
     ? await supa.from('users').update(row).eq('id', setEditId)
     : await supa.from('users').insert(row);
-  if (failIf(res.error ? res.error.message : null)) return;
+  if (res.error) {
+    if (res.error.code === 'PGRST204' || (res.error.message && res.error.message.includes('permissions'))) {
+      showSetError('ยังไม่ได้รัน SQL: กรุณารัน setup_admin_permissions.sql ใน Supabase ก่อน');
+    } else {
+      showSetError(res.error.message);
+    }
+    return;
+  }
 
   if (typeof logAdminAction === 'function') {
     logAdminAction(editing ? 'update' : 'create', 'users', setEditId || username, `${username} (${role})`);
   }
 
-  // แก้ข้อมูลของตัวเอง → อัปเดตชื่อบน topbar ด้วย
+  // แก้ข้อมูลของตัวเอง → อัปเดตข้อมูลและสิทธิ์บนระบบทันที
   if (editing && currentUser && currentUser.id === setEditId) {
     currentUser.username = username;
     currentUser.role = role;
     currentUser.display_name = row.display_name;
+    if (row.permissions) currentUser.permissions = row.permissions;
     const an = document.getElementById('admin-username');
     if (an) an.textContent = username;
+    if (typeof applyAdminPermissions === 'function') {
+      applyAdminPermissions();
+    }
   }
 
   showToast(editing ? 'แก้ไขผู้ใช้แล้ว' : 'เพิ่มผู้ใช้แล้ว', 'success');

@@ -172,14 +172,128 @@ function closeAdminSidebar(){
   if(overlay) overlay.classList.remove('open');
 }
 
+// ============================================================
+// การควบคุมสิทธิ์เมนูสำหรับ Admin (RBAC)
+// ============================================================
+function applyAdminPermissions(){
+  const isSuper = currentUser?.role === 'superadmin';
+
+  const canDash = isSuper || (typeof hasPermission === 'function' && hasPermission('dashboard'));
+  const canQuestions = isSuper || (typeof hasPermission === 'function' && hasPermission('questions'));
+  const canAddQ = isSuper || (typeof hasPermission === 'function' && hasPermission('add_question'));
+  const canImport = isSuper || (typeof hasPermission === 'function' && hasPermission('import_csv'));
+  const canSettings = isSuper || (typeof hasPermission === 'function' && (hasPermission('settings') || hasPermission('manage_users')));
+  const canTestExam = isSuper || (typeof hasPermission === 'function' && hasPermission('test_exam'));
+
+  const setDisp = (id, show, dispType = 'flex') => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = show ? dispType : 'none';
+  };
+
+  setDisp('nav-dashboard', canDash);
+  setDisp('sep-main', canDash);
+
+  setDisp('nav-questions', canQuestions);
+  setDisp('nav-add-question', canAddQ);
+  setDisp('nav-import-csv', canImport);
+  setDisp('sep-questions', canQuestions || canAddQ || canImport);
+
+  setDisp('nav-settings', canSettings);
+  setDisp('nav-audit-logs', isSuper);
+  setDisp('sep-system', canSettings || isSuper);
+
+  setDisp('nav-test-exam', canTestExam);
+  setDisp('sep-exam', canTestExam);
+  setDisp('admin-switch-user', canTestExam);
+  setDisp('topbar-btn-test-exam', canTestExam, 'inline-flex');
+}
+
+function getFirstAllowedAdminPage(){
+  const isSuper = currentUser?.role === 'superadmin';
+  if(isSuper) return 'dashboard';
+
+  const order = [
+    { page: 'dashboard', perm: 'dashboard' },
+    { page: 'questions', perm: 'questions' },
+    { page: 'add-question', perm: 'add_question' },
+    { page: 'import-csv', perm: 'import_csv' },
+    { page: 'settings', perm: ['settings', 'manage_users'] }
+  ];
+
+  for(const item of order){
+    if(Array.isArray(item.perm)){
+      if(item.perm.some(p => typeof hasPermission === 'function' && hasPermission(p))){
+        return item.page;
+      }
+    } else if(typeof hasPermission === 'function' && hasPermission(item.perm)){
+      return item.page;
+    }
+  }
+
+  // ถ้าไม่มีสิทธิ์เมนูจัดการใดๆ เลย แต่มีสิทธิ์ทดสอบข้อสอบ
+  if(typeof hasPermission === 'function' && hasPermission('test_exam')){
+    return 'test_exam_redirect';
+  }
+
+  return 'no_permission';
+}
+
+function goFirstAllowedAdminPage(){
+  const firstPage = getFirstAllowedAdminPage();
+  if(firstPage === 'test_exam_redirect'){
+    enterUser();
+    return;
+  }
+  if(firstPage === 'no_permission'){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('admin-layout').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;padding:20px;text-align:center">' +
+      '<div style="font-size:48px">🔒</div>' +
+      '<div style="font-size:18px;font-weight:700;color:#dc2626">ไม่มีสิทธิ์เข้าใช้งานระบบ</div>' +
+      '<div style="font-size:14px;color:#64748b;max-width:360px">บัญชีของคุณยังไม่ได้รับสิทธิ์ในการเข้าใช้งานเมนูจัดการใดๆ กรุณาติดต่อผู้ดูแลระบบสูงสุด (Superadmin)</div>' +
+      '<button onclick="doLogout()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px">← ออกจากระบบ</button>' +
+      '</div>';
+    return;
+  }
+  const navItem = document.getElementById('nav-' + firstPage) || document.querySelector('.nav-item');
+  goPage(firstPage, navItem);
+}
+
 function goPage(id,navEl){
   closeAdminSidebar();
 
+  const isSuper = currentUser?.role === 'superadmin';
+
   // ตรวจสอบสิทธิ์หน้า Audit Log: เฉพาะ superadmin เท่านั้น
   if(id === 'audit-logs'){
-    if(currentUser?.role !== 'superadmin'){
+    if(!isSuper){
       if(typeof showToast === 'function') showToast('เฉพาะ Superadmin เท่านั้นที่สามารถดูประวัติการทำงานได้', 'warn');
-      goPage('dashboard', document.querySelector('.nav-item'));
+      goFirstAllowedAdminPage();
+      return;
+    }
+  }
+
+  // ตรวจสอบสิทธิ์ของแต่ละหน้า (RBAC)
+  const pagePermMap = {
+    'dashboard': 'dashboard',
+    'questions': 'questions',
+    'add-question': 'add_question',
+    'import-csv': 'import_csv'
+  };
+
+  if(!isSuper && pagePermMap[id]){
+    if(typeof hasPermission === 'function' && !hasPermission(pagePermMap[id])){
+      if(typeof showToast === 'function') showToast('คุณไม่ได้รับสิทธิ์เข้าใช้งานเมนูนี้', 'warn');
+      goFirstAllowedAdminPage();
+      return;
+    }
+  }
+
+  if(!isSuper && id === 'settings'){
+    const canSettings = typeof hasPermission === 'function' && (hasPermission('settings') || hasPermission('manage_users'));
+    if(!canSettings){
+      if(typeof showToast === 'function') showToast('คุณไม่ได้รับสิทธิ์เข้าใช้งานหน้าตั้งค่า', 'warn');
+      goFirstAllowedAdminPage();
       return;
     }
   }
@@ -190,6 +304,12 @@ function goPage(id,navEl){
   if(navEl){
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     navEl.classList.add('active');
+  } else {
+    const defaultNav = document.getElementById('nav-' + id);
+    if(defaultNav){
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      defaultNav.classList.add('active');
+    }
   }
   const titles={
     'dashboard':'Dashboard',
@@ -204,9 +324,12 @@ function goPage(id,navEl){
   if(id==='settings' && typeof initSettingsPage==='function') initSettingsPage();
   // เปิดหน้า Audit Log → โหลดข้อมูล
   if(id==='audit-logs' && typeof loadAuditLogsPage==='function') loadAuditLogsPage();
-  // show switch-to-user if role=both, admin หรือ superadmin
+  // show switch-to-user if role=both, admin หรือ superadmin (และได้รับสิทธิ์ test_exam)
+  const canTest = isSuper || (typeof hasPermission === 'function' && hasPermission('test_exam'));
   const sw=document.getElementById('admin-switch-user');
-  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin' || currentUser?.role==='superadmin')?'flex':'none';
+  if(sw) sw.style.display=canTest?'flex':'none';
+  const topSw=document.getElementById('topbar-btn-test-exam');
+  if(topSw) topSw.style.display=canTest?'inline-flex':'none';
   // เปิด Dashboard → โหลดสถิติใหม่ทุกครั้ง (ไม่งั้นตัวเลขจะค้างอยู่ของเก่า)
   if(id==='dashboard' && typeof initAdminDashboard==='function') initAdminDashboard();
   // เปิดหน้าเพิ่มข้อสอบ → เตรียมฟอร์ม + โหลดรายวิชาจริง

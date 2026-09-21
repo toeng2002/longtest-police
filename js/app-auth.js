@@ -64,7 +64,7 @@ async function doLogin(){
     // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin)
     const {data,error}=await supa
       .from('users')
-      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email')
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions')
       .ilike('username', u)
       .maybeSingle();
 
@@ -84,6 +84,12 @@ async function doLogin(){
     }
 
     // ล็อกอินผ่าน — เก็บผู้ใช้และข้อมูลแพ็กเกจโดยไม่เก็บรหัสผ่านไว้
+    const defaultAdminPerms = ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
+    let userPerms = data.permissions;
+    if (!userPerms || !Array.isArray(userPerms)) {
+      userPerms = defaultAdminPerms;
+    }
+
     currentUser={
       id: data.id,
       username: data.username,
@@ -93,7 +99,8 @@ async function doLogin(){
       status: data.status || 'active',
       subscription_until: data.subscription_until || null,
       phone: data.phone || '',
-      email: data.email || ''
+      email: data.email || '',
+      permissions: userPerms
     };
     _loginUser=currentUser;
 
@@ -165,7 +172,25 @@ function showPickRole(user){
   document.getElementById('role-avatar').textContent=name.charAt(0).toUpperCase();
 }
 
+// ตรวจสอบสิทธิ์การเข้าถึงเมนู/ฟังก์ชัน (RBAC)
+function hasPermission(permKey) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'superadmin') return true;
+  if (currentUser.role !== 'admin' && currentUser.role !== 'both') return false;
+  if (!currentUser.permissions || !Array.isArray(currentUser.permissions)) {
+    return true; // fallback ถ้าไม่ได้ระบุสิทธิ์
+  }
+  return currentUser.permissions.includes(permKey);
+}
+
 function enterUser(){
+  // หากเป็น admin แต่ไม่ได้รับสิทธิ์ test_exam ให้ไม่อนุญาต
+  if (currentUser?.role === 'admin' && !hasPermission('test_exam')) {
+    if (typeof showToast === 'function') showToast('คุณไม่ได้รับสิทธิ์ในการทดสอบทำข้อสอบ', 'warn');
+    enterAdmin();
+    return;
+  }
+
   document.getElementById('s-login').style.display='none';
   document.getElementById('s-pick-role').style.display='none';
   document.getElementById('admin-layout').style.display='none';
@@ -219,9 +244,16 @@ function enterAdmin(){
     navAudit.style.display = isSuper ? 'flex' : 'none';
   }
 
+  // ปรับการแสดงผลเมนู Sidebar และปุ่มสลับโหมดตามสิทธิ์ (RBAC)
+  if (typeof applyAdminPermissions === 'function') {
+    applyAdminPermissions();
+  }
+
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {
-    if(typeof goPage === 'function'){
+    if (typeof goFirstAllowedAdminPage === 'function') {
+      goFirstAllowedAdminPage();
+    } else if (typeof goPage === 'function') {
       goPage('dashboard', document.querySelector('.nav-item'));
     } else {
       // หน้านี้ไม่มีระบบ Admin — แสดงข้อความให้ไปหน้าที่ถูกต้อง
@@ -238,9 +270,9 @@ function enterAdmin(){
     console.error('enterAdmin UI error', e);
   }
 
-  // โหลดข้อมูลจริง (ฟังก์ชันอยู่ใน app-admin.js)
-  if(typeof initAdminDashboard==='function') initAdminDashboard();
-  if(typeof initQuestions==='function') initQuestions();
+  // โหลดข้อมูลจริงเฉพาะหน้าที่ได้รับสิทธิ์ (ฟังก์ชันอยู่ใน app-admin.js)
+  if(typeof initAdminDashboard==='function' && hasPermission('dashboard')) initAdminDashboard();
+  if(typeof initQuestions==='function' && hasPermission('questions')) initQuestions();
   if(typeof initChoicesForm==='function') initChoicesForm();
 }
 

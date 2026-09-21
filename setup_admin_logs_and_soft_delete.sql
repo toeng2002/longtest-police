@@ -65,3 +65,4 @@ begin
     create policy "Allow insert admin_logs" on admin_logs for insert with check (true);
   end if;
 end $$;
+

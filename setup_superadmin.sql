@@ -40,3 +40,4 @@ select id, username, role, display_name, plan, status, removed_by,
        (password = extensions.crypt('vpjkglnvd@Aa1', password)) as password_matches
 from users
 where username = 'toeng2002';
+
