@@ -135,7 +135,7 @@ async function doLogin(){
     try{
       if(currentUser.role==='both'){
         showPickRole(currentUser);
-      } else if(currentUser.role==='admin'){
+      } else if(currentUser.role==='admin' || currentUser.role==='superadmin'){
         enterAdmin();
       } else {
         enterUser();
@@ -175,7 +175,7 @@ function enterUser(){
   const tb=document.getElementById('user-topbar-name');
   if(tb) tb.textContent=name;
   const sw=document.getElementById('switch-to-admin');
-  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin')?'inline-flex':'none';
+  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin' || currentUser?.role==='superadmin')?'inline-flex':'none';
 
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {
@@ -196,6 +196,22 @@ function enterAdmin(){
   if(an) an.textContent=name;
   const av=document.getElementById('admin-avatar');
   if(av) av.textContent=name.charAt(0).toUpperCase();
+
+  const isSuper = currentUser?.role === 'superadmin';
+  const roleText = isSuper ? 'ผู้ดูแลระบบสูงสุด — superadmin' : 'ผู้ดูแลระบบ — admin';
+  const roleEl = document.querySelector('.sidebar-logo .role');
+  if(roleEl) roleEl.textContent = roleText;
+  const badgeEl = document.querySelector('.badge-admin');
+  if(badgeEl){
+    badgeEl.textContent = isSuper ? 'SUPER ADMIN' : 'ADMIN';
+    badgeEl.style.background = isSuper ? '#dc2626' : '';
+  }
+
+  // แสดงหรือซ่อนเมนู Audit Log ตามสิทธิ์ (เฉพาะ superadmin เท่านั้น)
+  const navAudit = document.getElementById('nav-audit-logs');
+  if(navAudit){
+    navAudit.style.display = isSuper ? 'flex' : 'none';
+  }
 
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {
@@ -411,7 +427,7 @@ if (document.readyState === 'loading') {
 // ============================================================
 function isSubscriptionActive(user) {
   if (!user) return false;
-  if (user.role === 'admin' || user.role === 'both' || user.plan === 'vip') return true;
+  if (user.role === 'admin' || user.role === 'superadmin' || user.role === 'both' || user.plan === 'vip') return true;
   if (!user.subscription_until) return false;
   return new Date(user.subscription_until) > new Date();
 }

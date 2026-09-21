@@ -174,19 +174,39 @@ function closeAdminSidebar(){
 
 function goPage(id,navEl){
   closeAdminSidebar();
+
+  // ตรวจสอบสิทธิ์หน้า Audit Log: เฉพาะ superadmin เท่านั้น
+  if(id === 'audit-logs'){
+    if(currentUser?.role !== 'superadmin'){
+      if(typeof showToast === 'function') showToast('เฉพาะ Superadmin เท่านั้นที่สามารถดูประวัติการทำงานได้', 'warn');
+      goPage('dashboard', document.querySelector('.nav-item'));
+      return;
+    }
+  }
+
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  const targetPage = document.getElementById('page-'+id);
+  if(targetPage) targetPage.classList.add('active');
   if(navEl){
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     navEl.classList.add('active');
   }
-  const titles={'dashboard':'Dashboard','questions':'ข้อสอบทั้งหมด','add-question':'เพิ่มข้อสอบ','import-csv':'นำเข้า CSV','settings':'ตั้งค่าระบบ'};
+  const titles={
+    'dashboard':'Dashboard',
+    'questions':'ข้อสอบทั้งหมด',
+    'add-question':'เพิ่มข้อสอบ',
+    'import-csv':'นำเข้า CSV',
+    'settings':'ตั้งค่าระบบ',
+    'audit-logs':'ประวัติการทำงาน (Audit Log)'
+  };
   document.getElementById('topbar-title').textContent=titles[id]||id;
   // เปิดหน้าตั้งค่า → โหลดข้อมูล (ฟังก์ชันอยู่ใน app-settings.js)
   if(id==='settings' && typeof initSettingsPage==='function') initSettingsPage();
-  // show switch-to-user if role=both or admin
+  // เปิดหน้า Audit Log → โหลดข้อมูล
+  if(id==='audit-logs' && typeof loadAuditLogsPage==='function') loadAuditLogsPage();
+  // show switch-to-user if role=both, admin หรือ superadmin
   const sw=document.getElementById('admin-switch-user');
-  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin')?'flex':'none';
+  if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin' || currentUser?.role==='superadmin')?'flex':'none';
   // เปิด Dashboard → โหลดสถิติใหม่ทุกครั้ง (ไม่งั้นตัวเลขจะค้างอยู่ของเก่า)
   if(id==='dashboard' && typeof initAdminDashboard==='function') initAdminDashboard();
   // เปิดหน้าเพิ่มข้อสอบ → เตรียมฟอร์ม + โหลดรายวิชาจริง
@@ -235,43 +255,50 @@ async function initAdminDashboard(){
         <span style="font-size:12px;color:var(--text2);min-width:28px;text-align:right">${u.v}</span>
       </div>
     </div>`).join('');
-  // กิจกรรมล่าสุด: ดึงจากตาราง admin_logs หากมีข้อมูล หรือ fallback จากรายการข้อสอบ
+
+  // กิจกรรมล่าสุด: ถ้าเป็น superadmin ให้ดึงจากตาราง admin_logs ได้
+  // แต่ถ้าเป็น admin ทั่วไป ให้แสดงเฉพาะกิจกรรมข้อสอบ (ไม่เปิดเผย log ของแอดมินคนอื่น)
   let logsHtml = '';
-  try {
-    const { data: logs, error: lErr } = await supa
-      .from('admin_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(30);
+  const isSuper = currentUser?.role === 'superadmin';
 
-    if (!lErr && logs && logs.length > 0) {
-      const actionLabels = {
-        create: { text: 'เพิ่ม', color: 'var(--success)' },
-        update: { text: 'แก้ไข', color: 'var(--accent)' },
-        delete: { text: 'ลบ', color: 'var(--danger)' },
-        import_csv: { text: 'นำเข้า CSV', color: 'var(--accent)' },
-        toggle_publish: { text: 'สถานะเผยแพร่', color: 'var(--warning)' },
-        toggle_active: { text: 'เปิด/ปิดการใช้งาน', color: 'var(--warning)' }
-      };
+  if (isSuper) {
+    try {
+      const { data: logs, error: lErr } = await supa
+        .from('admin_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(30);
 
-      logsHtml = logs.map(l => {
-        const info = actionLabels[l.action] || { text: l.action, color: 'var(--text2)' };
-        const timeStr = l.created_at ? new Date(l.created_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '';
-        const targetName = l.target_table === 'questions' ? 'ข้อสอบ' :
-                           l.target_table === 'units' ? 'หน่วยงาน' :
-                           l.target_table === 'subjects' ? 'วิชา' :
-                           l.target_table === 'users' ? 'ผู้ใช้งาน' : l.target_table;
-        return `
-        <div class="activity-item">
-          <div class="act-dot" style="background:${info.color}"></div>
-          <div>
-            <div class="act-text"><b>${esc(l.admin_username || 'Admin')}</b>: ${info.text} ${targetName} ${l.target_id ? '#' + esc(l.target_id) : ''} · ${esc(l.details || '')}</div>
-            <div class="act-time">${timeStr} ${l.ip_address && l.ip_address !== 'unknown' ? '· IP: ' + esc(l.ip_address) : ''}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  } catch (e) {}
+      if (!lErr && logs && logs.length > 0) {
+        const actionLabels = {
+          create: { text: 'เพิ่ม', color: 'var(--success)' },
+          update: { text: 'แก้ไข', color: 'var(--accent)' },
+          delete: { text: 'ลบ', color: 'var(--danger)' },
+          import_csv: { text: 'นำเข้า CSV', color: 'var(--accent)' },
+          toggle_publish: { text: 'สถานะเผยแพร่', color: 'var(--warning)' },
+          toggle_active: { text: 'เปิด/ปิดการใช้งาน', color: 'var(--warning)' }
+        };
+
+        logsHtml = logs.map(l => {
+          const info = actionLabels[l.action] || { text: l.action, color: 'var(--text2)' };
+          const timeStr = l.created_at ? new Date(l.created_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '';
+          const targetName = l.target_table === 'questions' ? 'ข้อสอบ' :
+                             l.target_table === 'units' ? 'หน่วยงาน' :
+                             l.target_table === 'subjects' ? 'วิชา' :
+                             l.target_table === 'difficulty_levels' ? 'ระดับความยาก' :
+                             l.target_table === 'users' ? 'ผู้ใช้งาน' : l.target_table;
+          return `
+          <div class="activity-item">
+            <div class="act-dot" style="background:${info.color}"></div>
+            <div>
+              <div class="act-text"><b>${esc(l.admin_username || 'Admin')}</b>: ${info.text} ${targetName} ${l.target_id ? '#' + esc(l.target_id) : ''} · ${esc(l.details || '')}</div>
+              <div class="act-time">${timeStr} ${l.ip_address && l.ip_address !== 'unknown' ? '· IP: ' + esc(l.ip_address) : ''}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    } catch (e) {}
+  }
 
   if (!logsHtml) {
     const recent = [...rows].slice(0, 30);
@@ -286,6 +313,118 @@ async function initAdminDashboard(){
 
   const actEl = document.getElementById('activity-log');
   if (actEl) actEl.innerHTML = logsHtml;
+}
+
+// ============================================================
+// ระบบ Audit Log (สำหรับ Superadmin)
+// ============================================================
+let _rawAuditLogs = [];
+
+async function loadAuditLogsPage() {
+  if (currentUser?.role !== 'superadmin') return;
+
+  const tbody = document.getElementById('audit-logs-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">กำลังโหลดข้อมูลประวัติการทำงาน...</td></tr>';
+
+  try {
+    const { data, error } = await supa
+      .from('admin_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(300);
+
+    if (error) throw error;
+
+    _rawAuditLogs = data || [];
+    filterAuditLogs();
+  } catch (err) {
+    console.error('loadAuditLogsPage error', err);
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger)">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${esc(err.message || err)}</td></tr>`;
+  }
+}
+
+function filterAuditLogs() {
+  const tbody = document.getElementById('audit-logs-body');
+  const countEl = document.getElementById('log-count');
+  if (!tbody) return;
+
+  const q = (document.getElementById('log-search')?.value || '').trim().toLowerCase();
+  const actFilter = document.getElementById('log-action')?.value || '';
+  const tblFilter = document.getElementById('log-table')?.value || '';
+
+  const filtered = _rawAuditLogs.filter(item => {
+    if (actFilter && item.action !== actFilter) return false;
+    if (tblFilter && item.target_table !== tblFilter) return false;
+    if (q) {
+      const matchU = (item.admin_username || '').toLowerCase().includes(q);
+      const matchD = (item.details || '').toLowerCase().includes(q);
+      const matchId = String(item.target_id || '').toLowerCase().includes(q);
+      const matchIp = (item.ip_address || '').toLowerCase().includes(q);
+      if (!matchU && !matchD && !matchId && !matchIp) return false;
+    }
+    return true;
+  });
+
+  if (countEl) {
+    countEl.textContent = `พบ ${filtered.length.toLocaleString()} รายการ`;
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text2)">ไม่พบประวัติการทำงานที่ตรงกับเงื่อนไข</td></tr>';
+    return;
+  }
+
+  const actionMap = {
+    create: { text: 'เพิ่มข้อมูล', tag: 'green' },
+    update: { text: 'แก้ไขข้อมูล', tag: 'blue' },
+    delete: { text: 'ลบข้อมูล (Soft)', tag: 'red' },
+    import_csv: { text: 'นำเข้า CSV', tag: 'purple' },
+    toggle_publish: { text: 'สถานะเผยแพร่', tag: 'yellow' },
+    toggle_active: { text: 'เปิด/ปิดใช้งาน', tag: 'yellow' }
+  };
+
+  const tableMap = {
+    questions: 'ข้อสอบ',
+    units: 'หน่วยงาน',
+    subjects: 'วิชา',
+    difficulty_levels: 'ระดับความยาก',
+    users: 'ผู้ใช้งาน'
+  };
+
+  tbody.innerHTML = filtered.map(item => {
+    const actInfo = actionMap[item.action] || { text: item.action, tag: 'gray' };
+    const dateStr = item.created_at
+      ? new Date(item.created_at).toLocaleString('th-TH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })
+      : '-';
+    const tableName = tableMap[item.target_table] || item.target_table || '-';
+    const ipStr = item.ip_address && item.ip_address !== 'unknown'
+      ? `<span class="mono" style="font-size:11px">${esc(item.ip_address)}</span>`
+      : '<span style="color:var(--text3)">—</span>';
+
+    return `
+      <tr>
+        <td style="font-size:12px;color:var(--text2);white-space:nowrap">${dateStr}</td>
+        <td>
+          <div style="font-weight:500;font-size:13px">${esc(item.admin_username || 'Admin')}</div>
+          ${item.admin_id ? `<div style="font-size:10px;color:var(--text3)">ID: ${item.admin_id}</div>` : ''}
+        </td>
+        <td><span class="tag tag-${actInfo.tag}">${esc(actInfo.text)}</span></td>
+        <td style="font-size:13px;font-weight:500">${esc(tableName)}</td>
+        <td><span class="mono" style="font-size:12px">${item.target_id ? '#' + esc(item.target_id) : '—'}</span></td>
+        <td style="font-size:13px;line-height:1.4">${esc(item.details || '—')}</td>
+        <td>${ipStr}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function initQuestions(){

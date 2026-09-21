@@ -23,8 +23,8 @@ let setPinValue = '';
 let setDiffTableMissing = false;
 
 const LEVEL_LABEL = { p: 'ชั้นประทวน', s: 'ชั้นสัญญาบัตร', both: 'ทั้งสองระดับ' };
-const ROLE_LABEL = { admin: 'ผู้ดูแลระบบ', user: 'ผู้ใช้', both: 'ทั้งสองโหมด' };
-const ROLE_COLOR = { admin: 'red', user: 'blue', both: 'purple' };
+const ROLE_LABEL = { superadmin: 'ผู้ดูแลระบบสูงสุด', admin: 'ผู้ดูแลระบบ', user: 'ผู้ใช้', both: 'ทั้งสองโหมด' };
+const ROLE_COLOR = { superadmin: 'red', admin: 'red', user: 'blue', both: 'purple' };
 const DIFF_COLORS = ['gray', 'green', 'yellow', 'red', 'blue', 'purple'];
 
 // ตัวช่วยสร้าง HTML (กันเครื่องหมายพิเศษในข้อความ)
@@ -74,8 +74,9 @@ function delBtn(kind, id) {
     '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>';
 }
 
-function actionCell(kind, id, canDelete) {
-  return '<div style="display:flex;gap:3px">' + editBtn(kind, id, 'openSetForm') +
+function actionCell(kind, id, canDelete, canEdit = true) {
+  return '<div style="display:flex;gap:3px">' + 
+    (canEdit ? editBtn(kind, id, 'openSetForm') : '') +
     (canDelete ? delBtn(kind, id) : '') + '</div>';
 }
 
@@ -329,6 +330,9 @@ async function loadSetUsers() {
 
   setBody('set-users-body', SET_DATA.users.map(u => {
     const isMe = currentUser && currentUser.id === u.id;
+    const isSuper = u.role === 'superadmin';
+    const canDelete = !isMe && (currentUser?.role === 'superadmin' || !isSuper);
+    const canEdit = currentUser?.role === 'superadmin' || !isSuper || isMe;
     const created = u.created_at
       ? new Date(u.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
       : '-';
@@ -338,7 +342,7 @@ async function loadSetUsers() {
       '<td style="color:var(--text2);font-size:12px">' + esc(u.display_name || '-') + '</td>' +
       '<td>' + tagHtml(ROLE_LABEL[u.role] || u.role, ROLE_COLOR[u.role] || 'gray') + '</td>' +
       '<td style="font-size:12px;color:var(--text2)">' + esc(created) + '</td>' +
-      '<td>' + actionCell('users', u.id, !isMe) + '</td>' +
+      '<td>' + actionCell('users', u.id, canDelete, canEdit) + '</td>' +
       '</tr>';
   }).join(''));
 }
@@ -444,8 +448,15 @@ function openSetForm(kind, id) {
 
   else if (kind === 'users') {
     const u = editing ? SET_DATA.users.find(x => x.id === setEditId) : null;
-    const roleOpts = ['user', 'admin', 'both'].map(r =>
-      optionHtml(r, ROLE_LABEL[r], u && u.role === r)).join('');
+    if (editing && u && u.role === 'superadmin' && currentUser?.role !== 'superadmin') {
+      showToast('ไม่สามารถแก้ไขข้อมูลของผู้ดูแลระบบสูงสุดได้', 'warn');
+      return;
+    }
+    const roleList = (currentUser?.role === 'superadmin')
+      ? ['user', 'admin', 'both', 'superadmin']
+      : (u && u.role === 'superadmin' ? ['user', 'admin', 'both', 'superadmin'] : ['user', 'admin', 'both']);
+    const roleOpts = roleList.map(r =>
+      optionHtml(r, ROLE_LABEL[r] || r, u && u.role === r)).join('');
     fields.innerHTML =
       fieldHtml('f-username', 'ชื่อผู้ใช้ (username)', u ? u.username : '', {
         required: true, readonly: editing, placeholder: 'เช่น user001',
@@ -637,10 +648,36 @@ async function saveUser(editing) {
     if (dup.data) { showSetError('มีชื่อผู้ใช้นี้อยู่แล้ว'); return; }
   }
 
+  if (editing) {
+    const targetUser = SET_DATA.users.find(x => x.id === setEditId);
+    if (targetUser && targetUser.role === 'superadmin' && currentUser?.role !== 'superadmin') {
+      showSetError('ไม่อนุญาตให้แก้ไขข้อมูลของผู้ดูแลระบบสูงสุด');
+      return;
+    }
+  }
+
   const role = fieldValue('f-role') || 'user';
+  if (role === 'superadmin' && currentUser?.role !== 'superadmin') {
+    showSetError('เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่สามารถกำหนดสิทธิ์ Superadmin ได้');
+    return;
+  }
+
   const row = { username: username, role: role, display_name: fieldValue('f-display') || null };
   if (!editing) row.removed_by = 0;
-  if (pass) row.password = pass;
+  if (pass) {
+    const bcryptLib = (typeof dcodeIO !== 'undefined' && dcodeIO.bcrypt)
+      ? dcodeIO.bcrypt
+      : (typeof bcrypt !== 'undefined' ? bcrypt : null);
+    if (bcryptLib && typeof bcryptLib.hashSync === 'function') {
+      try {
+        row.password = bcryptLib.hashSync(pass, 10);
+      } catch (e) {
+        row.password = pass;
+      }
+    } else {
+      row.password = pass;
+    }
+  }
 
   const res = editing
     ? await supa.from('users').update(row).eq('id', setEditId)
@@ -696,10 +733,15 @@ function setDeleteInfo(kind, id) {
     };
   }
   const u = SET_DATA.users.find(x => x.id === id);
+  const isSuper = u && u.role === 'superadmin';
+  const blockSuper = isSuper && currentUser?.role !== 'superadmin';
   return {
     label: u ? (u.username + (u.display_name ? ' (' + u.display_name + ')' : '')) : ('#' + id),
-    table: 'users', col: 'id', val: id, block: false,
-    lines: ['บัญชีนี้จะล็อกอินเข้าระบบไม่ได้อีก']
+    table: 'users', col: 'id', val: id,
+    block: blockSuper,
+    lines: blockSuper
+      ? ['ไม่อนุญาตให้ลบบัญชีผู้ดูแลระบบสูงสุด (Superadmin)']
+      : ['บัญชีนี้จะล็อกอินเข้าระบบไม่ได้อีก']
   };
 }
 

@@ -796,6 +796,10 @@ body {
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.09 4.6h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 9v.09a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         ตั้งค่า
       </div>
+      <div class="nav-item" id="nav-audit-logs" onclick="goPage('audit-logs',this)" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        ประวัติการทำงาน (Audit Log)
+      </div>
       <div class="nav-sep">จำลองสอบ</div>
       <div class="nav-item" onclick="enterUser()" style="color:var(--accent);font-weight:500">
         <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1235,6 +1239,69 @@ body {
             <tbody id="set-users-body"></tbody>
           </table>
         </div></div>
+      </div>
+    </div>
+
+    <!-- Audit Logs (เฉพาะ superadmin) -->
+    <div id="page-audit-logs" class="page">
+      <div style="margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+            ประวัติการทำงานของผู้ดูแลระบบ (Audit Log)
+            <span class="tag tag-red" style="font-size:11px">เฉพาะ SUPERADMIN</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">บันทึกทุกกิจกรรม เพิ่ม แก้ไข ลบ นำเข้าข้อสอบ และการตั้งค่าระบบ พร้อม IP Address</div>
+        </div>
+        <button class="btn btn-sm" onclick="loadAuditLogsPage()" style="display:inline-flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          รีเฟรชข้อมูล
+        </button>
+      </div>
+
+      <div class="toolbar" style="gap:8px;flex-wrap:wrap">
+        <div class="search-box" style="flex:1;min-width:200px">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="ค้นหา (ผู้ใช้, รายละเอียด, ID)..." id="log-search" oninput="filterAuditLogs()">
+        </div>
+        <select id="log-action" onchange="filterAuditLogs()" style="min-width:140px">
+          <option value="">ทุกกิจกรรม (Action)</option>
+          <option value="create">เพิ่มข้อมูล (Create)</option>
+          <option value="update">แก้ไขข้อมูล (Update)</option>
+          <option value="delete">ลบข้อมูล (Delete)</option>
+          <option value="import_csv">นำเข้า CSV</option>
+          <option value="toggle_publish">สถานะเผยแพร่</option>
+          <option value="toggle_active">เปิด/ปิดการใช้งาน</option>
+        </select>
+        <select id="log-table" onchange="filterAuditLogs()" style="min-width:140px">
+          <option value="">ทุกตาราง (Target)</option>
+          <option value="questions">ข้อสอบ (questions)</option>
+          <option value="units">หน่วยงาน (units)</option>
+          <option value="subjects">วิชา (subjects)</option>
+          <option value="difficulty_levels">ความยาก (difficulty_levels)</option>
+          <option value="users">ผู้ใช้งาน (users)</option>
+        </select>
+        <div id="log-count" style="font-size:12px;color:var(--text2);align-self:center;margin-left:auto"></div>
+      </div>
+
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:145px">วัน-เวลา</th>
+                <th style="width:125px">ผู้ดำเนินการ</th>
+                <th style="width:115px">การกระทำ</th>
+                <th style="width:110px">ตาราง</th>
+                <th style="width:90px">ID เป้าหมาย</th>
+                <th>รายละเอียด</th>
+                <th style="width:120px">IP Address</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-body">
+              <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
    </div>
