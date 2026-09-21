@@ -213,7 +213,25 @@
     document.body.classList.remove('screen-blur-active');
   });
 
-  // 9. ระบบลายน้ำระบุตัวตนแบบไดนามิก (Dynamic Security Watermark)
+  // ฟังก์ชันเซ็นเซอร์ข้อความ ปิดบังตัวกลางเพื่อความเป็นส่วนตัว
+  function maskSensitive(text) {
+    if (!text || typeof text !== 'string') return '';
+    const s = text.trim();
+    if (s.length <= 2) return s[0] + '*';
+    if (s.length <= 4) return s[0] + '**' + s.slice(-1);
+    return s.slice(0, 2) + '***' + s.slice(-2);
+  }
+
+  // ตรวจสอบและซิงก์การแสดงผลลายน้ำ: แสดงเฉพาะเมื่ออยู่ในหน้าทำข้อสอบ (#s-quiz)
+  function syncWatermarkVisibility() {
+    const overlay = document.getElementById('security-watermark-overlay');
+    if (!overlay) return;
+    const quizScreen = document.getElementById('s-quiz');
+    const isQuizActive = quizScreen && (quizScreen.classList.contains('active') || quizScreen.style.display === 'block');
+    overlay.style.display = (isQuizActive && typeof currentUser !== 'undefined' && currentUser) ? 'block' : 'none';
+  }
+
+  // 9. ระบบลายน้ำระบุตัวตนแบบไดนามิกพร้อมเซ็นเซอร์ (Dynamic Security Watermark)
   window.updateSecurityWatermark = function () {
     let overlay = document.getElementById('security-watermark-overlay');
     if (typeof currentUser === 'undefined' || !currentUser) {
@@ -226,28 +244,43 @@
       overlay.id = 'security-watermark-overlay';
       document.body.appendChild(overlay);
     }
-    overlay.style.display = 'block';
 
+    // เซ็นเซอร์ชื่อผู้ใช้และชื่อที่แสดง เช่น to***02 (สม***ดี)
     const username = currentUser.username || 'User';
-    const dispName = currentUser.display_name || '';
-    const userId = currentUser.id || '';
-    const text = `${username} (${dispName}) • ID:${userId}`;
+    const maskedUser = maskSensitive(username);
+    const maskedName = currentUser.display_name ? ` (${maskSensitive(currentUser.display_name)})` : '';
+    const userId = currentUser.id ? ` • ID:#${currentUser.id}` : '';
+    const text = `${maskedUser}${maskedName}${userId}`;
 
     // สร้างลวดลาย SVG ข้อความเอียง 25 องศา กระจายทั่วทั้งหน้าจอ
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="220">
-      <text x="50%" y="50%" transform="rotate(-25 170 110)"
-        fill="#000000" font-family="'Sarabun', system-ui, sans-serif" font-size="13" font-weight="600"
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240">
+      <text x="50%" y="50%" transform="rotate(-25 180 120)"
+        fill="#000000" font-family="'Sarabun', system-ui, sans-serif" font-size="14" font-weight="600"
         text-anchor="middle" dominant-baseline="middle">${text}</text>
     </svg>`;
     const encoded = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     overlay.style.backgroundImage = `url("${encoded}")`;
     overlay.style.backgroundRepeat = 'repeat';
+
+    syncWatermarkVisibility();
   };
 
-  // เรียกเตรียมกล่องแจ้งเตือนเมื่อโหลดหน้าเสร็จ
+  // สังเกตการเปลี่ยนหน้าจอ เพื่อเปิด/ปิดลายน้ำเฉพาะหน้าทำข้อสอบ (#s-quiz) อัตโนมัติ
+  function setupWatermarkObserver() {
+    const quizScreen = document.getElementById('s-quiz');
+    if (!quizScreen) return;
+    const observer = new MutationObserver(syncWatermarkVisibility);
+    observer.observe(quizScreen, { attributes: true, attributeFilter: ['class', 'style'] });
+  }
+
+  // เรียกเตรียมกล่องแจ้งเตือนและระบบสังเกตการณ์เมื่อโหลดหน้าเสร็จ
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureBlurNotice);
+    document.addEventListener('DOMContentLoaded', function() {
+      ensureBlurNotice();
+      setupWatermarkObserver();
+    });
   } else {
     ensureBlurNotice();
+    setupWatermarkObserver();
   }
 })();
