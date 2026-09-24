@@ -1156,6 +1156,7 @@ function startRegCountdown() {
     btnResend.disabled = true;
     btnResend.style.color = 'var(--text3)';
     btnResend.style.cursor = 'not-allowed';
+    btnResend.style.display = 'none';
   }
   if (textEl) textEl.style.display = 'inline';
   if (numEl) numEl.textContent = _regCountdown;
@@ -1171,6 +1172,7 @@ function startRegCountdown() {
         btnResend.disabled = false;
         btnResend.style.color = 'var(--accent)';
         btnResend.style.cursor = 'pointer';
+        btnResend.style.display = 'inline-block';
       }
     }
   }, 1000);
@@ -1536,6 +1538,7 @@ function startForgotCountdown() {
     btnResend.disabled = true;
     btnResend.style.color = 'var(--text3)';
     btnResend.style.cursor = 'not-allowed';
+    btnResend.style.display = 'none';
   }
   if (textEl) textEl.style.display = 'inline';
   if (numEl) numEl.textContent = _forgotCountdown;
@@ -1551,6 +1554,7 @@ function startForgotCountdown() {
         btnResend.disabled = false;
         btnResend.style.color = 'var(--accent)';
         btnResend.style.cursor = 'pointer';
+        btnResend.style.display = 'inline-block';
       }
     }
   }, 1000);
