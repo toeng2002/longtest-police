@@ -1447,6 +1447,8 @@ async function verifyRegisterOtp() {
     btn.textContent = 'กำลังยืนยัน...';
   }
 
+  try {
+    let authUser = null;
     // แฮชรหัสผ่านมีอยู่ใน _regPendingData.password เรียบร้อยแล้ว
     const newUserObj = {
       username: _regPendingData.username.toLowerCase(),
