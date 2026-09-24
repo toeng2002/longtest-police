@@ -1568,9 +1568,11 @@ function openForgotPasswordModal() {
 
   modal.style.display = 'flex';
   setTimeout(() => document.getElementById('forgot-identity')?.focus(), 100);
+  if (typeof startForgotCrossTabPoll === 'function') startForgotCrossTabPoll();
 }
 
 function closeForgotPasswordModal() {
+  if (typeof stopForgotCrossTabPoll === 'function') stopForgotCrossTabPoll();
   window._isResetModalOpen = false;
   window._isPasswordResetActive = false;
   window._isPasswordRecoveryFlow = false;
@@ -2073,13 +2075,24 @@ window.toggleForgotOtpInput = toggleForgotOtpInput;
 // ช่วยแก้ปัญหาเมื่อผู้ใช้เปิด Gmail ในแท็บใหม่แล้วคลิกลิงก์
 // ให้แท็บเดิมอัปเดตสถานะตามทันที ไม่ค้างอยู่ที่หน้าเดิม
 // ============================================================
+let _lastAuthSyncHandledTime = 0;
+let _forgotPollTimer = null;
+let _authBc = null;
+
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    _authBc = new BroadcastChannel('police_auth_channel');
+    _authBc.onmessage = (event) => {
+      handleCrossTabAuthEvent(event.data);
+    };
+  }
+} catch(e) {}
+
 function broadcastResetEvent(action, data) {
   const payload = { action, data, time: Date.now() };
-  if (typeof BroadcastChannel !== 'undefined') {
+  if (_authBc) {
     try {
-      const bc = new BroadcastChannel('police_auth_channel');
-      bc.postMessage(payload);
-      bc.close();
+      _authBc.postMessage(payload);
     } catch(e) {}
   }
   try {
@@ -2089,6 +2102,10 @@ function broadcastResetEvent(action, data) {
 
 function handleCrossTabAuthEvent(msg) {
   if (!msg || !msg.action) return;
+  if (msg.time && msg.time <= _lastAuthSyncHandledTime) return;
+  _lastAuthSyncHandledTime = msg.time || Date.now();
+
+  console.log('handleCrossTabAuthEvent received:', msg.action, msg.data);
 
   if (msg.action === 'STEP3_OPENED' && msg.data) {
     // ถ้าแท็บเดิมกำลังเปิดโมดัลลืมรหัสผ่านอยู่ (เช่น อยู่ Step 2 รอคลิกอีเมล) ให้สลับเป็น Step 3 ทันที!
@@ -2125,14 +2142,26 @@ function handleCrossTabAuthEvent(msg) {
   }
 }
 
-// ฟังผ่าน BroadcastChannel
-if (typeof BroadcastChannel !== 'undefined') {
-  try {
-    const authBc = new BroadcastChannel('police_auth_channel');
-    authBc.onmessage = (event) => {
-      handleCrossTabAuthEvent(event.data);
-    };
-  } catch(e) {}
+function startForgotCrossTabPoll() {
+  if (_forgotPollTimer) clearInterval(_forgotPollTimer);
+  _lastAuthSyncHandledTime = Date.now() - 1000;
+  _forgotPollTimer = setInterval(() => {
+    try {
+      const raw = localStorage.getItem('police_auth_broadcast');
+      if (!raw) return;
+      const msg = JSON.parse(raw);
+      if (msg && msg.time && msg.time > _lastAuthSyncHandledTime) {
+        handleCrossTabAuthEvent(msg);
+      }
+    } catch(e) {}
+  }, 800);
+}
+
+function stopForgotCrossTabPoll() {
+  if (_forgotPollTimer) {
+    clearInterval(_forgotPollTimer);
+    _forgotPollTimer = null;
+  }
 }
 
 // ฟังผ่าน Storage Event (สำหรับ browser ที่ไม่แชร์ BroadcastChannel หรือเปิดคนละ context)
