@@ -580,7 +580,16 @@ async function syncAndLoginOAuthUser(authUser) {
       console.warn('ค้นหา auth_id ไม่สำเร็จ:', qErr);
     }
 
-    // 2) ถ้าไม่เจอด้วย auth_id ให้ค้นหาด้วย email (กรณีเป็นผู้ใช้เดิม)
+    // ตรวจสอบว่ามีข้อมูลค้างจากการสมัครสมาชิก (Pending Register) หรือ รีเซ็ตรหัสผ่าน (Pending Reset) หรือไม่
+    const pendingRaw = localStorage.getItem('police_pending_register');
+    let pendingReg = null;
+    try { pendingReg = pendingRaw ? JSON.parse(pendingRaw) : null; } catch(e){}
+
+    const resetRaw = localStorage.getItem('police_pending_reset');
+    let pendingReset = null;
+    try { pendingReset = resetRaw ? JSON.parse(resetRaw) : null; } catch(e){}
+
+    // 2) ถ้าไม่เจอด้วย auth_id ให้ค้นหาด้วย email (กรณีเป็นผู้ใช้เดิม หรือ ยืนยันอีเมล)
     if (!userRow && authUser.email) {
       const { data: emailMatch } = await supa
         .from('users')
@@ -591,30 +600,63 @@ async function syncAndLoginOAuthUser(authUser) {
       if (emailMatch) {
         userRow = emailMatch;
         try {
-          await supa.from('users').update({
+          const updObj = {
             auth_id: authUser.id,
-            avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null
-          }).eq('id', userRow.id);
+            avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || userRow.avatar_url || null
+          };
+          const resetPwd = (pendingReset && pendingReset.newPassword && pendingReset.email && authUser.email && authUser.email.toLowerCase() === pendingReset.email.toLowerCase())
+            ? pendingReset.newPassword
+            : (authUser.user_metadata?.pending_reset_password || null);
+          if (resetPwd) {
+            updObj.password = resetPwd;
+          }
+          await supa.from('users').update(updObj).eq('id', userRow.id);
           userRow.auth_id = authUser.id;
+          if (updObj.password) userRow.password = updObj.password;
         } catch (linkErr) {
           console.warn('เชื่อมต่อ auth_id กับบัญชีเดิมไม่สำเร็จ:', linkErr);
         }
       }
     }
 
-    // 3) ถ้ายังไม่มีในระบบเลย -> ลงทะเบียนให้อัตโนมัติ (Auto-register)
+    // 3) ถ้ายังไม่มีในระบบเลย -> ลงทะเบียนให้อัตโนมัติ (Auto-register จาก Google หรือ Email Confirmation)
+    let isNewRegistration = false;
+    let isPasswordReset = false;
+
     if (!userRow) {
       showOAuthLoading('กำลังสร้างบัญชีผู้ใช้ใหม่...');
-      const emailPrefix = (authUser.email ? authUser.email.split('@')[0] : 'user').replace(/[^a-zA-Z0-9_]/g, '_');
-      const randomSuffix = Math.random().toString(36).substring(2, 6);
-      const newUsername = (emailPrefix.substring(0, 15) + '_' + randomSuffix).toLowerCase();
-      const displayName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || emailPrefix;
+      let newUsername = '';
+      let displayName = '';
+      let userPassword = null;
+      let userPhone = '';
+
+      if (pendingReg && pendingReg.email && authUser.email && pendingReg.email.toLowerCase() === authUser.email.toLowerCase()) {
+        newUsername = pendingReg.username;
+        displayName = pendingReg.displayName || pendingReg.username;
+        userPassword = pendingReg.password;
+        userPhone = pendingReg.phone || '';
+        isNewRegistration = true;
+      } else if (authUser.user_metadata?.pending_username) {
+        newUsername = authUser.user_metadata.pending_username;
+        displayName = authUser.user_metadata.pending_display_name || newUsername;
+        userPassword = authUser.user_metadata.pending_password || null;
+        userPhone = authUser.user_metadata.pending_phone || '';
+        isNewRegistration = true;
+      } else {
+        const emailPrefix = (authUser.email ? authUser.email.split('@')[0] : 'user').replace(/[^a-zA-Z0-9_]/g, '_');
+        const randomSuffix = Math.random().toString(36).substring(2, 6);
+        newUsername = (emailPrefix.substring(0, 15) + '_' + randomSuffix).toLowerCase();
+        displayName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || emailPrefix;
+      }
+
       const avatarUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null;
 
       const newUserObj = {
         username: newUsername,
         display_name: displayName,
         email: authUser.email || '',
+        phone: userPhone,
+        password: userPassword,
         auth_id: authUser.id,
         avatar_url: avatarUrl,
         role: 'user',
@@ -630,7 +672,7 @@ async function syncAndLoginOAuthUser(authUser) {
         .single();
 
       if (insertErr) {
-        console.error('ลงทะเบียนผู้ใช้ Google อัตโนมัติไม่สำเร็จ:', insertErr);
+        console.error('ลงทะเบียนผู้ใช้ใหม่อัตโนมัติไม่สำเร็จ:', insertErr);
         hideOAuthLoading();
         _isOAuthProcessing = false;
         const errEl = document.getElementById('login-err');
@@ -641,7 +683,26 @@ async function syncAndLoginOAuthUser(authUser) {
         return;
       }
       userRow = createdUser;
+    } else {
+      const resetPwd = (pendingReset && pendingReset.newPassword && pendingReset.email && authUser.email && authUser.email.toLowerCase() === pendingReset.email.toLowerCase())
+        ? pendingReset.newPassword
+        : (authUser.user_metadata?.pending_reset_password || null);
+      if (resetPwd) {
+        try {
+          await supa.from('users').update({ password: resetPwd }).eq('id', userRow.id);
+          userRow.password = resetPwd;
+          isPasswordReset = true;
+        } catch(e) {}
+      }
     }
+
+    // ล้าง pending state
+    localStorage.removeItem('police_pending_register');
+    localStorage.removeItem('police_pending_reset');
+
+    // ปิดโมดัลที่อาจเปิดค้างอยู่
+    if (typeof closeRegisterModal === 'function') closeRegisterModal();
+    if (typeof closeForgotPasswordModal === 'function') closeForgotPasswordModal();
 
     // ล้าง URL hash และ search หลังล็อกอินสำเร็จ เพื่อให้ URL สวยงามและไม่ค้าง token
     if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
@@ -657,6 +718,13 @@ async function syncAndLoginOAuthUser(authUser) {
 
     hideOAuthLoading();
     _isOAuthProcessing = false;
+
+    if (isNewRegistration && typeof showToast === 'function') {
+      showToast('🎉 ยืนยันอีเมลสำเร็จ! บัญชีของคุณถูกสร้างเรียบร้อยแล้ว ยินดีต้อนรับ', 'success');
+    } else if (isPasswordReset && typeof showToast === 'function') {
+      showToast('🔑 ยืนยันอีเมลและเปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว!', 'success');
+    }
+
     await completeLoginSuccess(userRow);
   } catch (err) {
     console.error('syncAndLoginOAuthUser error:', err);
@@ -665,7 +733,7 @@ async function syncAndLoginOAuthUser(authUser) {
     const errEl = document.getElementById('login-err');
     if (errEl) {
       errEl.style.display = 'block';
-      errEl.textContent = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง');
+      errEl.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง');
     }
   }
 }
@@ -686,7 +754,7 @@ async function initGoogleAuth() {
       const errEl = document.getElementById('login-err');
       if (errEl) {
         errEl.style.display = 'block';
-        errEl.textContent = 'Google Login: ' + decodeURIComponent(errDesc.replace(/\+/g, ' '));
+        errEl.textContent = 'การยืนยันตัวตน: ' + decodeURIComponent(errDesc.replace(/\+/g, ' '));
       }
       history.replaceState(null, '', window.location.pathname);
       return;
@@ -694,7 +762,7 @@ async function initGoogleAuth() {
 
     if (hasOAuthParams) {
       _isOAuthProcessing = true;
-      showOAuthLoading('กำลังยืนยันตัวตนกับ Google กรุณารอสักครู่...');
+      showOAuthLoading('กำลังยืนยันตัวตน กรุณารอสักครู่...');
     }
 
     // 1) ลงทะเบียน listener ดักฟังเหตุการณ์การเปลี่ยนสถานะ Auth ก่อนเสมอ
@@ -942,15 +1010,36 @@ async function requestRegisterOtp() {
       return;
     }
 
-    // 4. ส่ง OTP ผ่าน Supabase Auth
+    // 4. บันทึกข้อมูลรอยืนยันลง localStorage (แฮชรหัสผ่านเรียบร้อย)
+    const hashedPassword = hashPassword(p1);
+    _regPendingData = {
+      username: u,
+      displayName: d || u,
+      email: em,
+      phone: ph,
+      password: hashedPassword
+    };
+    try {
+      localStorage.setItem('police_pending_register', JSON.stringify(_regPendingData));
+    } catch(stErr) {}
+
+    // 5. ส่ง Email Verification Link / OTP ผ่าน Supabase Auth
     let isRateLimited = false;
     _devRegOtp = null;
+    const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
       const { error: otpErr } = await supa.auth.signInWithOtp({
         email: em,
         options: {
-          shouldCreateUser: true
+          shouldCreateUser: true,
+          emailRedirectTo: redirectUrl,
+          data: {
+            pending_username: u,
+            pending_display_name: d || u,
+            pending_phone: ph,
+            pending_password: hashedPassword
+          }
         }
       });
 
@@ -970,15 +1059,6 @@ async function requestRegisterOtp() {
       }
     }
 
-    // จัดเก็บข้อมูลชั่วคราว
-    _regPendingData = {
-      username: u,
-      displayName: d || u,
-      email: em,
-      phone: ph,
-      password: p1
-    };
-
     // สลับไป Step 2
     const step1 = document.getElementById('reg-step-1'); if (step1) step1.style.display = 'none';
     const step2 = document.getElementById('reg-step-2'); if (step2) step2.style.display = 'block';
@@ -987,22 +1067,26 @@ async function requestRegisterOtp() {
     const otpInput = document.getElementById('reg-otp-code');
     if (otpInput) otpInput.value = '';
 
+    const manualContainer = document.getElementById('reg-otp-manual-container');
+
     if (isRateLimited) {
       _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong> (หรือคลิกลิงก์ในอีเมลหากได้รับ)`);
       console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${em} คือ: ${_devRegOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
+      if (manualContainer) manualContainer.style.display = 'block';
+    } else {
+      if (manualContainer) manualContainer.style.display = 'none';
     }
 
     startRegCountdown();
-    setTimeout(() => document.getElementById('reg-otp-code')?.focus(), 100);
 
   } catch (e) {
     console.error('requestRegisterOtp error:', e);
-    showRegError('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่ง OTP ได้ กรุณาลองใหม่'));
+    showRegError('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่งลิงก์ยืนยันได้ กรุณาลองใหม่'));
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '📩 ถัดไป: รับรหัส OTP ทางอีเมล';
+      btn.textContent = '📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล';
     }
   }
 }
@@ -1049,11 +1133,21 @@ async function resendRegisterOtp() {
   try {
     let isRateLimited = false;
     _devRegOtp = null;
+    const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
       const { error } = await supa.auth.signInWithOtp({
         email: _regPendingData.email,
-        options: { shouldCreateUser: true }
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: redirectUrl,
+          data: {
+            pending_username: _regPendingData.username,
+            pending_display_name: _regPendingData.displayName,
+            pending_phone: _regPendingData.phone,
+            pending_password: _regPendingData.password
+          }
+        }
       });
       if (error) {
         if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
@@ -1070,18 +1164,20 @@ async function resendRegisterOtp() {
       }
     }
 
+    const manualContainer = document.getElementById('reg-otp-manual-container');
     if (isRateLimited) {
       _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
       showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      if (manualContainer) manualContainer.style.display = 'block';
     } else {
-      showRegNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง ${_regPendingData.email} แล้ว`);
+      showRegNotice(`✅ ส่งลิงก์ยืนยันตัวตนใหม่ไปยัง ${_regPendingData.email} แล้ว`);
     }
 
     startRegCountdown();
   } catch (e) {
-    showRegError('ส่งรหัสใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
+    showRegError('ส่งใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
   } finally {
-    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
+    if (btnResend) btnResend.textContent = 'ส่งอีเมลอีกครั้ง';
   }
 }
 
@@ -1107,11 +1203,12 @@ async function verifyRegisterOtp() {
   }
 
   try {
+    let authUser = null;
     // ตรวจสอบรหัส OTP
     if (_devRegOtp) {
       if (code !== _devRegOtp) {
         showRegError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันและสร้างบัญชี'; }
+        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP และสร้างบัญชี'; }
         return;
       }
     } else {
@@ -1123,25 +1220,24 @@ async function verifyRegisterOtp() {
 
       if (verifyErr) {
         showRegError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันและสร้างบัญชี'; }
+        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP และสร้างบัญชี'; }
         return;
       }
+      authUser = verifyData.user;
     }
 
-    // แฮชรหัสผ่านด้วย bcrypt
-    const hashedPassword = hashPassword(_regPendingData.password);
-
-    // บันทึกลงตาราง users
+    // แฮชรหัสผ่านมีอยู่ใน _regPendingData.password เรียบร้อยแล้ว
     const newUserObj = {
       username: _regPendingData.username.toLowerCase(),
       display_name: _regPendingData.displayName,
       email: _regPendingData.email.toLowerCase(),
       phone: _regPendingData.phone || '',
-      password: hashedPassword,
+      password: _regPendingData.password,
       role: 'user',
       plan: 'free',
       status: 'active',
-      permissions: []
+      permissions: [],
+      auth_id: authUser ? authUser.id : null
     };
 
     const { data: createdUser, error: insertErr } = await supa
@@ -1153,6 +1249,8 @@ async function verifyRegisterOtp() {
     if (insertErr) {
       throw insertErr;
     }
+
+    localStorage.removeItem('police_pending_register');
 
     // ปิด Modal และเข้าสู่ระบบทันที
     closeRegisterModal();
@@ -1168,22 +1266,37 @@ async function verifyRegisterOtp() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '✅ ยืนยันและสร้างบัญชี';
+      btn.textContent = '✅ ยืนยันรหัส OTP และสร้างบัญชี';
     }
+  }
+}
+
+function toggleRegOtpInput() {
+  const container = document.getElementById('reg-otp-manual-container');
+  if (!container) return;
+  const isHidden = container.style.display === 'none' || !container.style.display;
+  container.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    setTimeout(() => document.getElementById('reg-otp-code')?.focus(), 50);
   }
 }
 
 // ------------------------------------------------------------
 // ลืมรหัสผ่าน (Forgot Password Flow)
 // ------------------------------------------------------------
+let _forgotPendingData = null;
+let _devForgotOtp = null;
+let _forgotTimer = null;
+let _forgotCountdown = 60;
+
 function openForgotPasswordModal() {
   const modal = document.getElementById('modal-forgot-pwd');
   if (!modal) return;
 
   const elId = document.getElementById('forgot-identity'); if (elId) elId.value = '';
-  const elOtp = document.getElementById('forgot-otp-code'); if (elOtp) elOtp.value = '';
   const elP1 = document.getElementById('forgot-new-pass'); if (elP1) elP1.value = '';
   const elP2 = document.getElementById('forgot-confirm-pass'); if (elP2) elP2.value = '';
+  const elOtp = document.getElementById('forgot-otp-code'); if (elOtp) elOtp.value = '';
 
   const errEl = document.getElementById('forgot-err');
   if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
@@ -1192,9 +1305,11 @@ function openForgotPasswordModal() {
 
   const step1 = document.getElementById('forgot-step-1'); if (step1) step1.style.display = 'block';
   const step2 = document.getElementById('forgot-step-2'); if (step2) step2.style.display = 'none';
+  const manualContainer = document.getElementById('forgot-otp-manual-container');
+  if (manualContainer) manualContainer.style.display = 'none';
 
   if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
-  _forgotTargetUser = null;
+  _forgotPendingData = null;
   _devForgotOtp = null;
 
   modal.style.display = 'flex';
@@ -1205,7 +1320,7 @@ function closeForgotPasswordModal() {
   const modal = document.getElementById('modal-forgot-pwd');
   if (modal) modal.style.display = 'none';
   if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
-  _forgotTargetUser = null;
+  _forgotPendingData = null;
   _devForgotOtp = null;
 }
 
@@ -1235,6 +1350,8 @@ function showForgotNotice(html) {
 
 async function requestForgotPasswordOtp() {
   const idInput = (document.getElementById('forgot-identity')?.value || '').trim();
+  const p1 = document.getElementById('forgot-new-pass')?.value || '';
+  const p2 = document.getElementById('forgot-confirm-pass')?.value || '';
   const btn = document.getElementById('btn-forgot-request-otp');
   const errEl = document.getElementById('forgot-err');
   if (errEl) errEl.style.display = 'none';
@@ -1246,9 +1363,19 @@ async function requestForgotPasswordOtp() {
     return;
   }
 
+  if (!p1 || p1.length < 6) {
+    showForgotError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+    return;
+  }
+
+  if (p1 !== p2) {
+    showForgotError('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+    return;
+  }
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'กำลังค้นหาบัญชี...';
+    btn.textContent = 'กำลังตรวจสอบบัญชี...';
   }
 
   try {
@@ -1262,27 +1389,49 @@ async function requestForgotPasswordOtp() {
     if (findErr) throw findErr;
     if (!users || users.length === 0) {
       showForgotError('ไม่พบบัญชีผู้ใช้งานหรืออีเมลนี้ในระบบ');
-      if (btn) { btn.disabled = false; btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล'; }
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล'; }
       return;
     }
 
     const user = users[0];
     if (!user.email) {
       showForgotError('บัญชีนี้ไม่มีอีเมลผูกไว้ในระบบ กรุณาติดต่อผู้ดูแลระบบ');
-      if (btn) { btn.disabled = false; btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล'; }
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล'; }
       return;
     }
 
-    _forgotTargetUser = user;
-    if (btn) btn.textContent = 'กำลังส่งรหัส OTP...';
+    // แฮชรหัสผ่านใหม่
+    const hashedPassword = hashPassword(p1);
+    _forgotPendingData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      newPassword: hashedPassword
+    };
+
+    try {
+      localStorage.setItem('police_pending_reset', JSON.stringify({
+        email: user.email,
+        newPassword: hashedPassword
+      }));
+    } catch(stErr) {}
+
+    if (btn) btn.textContent = 'กำลังส่งลิงก์ยืนยัน...';
 
     let isRateLimited = false;
     _devForgotOtp = null;
+    const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
       const { error: otpErr } = await supa.auth.signInWithOtp({
         email: user.email,
-        options: { shouldCreateUser: false }
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: redirectUrl,
+          data: {
+            pending_reset_password: hashedPassword
+          }
+        }
       });
       if (otpErr) {
         if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
@@ -1305,25 +1454,26 @@ async function requestForgotPasswordOtp() {
     const targetEmailEl = document.getElementById('forgot-otp-email-target');
     if (targetEmailEl) targetEmailEl.textContent = maskEmail(user.email);
     const otpInp = document.getElementById('forgot-otp-code'); if (otpInp) otpInp.value = '';
-    const newPassInp = document.getElementById('forgot-new-pass'); if (newPassInp) newPassInp.value = '';
-    const confPassInp = document.getElementById('forgot-confirm-pass'); if (confPassInp) confPassInp.value = '';
 
+    const manualContainer = document.getElementById('forgot-otp-manual-container');
     if (isRateLimited) {
       _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong> (หรือคลิกลิงก์ในอีเมลหากได้รับ)`);
       console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${user.email} คือ: ${_devForgotOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
+      if (manualContainer) manualContainer.style.display = 'block';
+    } else {
+      if (manualContainer) manualContainer.style.display = 'none';
     }
 
     startForgotCountdown();
-    setTimeout(() => document.getElementById('forgot-otp-code')?.focus(), 100);
 
   } catch(e) {
     console.error('requestForgotPasswordOtp error:', e);
-    showForgotError('ส่งรหัส OTP ไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง'));
+    showForgotError('ส่งลิงก์ยืนยันไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง'));
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล';
+      btn.textContent = '📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล';
     }
   }
 }
@@ -1360,7 +1510,7 @@ function startForgotCountdown() {
 }
 
 async function resendForgotPasswordOtp() {
-  if (!_forgotTargetUser) return;
+  if (!_forgotPendingData) return;
   const btnResend = document.getElementById('btn-forgot-resend');
   if (btnResend) {
     btnResend.disabled = true;
@@ -1370,11 +1520,18 @@ async function resendForgotPasswordOtp() {
   try {
     let isRateLimited = false;
     _devForgotOtp = null;
+    const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
       const { error } = await supa.auth.signInWithOtp({
-        email: _forgotTargetUser.email,
-        options: { shouldCreateUser: false }
+        email: _forgotPendingData.email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: redirectUrl,
+          data: {
+            pending_reset_password: _forgotPendingData.newPassword
+          }
+        }
       });
       if (error) {
         if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
@@ -1391,25 +1548,25 @@ async function resendForgotPasswordOtp() {
       }
     }
 
+    const manualContainer = document.getElementById('forgot-otp-manual-container');
     if (isRateLimited) {
       _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
       showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      if (manualContainer) manualContainer.style.display = 'block';
     } else {
-      showForgotNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง ${maskEmail(_forgotTargetUser.email)} แล้ว`);
+      showForgotNotice(`✅ ส่งลิงก์ยืนยันใหม่ไปยัง ${maskEmail(_forgotPendingData.email)} แล้ว`);
     }
 
     startForgotCountdown();
   } catch(e) {
-    showForgotError('ส่งรหัสใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
+    showForgotError('ส่งใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
   } finally {
-    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
+    if (btnResend) btnResend.textContent = 'ส่งอีเมลอีกครั้ง';
   }
 }
 
 async function verifyAndResetPassword() {
   const code = (document.getElementById('forgot-otp-code')?.value || '').trim();
-  const p1 = document.getElementById('forgot-new-pass')?.value || '';
-  const p2 = document.getElementById('forgot-confirm-pass')?.value || '';
   const btn = document.getElementById('btn-forgot-submit');
   const errEl = document.getElementById('forgot-err');
   if (errEl) errEl.style.display = 'none';
@@ -1419,18 +1576,8 @@ async function verifyAndResetPassword() {
     return;
   }
 
-  if (!p1 || p1.length < 6) {
-    showForgotError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
-    return;
-  }
-
-  if (p1 !== p2) {
-    showForgotError('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
-    return;
-  }
-
-  if (!_forgotTargetUser) {
-    showForgotError('ไม่พบข้อมูลผู้ใช้ กรุณาเริ่มใหม่อีกครั้ง');
+  if (!_forgotPendingData) {
+    showForgotError('ไม่พบข้อมูลการเปลี่ยนรหัสผ่าน กรุณาเริ่มใหม่อีกครั้ง');
     return;
   }
 
@@ -1444,33 +1591,32 @@ async function verifyAndResetPassword() {
     if (_devForgotOtp) {
       if (code !== _devForgotOtp) {
         showForgotError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
-        if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกรหัสผ่านใหม่'; }
+        if (btn) { btn.disabled = false; btn.textContent = '💾 ยืนยันรหัส OTP และบันทึกรหัสผ่านใหม่'; }
         return;
       }
     } else {
       const { data: verifyData, error: verifyErr } = await supa.auth.verifyOtp({
-        email: _forgotTargetUser.email,
+        email: _forgotPendingData.email,
         token: code,
         type: 'email'
       });
 
       if (verifyErr) {
         showForgotError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
-        if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกรหัสผ่านใหม่'; }
+        if (btn) { btn.disabled = false; btn.textContent = '💾 ยืนยันรหัส OTP และบันทึกรหัสผ่านใหม่'; }
         return;
       }
     }
 
-    // แฮชรหัสผ่านใหม่
-    const hashedPassword = hashPassword(p1);
-
     // อัปเดตรหัสผ่านลงตาราง users
     const { error: updErr } = await supa
       .from('users')
-      .update({ password: hashedPassword })
-      .eq('id', _forgotTargetUser.id);
+      .update({ password: _forgotPendingData.newPassword })
+      .eq('id', _forgotPendingData.id);
 
     if (updErr) throw updErr;
+
+    localStorage.removeItem('police_pending_reset');
 
     // เสร็จสิ้น
     closeForgotPasswordModal();
@@ -1480,7 +1626,7 @@ async function verifyAndResetPassword() {
 
     // เติม username ให้พร้อมล็อกอิน
     const userInp = document.getElementById('inp-user');
-    if (userInp) userInp.value = _forgotTargetUser.username;
+    if (userInp) userInp.value = _forgotPendingData.username;
     const passInp = document.getElementById('inp-pass');
     if (passInp) {
       passInp.value = '';
@@ -1493,8 +1639,18 @@ async function verifyAndResetPassword() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '💾 บันทึกรหัสผ่านใหม่';
+      btn.textContent = '💾 ยืนยันรหัส OTP และบันทึกรหัสผ่านใหม่';
     }
+  }
+}
+
+function toggleForgotOtpInput() {
+  const container = document.getElementById('forgot-otp-manual-container');
+  if (!container) return;
+  const isHidden = container.style.display === 'none' || !container.style.display;
+  container.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    setTimeout(() => document.getElementById('forgot-otp-code')?.focus(), 50);
   }
 }
 
@@ -1505,6 +1661,7 @@ window.backToRegStep1 = backToRegStep1;
 window.requestRegisterOtp = requestRegisterOtp;
 window.resendRegisterOtp = resendRegisterOtp;
 window.verifyRegisterOtp = verifyRegisterOtp;
+window.toggleRegOtpInput = toggleRegOtpInput;
 
 window.openForgotPasswordModal = openForgotPasswordModal;
 window.closeForgotPasswordModal = closeForgotPasswordModal;
@@ -1512,4 +1669,6 @@ window.backToForgotStep1 = backToForgotStep1;
 window.requestForgotPasswordOtp = requestForgotPasswordOtp;
 window.resendForgotPasswordOtp = resendForgotPasswordOtp;
 window.verifyAndResetPassword = verifyAndResetPassword;
+window.toggleForgotOtpInput = toggleForgotOtpInput;
+
 
