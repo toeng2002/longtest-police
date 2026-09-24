@@ -387,6 +387,16 @@ function renderProfileModalAvatar(url, name) {
   } else {
     wrap.innerHTML = `<span>${getAvatarInitials(name)}</span>`;
   }
+  const removeBtn = document.getElementById('btn-remove-avatar');
+  if (removeBtn) {
+    removeBtn.style.display = url ? 'inline-flex' : 'none';
+  }
+}
+
+function handleProfileAvatarRemove() {
+  _tempProfileAvatarData = '';
+  const fullName = currentUser ? (currentUser.display_name || currentUser.username) : 'ME';
+  renderProfileModalAvatar(null, fullName);
 }
 
 function renderProfileSubscriptionInfo() {
@@ -495,8 +505,8 @@ async function saveUserProfile() {
       email: email
     };
 
-    if (_tempProfileAvatarData) {
-      updatePayload.avatar_url = _tempProfileAvatarData;
+    if (_tempProfileAvatarData !== null) {
+      updatePayload.avatar_url = _tempProfileAvatarData || null;
     }
 
     const { data, error } = await supa
@@ -512,12 +522,21 @@ async function saveUserProfile() {
       return;
     }
 
-    // อัปเดตสถานะ currentUser ใน memory
+    // อัปเดตสถานะ currentUser ใน memory และ localStorage cache
     currentUser.display_name = updatePayload.display_name;
     currentUser.phone = phone;
     currentUser.email = email;
-    if (_tempProfileAvatarData) {
-      currentUser.avatar_url = _tempProfileAvatarData;
+    if (_tempProfileAvatarData !== null) {
+      currentUser.avatar_url = _tempProfileAvatarData || null;
+      if (currentUser.id) {
+        try {
+          if (_tempProfileAvatarData) {
+            localStorage.setItem('police_avatar_' + currentUser.id, _tempProfileAvatarData);
+          } else {
+            localStorage.removeItem('police_avatar_' + currentUser.id);
+          }
+        } catch(e){}
+      }
     }
 
     // อัปเดตลายน้ำหน้าจอ

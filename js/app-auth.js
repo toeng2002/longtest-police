@@ -61,12 +61,18 @@ async function doLogin(){
   err.style.display='none';
 
   try{
-    // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin)
-    const {data,error}=await supa
+    // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin) หรือล็อกอินด้วยอีเมล
+    let query = supa
       .from('users')
-      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions')
-      .ilike('username', u)
-      .maybeSingle();
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url');
+
+    if (u.includes('@')) {
+      query = query.ilike('email', u);
+    } else {
+      query = query.ilike('username', u);
+    }
+
+    const {data,error} = await query.maybeSingle();
 
     if(error) throw error;
 
@@ -109,6 +115,8 @@ async function completeLoginSuccess(data){
     userPerms = defaultAdminPerms;
   }
 
+  const userAvatar = data.avatar_url || (data.id ? localStorage.getItem('police_avatar_' + data.id) : null) || null;
+
   currentUser={
     id: data.id,
     username: data.username,
@@ -121,9 +129,14 @@ async function completeLoginSuccess(data){
     email: data.email || '',
     permissions: userPerms,
     auth_id: data.auth_id || null,
-    avatar_url: data.avatar_url || null
+    avatar_url: userAvatar
   };
   _loginUser=currentUser;
+
+  // บันทึกแคชรูปโปรไฟล์สำรองใน localStorage
+  if (currentUser.avatar_url && currentUser.id) {
+    try { localStorage.setItem('police_avatar_' + currentUser.id, currentUser.avatar_url); } catch(e){}
+  }
 
   // --- ระบบความปลอดภัย: จำกัด 1 ID เข้าใช้งานได้ 1 อุปกรณ์/IP ---
   try {
