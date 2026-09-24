@@ -589,6 +589,20 @@ async function syncAndLoginOAuthUser(authUser) {
     let pendingReset = null;
     try { pendingReset = resetRaw ? JSON.parse(resetRaw) : null; } catch(e){}
 
+    // ตรวจจับ Reset Flow จากทุกช่องทาง:
+    // 1) Flag จาก initGoogleAuth / onAuthStateChange (event === 'PASSWORD_RECOVERY')
+    // 2) URL hash มี type=recovery
+    // 3) URL search มี type=recovery หรือ flow=reset_password
+    // 4) localStorage มี police_pending_reset
+    // 5) authUser user_metadata มี pending_reset_flow
+    const isResetFlow = Boolean(
+      window._isPasswordRecoveryFlow ||
+      (window.location.hash && (window.location.hash.includes('type=recovery') || window.location.hash.includes('flow=reset_password'))) ||
+      (window.location.search && (window.location.search.includes('type=recovery') || window.location.search.includes('flow=reset_password'))) ||
+      (pendingReset && pendingReset.flow === 'reset_password') ||
+      authUser.user_metadata?.pending_reset_flow
+    );
+
     // 2) ถ้าไม่เจอด้วย auth_id ให้ค้นหาด้วย email หรือ reset_user_id (กรณีเป็นผู้ใช้เดิม หรือ ยืนยันอีเมล)
     if (!userRow && authUser.email) {
       const { data: emailMatch } = await supa
@@ -628,9 +642,9 @@ async function syncAndLoginOAuthUser(authUser) {
       }
     }
 
-    // ตรวจสอบว่าเป็นการยืนยันเพื่อรีเซ็ตรหัสผ่านผ่านลิงก์ในอีเมลหรือไม่
-    const isResetFlow = (pendingReset && pendingReset.flow === 'reset_password') || authUser.user_metadata?.pending_reset_flow;
+    // ถ้าเป็นการรีเซ็ตรหัสผ่าน -> เปิดหน้า Step 3 ให้ตั้งรหัสผ่านใหม่ทันที (ห้ามล็อกอินเด็ดขาด!)
     if (isResetFlow) {
+      window._isPasswordRecoveryFlow = false;
       localStorage.removeItem('police_pending_reset');
       hideOAuthLoading();
       _isOAuthProcessing = false;
@@ -646,13 +660,28 @@ async function syncAndLoginOAuthUser(authUser) {
       if (userRow) {
         openForgotStep3(userRow);
       } else {
-        const errEl = document.getElementById('login-err');
-        if (errEl) {
-          errEl.style.display = 'block';
-          errEl.textContent = 'ไม่พบบัญชีผู้ใช้งานที่ต้องการรีเซ็ตรหัสผ่าน กรุณาเริ่มใหม่อีกครั้ง';
+        const targetId = pendingReset?.id;
+        const targetEmail = authUser.email || pendingReset?.email;
+        let foundUser = null;
+        if (targetId) {
+          const { data } = await supa.from('users').select('id, username, email').eq('id', targetId).maybeSingle();
+          foundUser = data;
+        }
+        if (!foundUser && targetEmail) {
+          const { data } = await supa.from('users').select('id, username, email').ilike('email', targetEmail).maybeSingle();
+          foundUser = data;
+        }
+        if (foundUser) {
+          openForgotStep3(foundUser);
+        } else {
+          const errEl = document.getElementById('login-err');
+          if (errEl) {
+            errEl.style.display = 'block';
+            errEl.textContent = 'ไม่พบบัญชีผู้ใช้งานที่ต้องการรีเซ็ตรหัสผ่าน กรุณาเริ่มใหม่อีกครั้ง';
+          }
         }
       }
-      return;
+      return; // สำคัญมาก: หยุดการทำงานทันที ไม่ให้ไปถึงคำสั่ง completeLoginSuccess ด้านล่าง
     }
 
     // 3) ถ้ายังไม่มีในระบบเลย -> ลงทะเบียนให้อัตโนมัติ (Auto-register จาก Google หรือ Email Confirmation)
@@ -770,7 +799,11 @@ async function initGoogleAuth() {
     // ตรวจสอบว่า URL มีพารามิเตอร์ OAuth callback หรือไม่
     const hash = window.location.hash || '';
     const search = window.location.search || '';
-    const hasOAuthParams = hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=');
+    const isRecoveryUrl = hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('flow=reset_password') || search.includes('flow=reset_password');
+    if (isRecoveryUrl) {
+      window._isPasswordRecoveryFlow = true;
+    }
+    const hasOAuthParams = hash.includes('access_token') || hash.includes('refresh_token') || search.includes('code=') || isRecoveryUrl;
     const hasOAuthError = hash.includes('error') || search.includes('error=');
 
     if (hasOAuthError) {
@@ -787,14 +820,17 @@ async function initGoogleAuth() {
 
     if (hasOAuthParams) {
       _isOAuthProcessing = true;
-      showOAuthLoading('กำลังยืนยันตัวตน กรุณารอสักครู่...');
+      showOAuthLoading(window._isPasswordRecoveryFlow ? 'กำลังตรวจสอบการขอตั้งรหัสผ่านใหม่...' : 'กำลังยืนยันตัวตน กรุณารอสักครู่...');
     }
 
     // 1) ลงทะเบียน listener ดักฟังเหตุการณ์การเปลี่ยนสถานะ Auth ก่อนเสมอ
     supa.auth.onAuthStateChange(async (event, session) => {
       console.log('Supabase Auth Event:', event, session ? session.user?.email : 'no-session');
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session && session.user) {
-        if (!currentUser || currentUser.auth_id !== session.user.id) {
+      if (event === 'PASSWORD_RECOVERY') {
+        window._isPasswordRecoveryFlow = true;
+      }
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') && session && session.user) {
+        if (!currentUser || currentUser.auth_id !== session.user.id || window._isPasswordRecoveryFlow) {
           _isOAuthProcessing = true;
           await syncAndLoginOAuthUser(session.user);
         }
@@ -814,7 +850,7 @@ async function initGoogleAuth() {
     }
 
     if (session && session.user) {
-      if (!currentUser || currentUser.auth_id !== session.user.id) {
+      if (!currentUser || currentUser.auth_id !== session.user.id || window._isPasswordRecoveryFlow) {
         _isOAuthProcessing = true;
         await syncAndLoginOAuthUser(session.user);
       }
@@ -1337,7 +1373,7 @@ function closeForgotPasswordModal() {
   if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
   _forgotPendingData = null;
   _devForgotOtp = null;
-  localStorage.removeItem('police_pending_reset');
+  // หมายเหตุ: ไม่ลบ police_pending_reset ที่นี่ เพื่อให้ผู้ใช้สามารถคลิกลิงก์จากอีเมลได้แม้จะปิด Modal ไปแล้ว
 }
 
 function backToForgotStep1() {
@@ -1428,22 +1464,32 @@ async function requestForgotPasswordOtp() {
     const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
-      const { error: otpErr } = await supa.auth.signInWithOtp({
-        email: user.email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: redirectUrl,
-          data: {
-            pending_reset_flow: true,
-            reset_user_id: user.id
-          }
-        }
+      const { error: resetErr } = await supa.auth.resetPasswordForEmail(user.email, {
+        redirectTo: redirectUrl
       });
-      if (otpErr) {
-        if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+      if (resetErr) {
+        console.warn('resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
+        if (resetErr.message && (resetErr.message.includes('rate limit') || resetErr.status === 429)) {
           isRateLimited = true;
         } else {
-          throw otpErr;
+          const { error: otpErr } = await supa.auth.signInWithOtp({
+            email: user.email,
+            options: {
+              shouldCreateUser: false,
+              emailRedirectTo: redirectUrl,
+              data: {
+                pending_reset_flow: true,
+                reset_user_id: user.id
+              }
+            }
+          });
+          if (otpErr) {
+            if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+              isRateLimited = true;
+            } else {
+              throw otpErr;
+            }
+          }
         }
       }
     } catch(sendErr) {
@@ -1524,22 +1570,32 @@ async function resendForgotPasswordOtp() {
     const redirectUrl = window.location.origin + window.location.pathname;
 
     try {
-      const { error } = await supa.auth.signInWithOtp({
-        email: _forgotPendingData.email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: redirectUrl,
-          data: {
-            pending_reset_flow: true,
-            reset_user_id: _forgotPendingData.id
-          }
-        }
+      const { error: resetErr } = await supa.auth.resetPasswordForEmail(_forgotPendingData.email, {
+        redirectTo: redirectUrl
       });
-      if (error) {
-        if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+      if (resetErr) {
+        console.warn('resend resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
+        if (resetErr.message && (resetErr.message.includes('rate limit') || resetErr.status === 429)) {
           isRateLimited = true;
         } else {
-          throw error;
+          const { error } = await supa.auth.signInWithOtp({
+            email: _forgotPendingData.email,
+            options: {
+              shouldCreateUser: false,
+              emailRedirectTo: redirectUrl,
+              data: {
+                pending_reset_flow: true,
+                reset_user_id: _forgotPendingData.id
+              }
+            }
+          });
+          if (error) {
+            if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+              isRateLimited = true;
+            } else {
+              throw error;
+            }
+          }
         }
       }
     } catch(err) {
@@ -1696,6 +1752,16 @@ async function saveNewPassword() {
       .eq('id', _forgotPendingData.id);
 
     if (updErr) throw updErr;
+
+    // ถ้ามี auth session ใน Supabase ให้อัปเดตรหัสผ่านและ sign out ออก เพื่อให้ผู้ใช้ล็อกอินใหม่ด้วยตนเอง
+    try {
+      if (supa && supa.auth) {
+        await supa.auth.updateUser({ password: p1 });
+        await supa.auth.signOut();
+      }
+    } catch(authUpdErr) {
+      console.warn('supa.auth.updateUser/signOut notice:', authUpdErr);
+    }
 
     localStorage.removeItem('police_pending_reset');
     const resetUsername = _forgotPendingData.username;
