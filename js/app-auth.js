@@ -1273,6 +1273,7 @@ async function requestRegisterOtp() {
 
     // 5. ส่ง Email Verification Link / OTP ผ่าน Supabase Auth
     let isRateLimited = false;
+    let rateLimitMsg = '';
     _devRegOtp = null;
     const redirectUrl = window.location.origin + window.location.pathname + '?flow=register';
 
@@ -1293,15 +1294,17 @@ async function requestRegisterOtp() {
 
       if (otpErr) {
         console.warn('signInWithOtp warning:', otpErr);
-        if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+        if (otpErr.status === 429 || (otpErr.message && /rate limit|security|60 seconds/i.test(otpErr.message))) {
           isRateLimited = true;
+          rateLimitMsg = otpErr.message || '';
         } else {
           throw otpErr;
         }
       }
     } catch (sendErr) {
-      if (sendErr.message && (sendErr.message.includes('rate limit') || sendErr.status === 429)) {
+      if (sendErr.status === 429 || (sendErr.message && /rate limit|security|60 seconds/i.test(sendErr.message))) {
         isRateLimited = true;
+        rateLimitMsg = sendErr.message || '';
       } else {
         throw sendErr;
       }
@@ -1316,7 +1319,12 @@ async function requestRegisterOtp() {
     if (otpInput) otpInput.value = '';
 
     if (isRateLimited) {
-      showRegNotice(`⚠️ การส่งอีเมลผ่าน Supabase ถึงโควตาจำกัดชั่วคราว (3-4 ฉบับ/ชม.)<br>หากยังไม่ได้รับอีเมล กรุณารอสักครู่แล้วกดส่งใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
+      if (isCooldown) {
+        showRegNotice(`⏳ เพื่อความปลอดภัย กรุณารอสักครู่ (ประมาณ 60 วินาที) ก่อนกดขอส่งอีเมลใหม่<br>หากได้รับอีเมลก่อนหน้านี้แล้ว สามารถคลิกลิงก์ยืนยันในอีเมลได้ทันที หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      } else {
+        showRegNotice(`⚠️ มีการส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      }
     }
 
     startRegCountdown();
@@ -1375,6 +1383,7 @@ async function resendRegisterOtp() {
 
   try {
     let isRateLimited = false;
+    let rateLimitMsg = '';
     _devRegOtp = null;
     const redirectUrl = window.location.origin + window.location.pathname + '?flow=register';
 
@@ -1393,15 +1402,17 @@ async function resendRegisterOtp() {
         }
       });
       if (error) {
-        if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+        if (error.status === 429 || (error.message && /rate limit|security|60 seconds/i.test(error.message))) {
           isRateLimited = true;
+          rateLimitMsg = error.message || '';
         } else {
           throw error;
         }
       }
     } catch(err) {
-      if (err.message && (err.message.includes('rate limit') || err.status === 429)) {
+      if (err.status === 429 || (err.message && /rate limit|security|60 seconds/i.test(err.message))) {
         isRateLimited = true;
+        rateLimitMsg = err.message || '';
       } else {
         throw err;
       }
@@ -1409,8 +1420,13 @@ async function resendRegisterOtp() {
 
     const manualContainer = document.getElementById('reg-otp-manual-container');
     if (isRateLimited) {
+      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
       _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      if (isCooldown) {
+        showRegNotice(`⏳ กรุณารอสักครู่ก่อนขอส่งใหม่อีกครั้ง (ระบบความปลอดภัยจำกัด 60 วินาที/ครั้ง)<br>⚙️ <b>[โหมดทดสอบ]</b> หากต้องการทดสอบทันที ใช้รหัส OTP นี้: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      } else {
+        showRegNotice(`⚠️ มีการส่งอีเมลบ่อยเกินขีดจำกัดชั่วคราว<br>⚙️ <b>[โหมดทดสอบ]</b> สามารถใช้รหัส OTP นี้ได้: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      }
       if (manualContainer) manualContainer.style.display = 'block';
     } else {
       showRegNotice(`✅ ส่งลิงก์ยืนยันตัวตนใหม่ไปยัง ${_regPendingData.email} แล้ว`);
@@ -1692,6 +1708,7 @@ async function requestForgotPasswordOtp() {
     if (btn) btn.textContent = 'กำลังส่งลิงก์ยืนยัน...';
 
     let isRateLimited = false;
+    let rateLimitMsg = '';
     _devForgotOtp = null;
     const redirectUrl = window.location.origin + window.location.pathname + '?flow=reset_password';
 
@@ -1701,8 +1718,9 @@ async function requestForgotPasswordOtp() {
       });
       if (resetErr) {
         console.warn('resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
-        if (resetErr.message && (resetErr.message.includes('rate limit') || resetErr.status === 429)) {
+        if (resetErr.status === 429 || (resetErr.message && /rate limit|security|60 seconds/i.test(resetErr.message))) {
           isRateLimited = true;
+          rateLimitMsg = resetErr.message || '';
         } else {
           const { error: otpErr } = await supa.auth.signInWithOtp({
             email: user.email,
@@ -1716,8 +1734,9 @@ async function requestForgotPasswordOtp() {
             }
           });
           if (otpErr) {
-            if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+            if (otpErr.status === 429 || (otpErr.message && /rate limit|security|60 seconds/i.test(otpErr.message))) {
               isRateLimited = true;
+              rateLimitMsg = otpErr.message || '';
             } else {
               throw otpErr;
             }
@@ -1725,8 +1744,9 @@ async function requestForgotPasswordOtp() {
         }
       }
     } catch(sendErr) {
-      if (sendErr.message && (sendErr.message.includes('rate limit') || sendErr.status === 429)) {
+      if (sendErr.status === 429 || (sendErr.message && /rate limit|security|60 seconds/i.test(sendErr.message))) {
         isRateLimited = true;
+        rateLimitMsg = sendErr.message || '';
       } else {
         throw sendErr;
       }
@@ -1741,7 +1761,12 @@ async function requestForgotPasswordOtp() {
     const otpInp = document.getElementById('forgot-otp-code'); if (otpInp) otpInp.value = '';
 
     if (isRateLimited) {
-      showForgotNotice(`⚠️ การส่งอีเมลผ่าน Supabase ถึงโควตาจำกัดชั่วคราว (3-4 ฉบับ/ชม.)<br>หากยังไม่ได้รับอีเมล กรุณารอสักครู่แล้วกดส่งใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
+      if (isCooldown) {
+        showForgotNotice(`⏳ เพื่อความปลอดภัย กรุณารอสักครู่ (ประมาณ 60 วินาที) ก่อนกดขอส่งอีเมลใหม่<br>หากได้รับอีเมลก่อนหน้านี้แล้ว สามารถคลิกลิงก์รีเซ็ตรหัสผ่านในอีเมลได้ทันที หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      } else {
+        showForgotNotice(`⚠️ มีการส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
+      }
     }
 
     startForgotCountdown();
@@ -1800,6 +1825,7 @@ async function resendForgotPasswordOtp() {
 
   try {
     let isRateLimited = false;
+    let rateLimitMsg = '';
     _devForgotOtp = null;
     const redirectUrl = window.location.origin + window.location.pathname + '?flow=reset_password';
 
@@ -1809,8 +1835,9 @@ async function resendForgotPasswordOtp() {
       });
       if (resetErr) {
         console.warn('resend resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
-        if (resetErr.message && (resetErr.message.includes('rate limit') || resetErr.status === 429)) {
+        if (resetErr.status === 429 || (resetErr.message && /rate limit|security|60 seconds/i.test(resetErr.message))) {
           isRateLimited = true;
+          rateLimitMsg = resetErr.message || '';
         } else {
           const { error } = await supa.auth.signInWithOtp({
             email: _forgotPendingData.email,
@@ -1824,8 +1851,9 @@ async function resendForgotPasswordOtp() {
             }
           });
           if (error) {
-            if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+            if (error.status === 429 || (error.message && /rate limit|security|60 seconds/i.test(error.message))) {
               isRateLimited = true;
+              rateLimitMsg = error.message || '';
             } else {
               throw error;
             }
@@ -1833,8 +1861,9 @@ async function resendForgotPasswordOtp() {
         }
       }
     } catch(err) {
-      if (err.message && (err.message.includes('rate limit') || err.status === 429)) {
+      if (err.status === 429 || (err.message && /rate limit|security|60 seconds/i.test(err.message))) {
         isRateLimited = true;
+        rateLimitMsg = err.message || '';
       } else {
         throw err;
       }
@@ -1842,8 +1871,13 @@ async function resendForgotPasswordOtp() {
 
     const manualContainer = document.getElementById('forgot-otp-manual-container');
     if (isRateLimited) {
+      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
       _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      if (isCooldown) {
+        showForgotNotice(`⏳ กรุณารอสักครู่ก่อนขอส่งใหม่อีกครั้ง (ระบบความปลอดภัยจำกัด 60 วินาที/ครั้ง)<br>⚙️ <b>[โหมดทดสอบ]</b> หากต้องการทดสอบทันที ใช้รหัส OTP นี้: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      } else {
+        showForgotNotice(`⚠️ มีการส่งอีเมลบ่อยเกินขีดจำกัดชั่วคราว<br>⚙️ <b>[โหมดทดสอบ]</b> สามารถใช้รหัส OTP นี้ได้: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      }
       if (manualContainer) manualContainer.style.display = 'block';
     } else {
       showForgotNotice(`✅ ส่งลิงก์ยืนยันใหม่ไปยัง ${maskEmail(_forgotPendingData.email)} แล้ว`);
