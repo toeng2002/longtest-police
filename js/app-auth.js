@@ -763,3 +763,753 @@ function getSubscriptionDaysRemaining(user) {
   const diff = new Date(user.subscription_until) - new Date();
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
+
+// ============================================================
+// ระบบสมัครสมาชิกใหม่ (Register) & ลืมรหัสผ่าน (Forgot Password) ด้วย Email OTP
+// ============================================================
+
+let _regPendingData = null;
+let _regTimer = null;
+let _regCountdown = 60;
+let _devRegOtp = null;
+
+let _forgotTargetUser = null;
+let _forgotTimer = null;
+let _forgotCountdown = 60;
+let _devForgotOtp = null;
+
+function hashPassword(plain) {
+  const bcryptLib = (typeof dcodeIO !== 'undefined' && dcodeIO.bcrypt)
+    ? dcodeIO.bcrypt
+    : (typeof bcrypt !== 'undefined' ? bcrypt : null);
+  if (bcryptLib && typeof bcryptLib.hashSync === 'function') {
+    try {
+      return bcryptLib.hashSync(plain, 10);
+    } catch(e) {
+      console.warn('hashSync failed:', e);
+    }
+  }
+  return plain;
+}
+
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return email || '';
+  const parts = email.split('@');
+  const name = parts[0];
+  const domain = parts[1];
+  if (name.length <= 2) {
+    return name.charAt(0) + '***@' + domain;
+  }
+  return name.charAt(0) + '***' + name.charAt(name.length - 1) + '@' + domain;
+}
+
+// ------------------------------------------------------------
+// สมัครสมาชิกใหม่ (Register Flow)
+// ------------------------------------------------------------
+function openRegisterModal() {
+  const modal = document.getElementById('modal-register');
+  if (!modal) return;
+  
+  // รีเซ็ตค่าฟอร์ม
+  const elU = document.getElementById('reg-username'); if (elU) elU.value = '';
+  const elD = document.getElementById('reg-display-name'); if (elD) elD.value = '';
+  const elE = document.getElementById('reg-email'); if (elE) elE.value = '';
+  const elP = document.getElementById('reg-phone'); if (elP) elP.value = '';
+  const elP1 = document.getElementById('reg-password'); if (elP1) elP1.value = '';
+  const elP2 = document.getElementById('reg-confirm-password'); if (elP2) elP2.value = '';
+  const elOtp = document.getElementById('reg-otp-code'); if (elOtp) elOtp.value = '';
+  
+  const errEl = document.getElementById('reg-err');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  const noticeEl = document.getElementById('reg-notice');
+  if (noticeEl) { noticeEl.style.display = 'none'; noticeEl.innerHTML = ''; }
+  
+  const step1 = document.getElementById('reg-step-1'); if (step1) step1.style.display = 'block';
+  const step2 = document.getElementById('reg-step-2'); if (step2) step2.style.display = 'none';
+  
+  if (_regTimer) { clearInterval(_regTimer); _regTimer = null; }
+  _regPendingData = null;
+  _devRegOtp = null;
+  
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('reg-username')?.focus(), 100);
+}
+
+function closeRegisterModal() {
+  const modal = document.getElementById('modal-register');
+  if (modal) modal.style.display = 'none';
+  if (_regTimer) { clearInterval(_regTimer); _regTimer = null; }
+  _regPendingData = null;
+  _devRegOtp = null;
+}
+
+function backToRegStep1() {
+  if (_regTimer) { clearInterval(_regTimer); _regTimer = null; }
+  const step1 = document.getElementById('reg-step-1'); if (step1) step1.style.display = 'block';
+  const step2 = document.getElementById('reg-step-2'); if (step2) step2.style.display = 'none';
+  const errEl = document.getElementById('reg-err');
+  if (errEl) { errEl.style.display = 'none'; }
+}
+
+function showRegError(msg) {
+  const errEl = document.getElementById('reg-err');
+  if (errEl) {
+    errEl.style.display = 'block';
+    errEl.innerHTML = msg;
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function showRegNotice(html) {
+  const noticeEl = document.getElementById('reg-notice');
+  if (noticeEl) {
+    noticeEl.style.display = 'block';
+    noticeEl.innerHTML = html;
+  }
+}
+
+async function requestRegisterOtp() {
+  const u = (document.getElementById('reg-username')?.value || '').trim();
+  const d = (document.getElementById('reg-display-name')?.value || '').trim();
+  const em = (document.getElementById('reg-email')?.value || '').trim();
+  const ph = (document.getElementById('reg-phone')?.value || '').trim();
+  const p1 = document.getElementById('reg-password')?.value || '';
+  const p2 = document.getElementById('reg-confirm-password')?.value || '';
+  const btn = document.getElementById('btn-reg-request-otp');
+
+  const errEl = document.getElementById('reg-err');
+  if (errEl) errEl.style.display = 'none';
+  const noticeEl = document.getElementById('reg-notice');
+  if (noticeEl) noticeEl.style.display = 'none';
+
+  // 1. ตรวจสอบข้อมูล
+  if (!u || !em || !p1 || !p2) {
+    showRegError('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน');
+    return;
+  }
+
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(u)) {
+    showRegError('Username ต้องเป็นภาษาอังกฤษ ตัวเลข หรือขีดล่าง (_) ความยาว 3-20 ตัวอักษร');
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    showRegError('รูปแบบอีเมลไม่ถูกต้อง กรุณาตรวจสอบใหม่อีกครั้ง');
+    return;
+  }
+
+  if (p1.length < 6) {
+    showRegError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+    return;
+  }
+
+  if (p1 !== p2) {
+    showRegError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'กำลังตรวจสอบและส่ง OTP...';
+  }
+
+  try {
+    // 2. ตรวจสอบชื่อซ้ำใน Supabase
+    const { data: dupUser, error: dupUserErr } = await supa
+      .from('users')
+      .select('id')
+      .ilike('username', u)
+      .maybeSingle();
+
+    if (dupUserErr) throw dupUserErr;
+    if (dupUser) {
+      showRegError(`Username <strong>"${u}"</strong> มีผู้ใช้งานแล้ว กรุณาเลือกชื่ออื่น`);
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ถัดไป: รับรหัส OTP ทางอีเมล'; }
+      return;
+    }
+
+    // 3. ตรวจสอบอีเมลซ้ำใน Supabase
+    const { data: dupEmail, error: dupEmailErr } = await supa
+      .from('users')
+      .select('id')
+      .ilike('email', em)
+      .maybeSingle();
+
+    if (dupEmailErr) throw dupEmailErr;
+    if (dupEmail) {
+      showRegError(`อีเมล <strong>"${em}"</strong> ถูกลงทะเบียนไว้แล้ว สามารถเข้าสู่ระบบหรือใช้ "ลืมรหัสผ่าน" ได้ทันที`);
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ถัดไป: รับรหัส OTP ทางอีเมล'; }
+      return;
+    }
+
+    // 4. ส่ง OTP ผ่าน Supabase Auth
+    let isRateLimited = false;
+    _devRegOtp = null;
+
+    try {
+      const { error: otpErr } = await supa.auth.signInWithOtp({
+        email: em,
+        options: {
+          shouldCreateUser: true
+        }
+      });
+
+      if (otpErr) {
+        console.warn('signInWithOtp warning:', otpErr);
+        if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+          isRateLimited = true;
+        } else {
+          throw otpErr;
+        }
+      }
+    } catch (sendErr) {
+      if (sendErr.message && (sendErr.message.includes('rate limit') || sendErr.status === 429)) {
+        isRateLimited = true;
+      } else {
+        throw sendErr;
+      }
+    }
+
+    // จัดเก็บข้อมูลชั่วคราว
+    _regPendingData = {
+      username: u,
+      displayName: d || u,
+      email: em,
+      phone: ph,
+      password: p1
+    };
+
+    // สลับไป Step 2
+    const step1 = document.getElementById('reg-step-1'); if (step1) step1.style.display = 'none';
+    const step2 = document.getElementById('reg-step-2'); if (step2) step2.style.display = 'block';
+    const emailTarget = document.getElementById('reg-otp-email-target');
+    if (emailTarget) emailTarget.textContent = em;
+    const otpInput = document.getElementById('reg-otp-code');
+    if (otpInput) otpInput.value = '';
+
+    if (isRateLimited) {
+      _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+      console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${em} คือ: ${_devRegOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
+    }
+
+    startRegCountdown();
+    setTimeout(() => document.getElementById('reg-otp-code')?.focus(), 100);
+
+  } catch (e) {
+    console.error('requestRegisterOtp error:', e);
+    showRegError('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่ง OTP ได้ กรุณาลองใหม่'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📩 ถัดไป: รับรหัส OTP ทางอีเมล';
+    }
+  }
+}
+
+function startRegCountdown() {
+  if (_regTimer) clearInterval(_regTimer);
+  _regCountdown = 60;
+  const numEl = document.getElementById('reg-countdown-num');
+  const btnResend = document.getElementById('btn-reg-resend');
+  const textEl = document.getElementById('reg-timer-text');
+  
+  if (btnResend) {
+    btnResend.disabled = true;
+    btnResend.style.color = 'var(--text3)';
+    btnResend.style.cursor = 'not-allowed';
+  }
+  if (textEl) textEl.style.display = 'inline';
+  if (numEl) numEl.textContent = _regCountdown;
+
+  _regTimer = setInterval(() => {
+    _regCountdown--;
+    if (numEl) numEl.textContent = _regCountdown;
+    if (_regCountdown <= 0) {
+      clearInterval(_regTimer);
+      _regTimer = null;
+      if (textEl) textEl.style.display = 'none';
+      if (btnResend) {
+        btnResend.disabled = false;
+        btnResend.style.color = 'var(--accent)';
+        btnResend.style.cursor = 'pointer';
+      }
+    }
+  }, 1000);
+}
+
+async function resendRegisterOtp() {
+  if (!_regPendingData) return;
+  const btnResend = document.getElementById('btn-reg-resend');
+  if (btnResend) {
+    btnResend.disabled = true;
+    btnResend.textContent = 'กำลังส่ง...';
+  }
+
+  try {
+    let isRateLimited = false;
+    _devRegOtp = null;
+
+    try {
+      const { error } = await supa.auth.signInWithOtp({
+        email: _regPendingData.email,
+        options: { shouldCreateUser: true }
+      });
+      if (error) {
+        if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+          isRateLimited = true;
+        } else {
+          throw error;
+        }
+      }
+    } catch(err) {
+      if (err.message && (err.message.includes('rate limit') || err.status === 429)) {
+        isRateLimited = true;
+      } else {
+        throw err;
+      }
+    }
+
+    if (isRateLimited) {
+      _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
+    } else {
+      showRegNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง ${_regPendingData.email} แล้ว`);
+    }
+
+    startRegCountdown();
+  } catch (e) {
+    showRegError('ส่งรหัสใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
+  } finally {
+    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
+  }
+}
+
+async function verifyRegisterOtp() {
+  const code = (document.getElementById('reg-otp-code')?.value || '').trim();
+  const btn = document.getElementById('btn-reg-verify');
+  const errEl = document.getElementById('reg-err');
+  if (errEl) errEl.style.display = 'none';
+
+  if (!code || code.length !== 6) {
+    showRegError('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก');
+    return;
+  }
+
+  if (!_regPendingData) {
+    showRegError('ไม่พบข้อมูลการลงทะเบียน กรุณาเริ่มใหม่อีกครั้ง');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'กำลังยืนยัน...';
+  }
+
+  try {
+    // ตรวจสอบรหัส OTP
+    if (_devRegOtp) {
+      if (code !== _devRegOtp) {
+        showRegError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
+        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันและสร้างบัญชี'; }
+        return;
+      }
+    } else {
+      const { data: verifyData, error: verifyErr } = await supa.auth.verifyOtp({
+        email: _regPendingData.email,
+        token: code,
+        type: 'email'
+      });
+
+      if (verifyErr) {
+        showRegError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
+        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันและสร้างบัญชี'; }
+        return;
+      }
+    }
+
+    // แฮชรหัสผ่านด้วย bcrypt
+    const hashedPassword = hashPassword(_regPendingData.password);
+
+    // บันทึกลงตาราง users
+    const newUserObj = {
+      username: _regPendingData.username.toLowerCase(),
+      display_name: _regPendingData.displayName,
+      email: _regPendingData.email.toLowerCase(),
+      phone: _regPendingData.phone || '',
+      password: hashedPassword,
+      role: 'user',
+      plan: 'free',
+      status: 'active',
+      permissions: []
+    };
+
+    const { data: createdUser, error: insertErr } = await supa
+      .from('users')
+      .insert([newUserObj])
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+      .single();
+
+    if (insertErr) {
+      throw insertErr;
+    }
+
+    // ปิด Modal และเข้าสู่ระบบทันที
+    closeRegisterModal();
+    if (typeof showToast === 'function') {
+      showToast('🎉 สมัครสมาชิกและยืนยันอีเมลสำเร็จ! ยินดีต้อนรับ', 'success');
+    }
+
+    await completeLoginSuccess(createdUser);
+
+  } catch (e) {
+    console.error('verifyRegisterOtp error:', e);
+    showRegError('สร้างบัญชีไม่สำเร็จ: ' + (e.message || 'โปรดติดต่อผู้ดูแลระบบ'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✅ ยืนยันและสร้างบัญชี';
+    }
+  }
+}
+
+// ------------------------------------------------------------
+// ลืมรหัสผ่าน (Forgot Password Flow)
+// ------------------------------------------------------------
+function openForgotPasswordModal() {
+  const modal = document.getElementById('modal-forgot-pwd');
+  if (!modal) return;
+
+  const elId = document.getElementById('forgot-identity'); if (elId) elId.value = '';
+  const elOtp = document.getElementById('forgot-otp-code'); if (elOtp) elOtp.value = '';
+  const elP1 = document.getElementById('forgot-new-pass'); if (elP1) elP1.value = '';
+  const elP2 = document.getElementById('forgot-confirm-pass'); if (elP2) elP2.value = '';
+
+  const errEl = document.getElementById('forgot-err');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  const noticeEl = document.getElementById('forgot-notice');
+  if (noticeEl) { noticeEl.style.display = 'none'; noticeEl.innerHTML = ''; }
+
+  const step1 = document.getElementById('forgot-step-1'); if (step1) step1.style.display = 'block';
+  const step2 = document.getElementById('forgot-step-2'); if (step2) step2.style.display = 'none';
+
+  if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
+  _forgotTargetUser = null;
+  _devForgotOtp = null;
+
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('forgot-identity')?.focus(), 100);
+}
+
+function closeForgotPasswordModal() {
+  const modal = document.getElementById('modal-forgot-pwd');
+  if (modal) modal.style.display = 'none';
+  if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
+  _forgotTargetUser = null;
+  _devForgotOtp = null;
+}
+
+function backToForgotStep1() {
+  if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
+  const step1 = document.getElementById('forgot-step-1'); if (step1) step1.style.display = 'block';
+  const step2 = document.getElementById('forgot-step-2'); if (step2) step2.style.display = 'none';
+  const errEl = document.getElementById('forgot-err');
+  if (errEl) errEl.style.display = 'none';
+}
+
+function showForgotError(msg) {
+  const errEl = document.getElementById('forgot-err');
+  if (errEl) {
+    errEl.style.display = 'block';
+    errEl.innerHTML = msg;
+  }
+}
+
+function showForgotNotice(html) {
+  const noticeEl = document.getElementById('forgot-notice');
+  if (noticeEl) {
+    noticeEl.style.display = 'block';
+    noticeEl.innerHTML = html;
+  }
+}
+
+async function requestForgotPasswordOtp() {
+  const idInput = (document.getElementById('forgot-identity')?.value || '').trim();
+  const btn = document.getElementById('btn-forgot-request-otp');
+  const errEl = document.getElementById('forgot-err');
+  if (errEl) errEl.style.display = 'none';
+  const noticeEl = document.getElementById('forgot-notice');
+  if (noticeEl) noticeEl.style.display = 'none';
+
+  if (!idInput) {
+    showForgotError('กรุณากรอก Username หรือ อีเมล ของคุณ');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'กำลังค้นหาบัญชี...';
+  }
+
+  try {
+    // ค้นหาผู้ใช้จาก username หรือ email
+    const { data: users, error: findErr } = await supa
+      .from('users')
+      .select('id, username, email')
+      .or(`username.ilike.${idInput},email.ilike.${idInput}`)
+      .limit(1);
+
+    if (findErr) throw findErr;
+    if (!users || users.length === 0) {
+      showForgotError('ไม่พบบัญชีผู้ใช้งานหรืออีเมลนี้ในระบบ');
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล'; }
+      return;
+    }
+
+    const user = users[0];
+    if (!user.email) {
+      showForgotError('บัญชีนี้ไม่มีอีเมลผูกไว้ในระบบ กรุณาติดต่อผู้ดูแลระบบ');
+      if (btn) { btn.disabled = false; btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล'; }
+      return;
+    }
+
+    _forgotTargetUser = user;
+    if (btn) btn.textContent = 'กำลังส่งรหัส OTP...';
+
+    let isRateLimited = false;
+    _devForgotOtp = null;
+
+    try {
+      const { error: otpErr } = await supa.auth.signInWithOtp({
+        email: user.email,
+        options: { shouldCreateUser: false }
+      });
+      if (otpErr) {
+        if (otpErr.message && (otpErr.message.includes('rate limit') || otpErr.status === 429)) {
+          isRateLimited = true;
+        } else {
+          throw otpErr;
+        }
+      }
+    } catch(sendErr) {
+      if (sendErr.message && (sendErr.message.includes('rate limit') || sendErr.status === 429)) {
+        isRateLimited = true;
+      } else {
+        throw sendErr;
+      }
+    }
+
+    // สลับไป Step 2
+    const step1 = document.getElementById('forgot-step-1'); if (step1) step1.style.display = 'none';
+    const step2 = document.getElementById('forgot-step-2'); if (step2) step2.style.display = 'block';
+    const targetEmailEl = document.getElementById('forgot-otp-email-target');
+    if (targetEmailEl) targetEmailEl.textContent = maskEmail(user.email);
+    const otpInp = document.getElementById('forgot-otp-code'); if (otpInp) otpInp.value = '';
+    const newPassInp = document.getElementById('forgot-new-pass'); if (newPassInp) newPassInp.value = '';
+    const confPassInp = document.getElementById('forgot-confirm-pass'); if (confPassInp) confPassInp.value = '';
+
+    if (isRateLimited) {
+      _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+      console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${user.email} คือ: ${_devForgotOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
+    }
+
+    startForgotCountdown();
+    setTimeout(() => document.getElementById('forgot-otp-code')?.focus(), 100);
+
+  } catch(e) {
+    console.error('requestForgotPasswordOtp error:', e);
+    showForgotError('ส่งรหัส OTP ไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📩 ส่งรหัส OTP ไปที่อีเมล';
+    }
+  }
+}
+
+function startForgotCountdown() {
+  if (_forgotTimer) clearInterval(_forgotTimer);
+  _forgotCountdown = 60;
+  const numEl = document.getElementById('forgot-countdown-num');
+  const btnResend = document.getElementById('btn-forgot-resend');
+  const textEl = document.getElementById('forgot-timer-text');
+
+  if (btnResend) {
+    btnResend.disabled = true;
+    btnResend.style.color = 'var(--text3)';
+    btnResend.style.cursor = 'not-allowed';
+  }
+  if (textEl) textEl.style.display = 'inline';
+  if (numEl) numEl.textContent = _forgotCountdown;
+
+  _forgotTimer = setInterval(() => {
+    _forgotCountdown--;
+    if (numEl) numEl.textContent = _forgotCountdown;
+    if (_forgotCountdown <= 0) {
+      clearInterval(_forgotTimer);
+      _forgotTimer = null;
+      if (textEl) textEl.style.display = 'none';
+      if (btnResend) {
+        btnResend.disabled = false;
+        btnResend.style.color = 'var(--accent)';
+        btnResend.style.cursor = 'pointer';
+      }
+    }
+  }, 1000);
+}
+
+async function resendForgotPasswordOtp() {
+  if (!_forgotTargetUser) return;
+  const btnResend = document.getElementById('btn-forgot-resend');
+  if (btnResend) {
+    btnResend.disabled = true;
+    btnResend.textContent = 'กำลังส่ง...';
+  }
+
+  try {
+    let isRateLimited = false;
+    _devForgotOtp = null;
+
+    try {
+      const { error } = await supa.auth.signInWithOtp({
+        email: _forgotTargetUser.email,
+        options: { shouldCreateUser: false }
+      });
+      if (error) {
+        if (error.message && (error.message.includes('rate limit') || error.status === 429)) {
+          isRateLimited = true;
+        } else {
+          throw error;
+        }
+      }
+    } catch(err) {
+      if (err.message && (err.message.includes('rate limit') || err.status === 429)) {
+        isRateLimited = true;
+      } else {
+        throw err;
+      }
+    }
+
+    if (isRateLimited) {
+      _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบรายชั่วโมง<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
+    } else {
+      showForgotNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง ${maskEmail(_forgotTargetUser.email)} แล้ว`);
+    }
+
+    startForgotCountdown();
+  } catch(e) {
+    showForgotError('ส่งรหัสใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
+  } finally {
+    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
+  }
+}
+
+async function verifyAndResetPassword() {
+  const code = (document.getElementById('forgot-otp-code')?.value || '').trim();
+  const p1 = document.getElementById('forgot-new-pass')?.value || '';
+  const p2 = document.getElementById('forgot-confirm-pass')?.value || '';
+  const btn = document.getElementById('btn-forgot-submit');
+  const errEl = document.getElementById('forgot-err');
+  if (errEl) errEl.style.display = 'none';
+
+  if (!code || code.length !== 6) {
+    showForgotError('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก');
+    return;
+  }
+
+  if (!p1 || p1.length < 6) {
+    showForgotError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+    return;
+  }
+
+  if (p1 !== p2) {
+    showForgotError('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+    return;
+  }
+
+  if (!_forgotTargetUser) {
+    showForgotError('ไม่พบข้อมูลผู้ใช้ กรุณาเริ่มใหม่อีกครั้ง');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึกรหัสผ่านใหม่...';
+  }
+
+  try {
+    // ยืนยันรหัส OTP
+    if (_devForgotOtp) {
+      if (code !== _devForgotOtp) {
+        showForgotError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
+        if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกรหัสผ่านใหม่'; }
+        return;
+      }
+    } else {
+      const { data: verifyData, error: verifyErr } = await supa.auth.verifyOtp({
+        email: _forgotTargetUser.email,
+        token: code,
+        type: 'email'
+      });
+
+      if (verifyErr) {
+        showForgotError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
+        if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกรหัสผ่านใหม่'; }
+        return;
+      }
+    }
+
+    // แฮชรหัสผ่านใหม่
+    const hashedPassword = hashPassword(p1);
+
+    // อัปเดตรหัสผ่านลงตาราง users
+    const { error: updErr } = await supa
+      .from('users')
+      .update({ password: hashedPassword })
+      .eq('id', _forgotTargetUser.id);
+
+    if (updErr) throw updErr;
+
+    // เสร็จสิ้น
+    closeForgotPasswordModal();
+    if (typeof showToast === 'function') {
+      showToast('✅ ตั้งรหัสผ่านใหม่สำเร็จแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่', 'success');
+    }
+
+    // เติม username ให้พร้อมล็อกอิน
+    const userInp = document.getElementById('inp-user');
+    if (userInp) userInp.value = _forgotTargetUser.username;
+    const passInp = document.getElementById('inp-pass');
+    if (passInp) {
+      passInp.value = '';
+      passInp.focus();
+    }
+
+  } catch(e) {
+    console.error('verifyAndResetPassword error:', e);
+    showForgotError('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + (e.message || 'โปรดติดต่อผู้ดูแลระบบ'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '💾 บันทึกรหัสผ่านใหม่';
+    }
+  }
+}
+
+// Binds to window
+window.openRegisterModal = openRegisterModal;
+window.closeRegisterModal = closeRegisterModal;
+window.backToRegStep1 = backToRegStep1;
+window.requestRegisterOtp = requestRegisterOtp;
+window.resendRegisterOtp = resendRegisterOtp;
+window.verifyRegisterOtp = verifyRegisterOtp;
+
+window.openForgotPasswordModal = openForgotPasswordModal;
+window.closeForgotPasswordModal = closeForgotPasswordModal;
+window.backToForgotStep1 = backToForgotStep1;
+window.requestForgotPasswordOtp = requestForgotPasswordOtp;
+window.resendForgotPasswordOtp = resendForgotPasswordOtp;
+window.verifyAndResetPassword = verifyAndResetPassword;
+

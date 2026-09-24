@@ -510,11 +510,16 @@ textarea{resize:vertical;min-height:72px}
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username</label>
       <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
-    <div style="margin-bottom:20px">
-      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Password</label>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <label style="font-size:12px;font-weight:500;color:var(--text2)">Password</label>
+        <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:500;cursor:pointer">ลืมรหัสผ่าน?</a>
+      </div>
       <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
-    <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer">เข้าสู่ระบบ</button>
+    <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px">เข้าสู่ระบบ</button>
+
+    <button type="button" onclick="openRegisterModal()" id="btn-show-register" style="width:100%;background:var(--surface);color:var(--text);border:1.5px solid var(--border2);border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 0.15s">✨ สมัครสมาชิกใหม่ (สร้างบัญชี)</button>
 
     <div style="display:flex;align-items:center;margin:18px 0;gap:10px">
       <div style="flex:1;height:1px;background:var(--border2)"></div>
@@ -532,7 +537,160 @@ textarea{resize:vertical;min-height:72px}
       <span id="btn-google-text">เข้าสู่ระบบด้วย Google</span>
     </button>
 
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="loginWithGoogle()">เข้าสู่ระบบด้วย Google เพื่อเริ่มต้นใช้งานทันที</span></div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer;font-weight:500" onclick="openRegisterModal()">สมัครสมาชิกใหม่</span> หรือ <span style="color:var(--accent);cursor:pointer;font-weight:500" onclick="loginWithGoogle()">เข้าด้วย Google</span></div>
+  </div>
+</div>
+
+<!-- Modal: สมัครสมาชิกใหม่ (Register + Email OTP) -->
+<div id="modal-register" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>✨ สมัครสมาชิกใหม่</span>
+      </div>
+      <button type="button" onclick="closeRegisterModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Error message banner -->
+    <div id="reg-err" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- Info / Notice banner -->
+    <div id="reg-notice" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- STEP 1: กรอกข้อมูลส่วนตัวและรหัสผ่าน -->
+    <div id="reg-step-1">
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username (สำหรับล็อกอิน) <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="reg-username" placeholder="ภาษาอังกฤษหรือตัวเลข (เช่น somchai01)" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ชื่อ - นามสกุล <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="reg-display-name" placeholder="เช่น สมชาย ใจดี" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">อีเมล (สำหรับรับรหัส OTP) <span style="color:var(--danger)">*</span></label>
+        <input type="email" id="reg-email" placeholder="example@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="email">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">เบอร์โทรศัพท์ (ไม่บังคับ)</label>
+        <input type="tel" id="reg-phone" placeholder="08xxxxxxxx" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่าน <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="reg-password" placeholder="อย่างน้อย 6 ตัว" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="reg-confirm-password" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+        </div>
+      </div>
+
+      <button type="button" onclick="requestRegisterOtp()" id="btn-reg-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: รับรหัส OTP ทางอีเมล</button>
+    </div>
+
+    <!-- STEP 2: กรอกรหัส OTP 6 หลัก -->
+    <div id="reg-step-2" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:36px;margin-bottom:8px">📬</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">ยืนยันรหัส OTP</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
+          ระบบได้ส่งรหัส OTP 6 หลักไปยัง<br>
+          <strong id="reg-otp-email-target" style="color:var(--accent)"></strong>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;text-align:center">กรอกรหัสตัวเลข 6 หลัก</label>
+        <input type="text" id="reg-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:12px;border:2px solid var(--accent);border-radius:var(--r);font-size:24px;font-weight:700;letter-spacing:10px;text-align:center;background:var(--surface);color:var(--text);outline:none" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyRegisterOtp()">
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;font-size:12px">
+        <span id="reg-timer-text" style="color:var(--text2)">ส่งรหัสใหม่อีกครั้งใน: <strong id="reg-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-reg-resend" onclick="resendRegisterOtp()" disabled style="background:transparent;border:none;color:var(--text3);cursor:not-allowed;font-size:12px;font-weight:600;padding:0">ส่งรหัสอีกครั้ง</button>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button type="button" onclick="backToRegStep1()" style="flex:1;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:10px;font-size:13px;color:var(--text);cursor:pointer">ย้อนกลับ</button>
+        <button type="button" onclick="verifyRegisterOtp()" id="btn-reg-verify" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">✅ ยืนยันและสร้างบัญชี</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: ลืมรหัสผ่าน (Forgot Password + Email OTP) -->
+<div id="modal-forgot-pwd" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;max-height:92vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>🔑 กู้คืนรหัสผ่าน</span>
+      </div>
+      <button type="button" onclick="closeForgotPasswordModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Error message banner -->
+    <div id="forgot-err" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- Info banner -->
+    <div id="forgot-notice" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- STEP 1: ระบุ Username หรือ Email -->
+    <div id="forgot-step-1">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5">
+        กรอก <strong>Username</strong> หรือ <strong>Email</strong> ที่ผูกไว้กับบัญชี เพื่อรับรหัส OTP สำหรับตั้งรหัสผ่านใหม่
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username หรือ อีเมล</label>
+        <input type="text" id="forgot-identity" placeholder="ระบุ username หรือ อีเมล" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" onkeyup="if(event.key==='Enter') requestForgotPasswordOtp()">
+      </div>
+
+      <button type="button" onclick="requestForgotPasswordOtp()" id="btn-forgot-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ส่งรหัส OTP ไปที่อีเมล</button>
+    </div>
+
+    <!-- STEP 2: กรอก OTP 6 หลัก และตั้งรหัสผ่านใหม่ -->
+    <div id="forgot-step-2" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:6px">🔐</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">ตั้งรหัสผ่านใหม่</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
+          ส่งรหัส OTP ไปยัง <strong id="forgot-otp-email-target" style="color:var(--accent)"></strong> แล้ว
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-align:center">รหัส OTP 6 หลัก</label>
+        <input type="text" id="forgot-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:10px;border:2px solid var(--accent);border-radius:var(--r);font-size:20px;font-weight:700;letter-spacing:8px;text-align:center;background:var(--surface);color:var(--text);outline:none" autocomplete="one-time-code">
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px">
+        <span id="forgot-timer-text" style="color:var(--text2)">ส่งรหัสใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-forgot-resend" onclick="resendForgotPasswordOtp()" disabled style="background:transparent;border:none;color:var(--text3);cursor:not-allowed;font-size:12px;font-weight:600;padding:0">ส่งรหัสอีกครั้ง</button>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-new-pass" placeholder="อย่างน้อย 6 ตัวอักษร" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-confirm-pass" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" onkeyup="if(event.key==='Enter') verifyAndResetPassword()">
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button type="button" onclick="backToForgotStep1()" style="flex:1;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:10px;font-size:13px;color:var(--text);cursor:pointer">ย้อนกลับ</button>
+        <button type="button" onclick="verifyAndResetPassword()" id="btn-forgot-submit" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">💾 บันทึกรหัสผ่านใหม่</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
