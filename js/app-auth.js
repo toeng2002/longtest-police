@@ -926,7 +926,7 @@ function getSubscriptionDaysRemaining(user) {
 // true  = เปิดใช้งานการยืนยันอีเมล (ผู้ใช้ต้องคลิกลิงก์/กรอก OTP ก่อนจึงจะใช้งานได้)
 // false = ปิดการยืนยันอีเมล (โหมดทดสอบ: สมัครแล้วเข้าใช้งานทันที, รีเซ็ตรหัสผ่านได้ทันทีโดยไม่ต้องรออีเมล)
 // ============================================================
-const REQUIRE_EMAIL_CONFIRMATION = false;
+const REQUIRE_EMAIL_CONFIRMATION = true;
 
 let _regPendingData = null;
 let _regTimer = null;
