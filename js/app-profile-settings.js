@@ -93,6 +93,9 @@ function updateThemeButtonsUI(activeTheme) {
 function setUserFont(font) {
   localStorage.setItem('police_font', font);
   document.documentElement.setAttribute('data-font', font);
+  if (document.body) {
+    document.body.setAttribute('data-font', font);
+  }
   updateFontButtonsUI(font);
 }
 

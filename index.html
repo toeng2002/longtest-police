@@ -15,7 +15,7 @@
 <script src="js/supabase.min.js"></script>
 <script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');}</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Prompt:wght@300;400;500;600&family=Sarabun:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@300;400;600&family=Chakra+Petch:wght@300;400;600&family=Kanit:wght@300;400;600&family=Krub:wght@300;400;600&family=Mali:wght@400;600&family=Mitr:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&family=Prompt:wght@300;400;600&family=Sarabun:wght@400;600&family=Taviraj:wght@300;400;600&display=swap');
 /* ===== USER STYLES ===== */
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -87,10 +87,17 @@ body[data-theme="sepia"] { background: #F7EEDB !important; color: #3D2D1D !impor
 body[data-theme="dark"] { background: #0F172A !important; color: #F8FAFC !important; }
 body[data-theme="light"] { background: #F7F7F5 !important; color: #1A1A18 !important; }
 
-/* Font Families */
+/* Font Families (10 Fonts) */
+html[data-font="sarabun"], html[data-font="sarabun"] body { font-family: 'Sarabun', system-ui, sans-serif !important; }
 html[data-font="prompt"], html[data-font="prompt"] body { font-family: 'Prompt', system-ui, sans-serif !important; }
 html[data-font="kanit"], html[data-font="kanit"] body { font-family: 'Kanit', system-ui, sans-serif !important; }
-html[data-font="sarabun"], html[data-font="sarabun"] body { font-family: 'Sarabun', system-ui, sans-serif !important; }
+html[data-font="mitr"], html[data-font="mitr"] body { font-family: 'Mitr', system-ui, sans-serif !important; }
+html[data-font="chakra-petch"], html[data-font="chakra-petch"] body { font-family: 'Chakra Petch', system-ui, sans-serif !important; }
+html[data-font="bai-jamjuree"], html[data-font="bai-jamjuree"] body { font-family: 'Bai Jamjuree', system-ui, sans-serif !important; }
+html[data-font="noto-sans-thai"], html[data-font="noto-sans-thai"] body { font-family: 'Noto Sans Thai', system-ui, sans-serif !important; }
+html[data-font="krub"], html[data-font="krub"] body { font-family: 'Krub', system-ui, sans-serif !important; }
+html[data-font="taviraj"], html[data-font="taviraj"] body { font-family: 'Taviraj', serif !important; }
+html[data-font="mali"], html[data-font="mali"] body { font-family: 'Mali', cursive, sans-serif !important; }
 
 /* Font Sizes */
 [data-font-size="large"] { font-size: 16.5px; }
@@ -1637,16 +1644,37 @@ body {
 
         <!-- Section 2: แบบฟอนต์ -->
         <div style="margin-bottom:18px">
-          <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">แบบฟอนต์ (Font Family)</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-            <button type="button" class="font-option-btn" data-font="sarabun" onclick="setUserFont('sarabun')" style="font-family:'Sarabun',sans-serif;padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s">
-              สารบัญ
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">แบบฟอนต์ (Font Family - 10 สไตล์)</label>
+          <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;max-height:220px;overflow-y:auto;padding-right:2px">
+            <button type="button" class="font-option-btn" data-font="sarabun" onclick="setUserFont('sarabun')" style="font-family:'Sarabun',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Sarabun
             </button>
-            <button type="button" class="font-option-btn" data-font="prompt" onclick="setUserFont('prompt')" style="font-family:'Prompt',sans-serif;padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s">
-              พร้อมท์
+            <button type="button" class="font-option-btn" data-font="prompt" onclick="setUserFont('prompt')" style="font-family:'Prompt',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Prompt
             </button>
-            <button type="button" class="font-option-btn" data-font="kanit" onclick="setUserFont('kanit')" style="font-family:'Kanit',sans-serif;padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s">
-              คณิต
+            <button type="button" class="font-option-btn" data-font="kanit" onclick="setUserFont('kanit')" style="font-family:'Kanit',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Kanit
+            </button>
+            <button type="button" class="font-option-btn" data-font="mitr" onclick="setUserFont('mitr')" style="font-family:'Mitr',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Mitr
+            </button>
+            <button type="button" class="font-option-btn" data-font="chakra-petch" onclick="setUserFont('chakra-petch')" style="font-family:'Chakra Petch',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Chakra Petch
+            </button>
+            <button type="button" class="font-option-btn" data-font="bai-jamjuree" onclick="setUserFont('bai-jamjuree')" style="font-family:'Bai Jamjuree',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Bai Jamjuree
+            </button>
+            <button type="button" class="font-option-btn" data-font="noto-sans-thai" onclick="setUserFont('noto-sans-thai')" style="font-family:'Noto Sans Thai',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Noto Sans Thai
+            </button>
+            <button type="button" class="font-option-btn" data-font="krub" onclick="setUserFont('krub')" style="font-family:'Krub',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Krub
+            </button>
+            <button type="button" class="font-option-btn" data-font="taviraj" onclick="setUserFont('taviraj')" style="font-family:'Taviraj',serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Taviraj
+            </button>
+            <button type="button" class="font-option-btn" data-font="mali" onclick="setUserFont('mali')" style="font-family:'Mali',cursive;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+              Mali
             </button>
           </div>
         </div>
