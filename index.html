@@ -725,10 +725,13 @@ body {
       <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
         💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm your mail"</strong> ในข้อความ<br>
         ระบบจะเปิดใช้งานบัญชีและเข้าสู่ระบบให้อัตโนมัติทันที
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--accent-border);color:var(--text2);font-size:12px">
+          ⚠️ <b>ไม่พบอีเมล?</b> หากหาไม่เจอในกล่องข้อความหลัก ลองตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b>
+        </div>
       </div>
 
       <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:14px;box-sizing:border-box">
-        <span>📧 เปิดกล่องข้อความ Gmail</span>
+        <span>📧 เปิดกล่องข้อความ Gmail (เปิดแท็บใหม่ ↗)</span>
       </a>
 
       <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
@@ -785,13 +788,20 @@ body {
       </div>
 
       <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
-        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm"</strong><br>
-        เพื่อยืนยันตัวตนแล้วระบบจะเปิดหน้าตั้งรหัสผ่านใหม่ให้ทันที
+        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm"</strong> เพื่อตั้งรหัสผ่านใหม่<br>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--accent-border);color:var(--text2);font-size:12px">
+          ⚠️ <b>ไม่พบอีเมล?</b> หากหาไม่เจอในกล่องข้อความหลัก กรุณาตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b>
+        </div>
       </div>
 
-      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:16px;box-sizing:border-box">
-        <span>📧 เปิดกล่องข้อความ Gmail</span>
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:10px;box-sizing:border-box">
+        <span>📧 เปิดกล่องข้อความ Gmail (เปิดแท็บใหม่ ↗)</span>
       </a>
+
+      <div style="font-size:11.5px;color:var(--text3);text-align:center;margin-bottom:14px;line-height:1.4">
+        📱 หรือเปิดแอปอีเมลในมือถือของคุณเพื่อคลิกลิงก์ได้เช่นกัน<br>
+        (เมื่อคลิกลิงก์แล้ว หน้านี้จะอัปเดตให้อัตโนมัติ)
+      </div>
 
       <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
         <span id="forgot-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
@@ -1994,7 +2004,7 @@ body {
 <script src="js/app-admin.js?v=20260921_google_v12"></script>
 <script src="js/app-settings.js?v=20260921_google_v12"></script>
 <script src="js/app-csv.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_reset_v12"></script>
+<script src="js/app-auth.js?v=20260924_sync_v13"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 

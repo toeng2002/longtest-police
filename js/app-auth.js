@@ -1855,7 +1855,7 @@ async function resendForgotPasswordOtp() {
   }
 }
 
-function openForgotStep3(userData) {
+function openForgotStep3(userData, isCrossTabSync) {
   window._isResetModalOpen = true;
   window._isPasswordResetActive = true;
   window._isPasswordRecoveryFlow = false;
@@ -1871,6 +1871,9 @@ function openForgotStep3(userData) {
       email: userData.email,
       verified: true
     };
+    if (!isCrossTabSync && typeof broadcastResetEvent === 'function') {
+      try { broadcastResetEvent('STEP3_OPENED', _forgotPendingData); } catch(e){}
+    }
   }
   const modal = document.getElementById('modal-forgot-pwd');
   if (!modal) return;
@@ -2008,6 +2011,9 @@ async function saveNewPassword() {
 
     // เสร็จสิ้น
     closeForgotPasswordModal();
+    if (typeof broadcastResetEvent === 'function') {
+      try { broadcastResetEvent('PASSWORD_CHANGED_SUCCESS', { username: resetUsername }); } catch(e){}
+    }
     if (typeof showToast === 'function') {
       showToast('✅ ตั้งรหัสผ่านใหม่สำเร็จแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่', 'success');
     }
@@ -2061,5 +2067,82 @@ window.verifyAndResetPassword = verifyForgotOtp;
 window.openForgotStep3 = openForgotStep3;
 window.saveNewPassword = saveNewPassword;
 window.toggleForgotOtpInput = toggleForgotOtpInput;
+
+// ============================================================
+// Cross-Tab Synchronization (ระบบซิงค์สถานะข้ามแท็บอัตโนมัติ)
+// ช่วยแก้ปัญหาเมื่อผู้ใช้เปิด Gmail ในแท็บใหม่แล้วคลิกลิงก์
+// ให้แท็บเดิมอัปเดตสถานะตามทันที ไม่ค้างอยู่ที่หน้าเดิม
+// ============================================================
+function broadcastResetEvent(action, data) {
+  const payload = { action, data, time: Date.now() };
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const bc = new BroadcastChannel('police_auth_channel');
+      bc.postMessage(payload);
+      bc.close();
+    } catch(e) {}
+  }
+  try {
+    localStorage.setItem('police_auth_broadcast', JSON.stringify(payload));
+  } catch(e) {}
+}
+
+function handleCrossTabAuthEvent(msg) {
+  if (!msg || !msg.action) return;
+
+  if (msg.action === 'STEP3_OPENED' && msg.data) {
+    // ถ้าแท็บเดิมกำลังเปิดโมดัลลืมรหัสผ่านอยู่ (เช่น อยู่ Step 2 รอคลิกอีเมล) ให้สลับเป็น Step 3 ทันที!
+    const modalForgot = document.getElementById('modal-forgot-pwd');
+    if (modalForgot && modalForgot.style.display === 'flex') {
+      const step3 = document.getElementById('forgot-step-3');
+      if (!step3 || step3.style.display !== 'block') {
+        console.log('Cross-tab sync: Step 3 opened in another tab, switching this tab to Step 3');
+        openForgotStep3(msg.data, true);
+        if (typeof showToast === 'function') {
+          showToast('🔗 ตรวจพบการคลิกลิงก์ยืนยันจากอีกหน้าต่างหนึ่ง! กำลังเปิดหน้าตั้งรหัสผ่านใหม่ให้คุณ', 'info');
+        }
+      }
+    }
+  } else if (msg.action === 'PASSWORD_CHANGED_SUCCESS' && msg.data) {
+    // ถ้ามีการเปลี่ยนรหัสผ่านสำเร็จจากอีกแท็บหนึ่ง -> ปิดโมดัลและเตรียมช่อง Username ให้พร้อมล็อกอินในแท็บนี้
+    console.log('Cross-tab sync: Password changed in another tab, updating this tab');
+    closeForgotPasswordModal();
+    if (typeof showToast === 'function') {
+      showToast('✅ ตั้งรหัสผ่านใหม่สำเร็จแล้วจากอีกหน้าต่างหนึ่ง! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่', 'success');
+    }
+    const userInp = document.getElementById('inp-user');
+    if (userInp && msg.data.username) userInp.value = msg.data.username;
+    const passInp = document.getElementById('inp-pass');
+    if (passInp) {
+      passInp.value = '';
+      passInp.focus();
+    }
+  } else if (msg.action === 'REGISTER_SUCCESS') {
+    if (typeof closeRegisterModal === 'function') closeRegisterModal();
+    if (typeof showToast === 'function') {
+      showToast('🎉 ยืนยันอีเมลสำเร็จเรียบร้อยแล้ว!', 'success');
+    }
+  }
+}
+
+// ฟังผ่าน BroadcastChannel
+if (typeof BroadcastChannel !== 'undefined') {
+  try {
+    const authBc = new BroadcastChannel('police_auth_channel');
+    authBc.onmessage = (event) => {
+      handleCrossTabAuthEvent(event.data);
+    };
+  } catch(e) {}
+}
+
+// ฟังผ่าน Storage Event (สำหรับ browser ที่ไม่แชร์ BroadcastChannel หรือเปิดคนละ context)
+window.addEventListener('storage', (event) => {
+  if (event.key === 'police_auth_broadcast' && event.newValue) {
+    try {
+      const msg = JSON.parse(event.newValue);
+      handleCrossTabAuthEvent(msg);
+    } catch(e) {}
+  }
+});
 
 
