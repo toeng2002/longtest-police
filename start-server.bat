@@ -12,3 +12,4 @@ if %ERRORLEVEL% NEQ 0 (
     echo เกิดข้อผิดพลาดในการรัน python serve.py
     pause
 )
+

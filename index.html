@@ -755,25 +755,15 @@ body {
     <!-- Info banner -->
     <div id="forgot-notice" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:14px;line-height:1.4"></div>
 
-    <!-- STEP 1: ระบุ Username หรือ Email พร้อมตั้งรหัสผ่านใหม่ -->
+    <!-- STEP 1: ระบุเฉพาะอีเมล -->
     <div id="forgot-step-1">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5">
-        ระบุ <strong>Username</strong> หรือ <strong>อีเมล</strong> และตั้งรหัสผ่านใหม่ที่ต้องการ จากนั้นระบบจะส่งลิงก์ยืนยันไปที่อีเมลของคุณ
-      </div>
-
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username หรือ อีเมล <span style="color:var(--danger)">*</span></label>
-        <input type="text" id="forgot-identity" placeholder="ระบุ username หรือ อีเมล" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="username">
-      </div>
-
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="forgot-new-pass" placeholder="อย่างน้อย 6 ตัวอักษร" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
+        กรอก <strong>อีเมล</strong> ของคุณที่ลงทะเบียนไว้ในระบบ เราจะส่งลิงก์ยืนยันตัวตนสำหรับตั้งรหัสผ่านใหม่ไปให้
       </div>
 
       <div style="margin-bottom:18px">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="forgot-confirm-pass" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" onkeyup="if(event.key==='Enter') requestForgotPasswordOtp()">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">อีเมลของคุณ <span style="color:var(--danger)">*</span></label>
+        <input type="email" id="forgot-identity" placeholder="example@email.com (หรือ Username)" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" autocomplete="email" onkeyup="if(event.key==='Enter') requestForgotPasswordOtp()">
       </div>
 
       <button type="button" onclick="requestForgotPasswordOtp()" id="btn-forgot-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล</button>
@@ -785,14 +775,14 @@ body {
         <div style="font-size:40px;margin-bottom:6px">📬</div>
         <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตรวจสอบกล่องข้อความอีเมล</div>
         <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
-          เราได้ส่งลิงก์ยืนยันการตั้งรหัสผ่านใหม่ไปยัง<br>
+          เราได้ส่งลิงก์ยืนยันตัวตนไปยัง<br>
           <strong id="forgot-otp-email-target" style="color:var(--accent);font-size:13.5px"></strong>
         </div>
       </div>
 
       <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
         💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm"</strong><br>
-        รหัสผ่านใหม่จะมีผลทันที และระบบจะเข้าสู่ระบบให้อัตโนมัติ
+        เพื่อยืนยันตัวตนแล้วระบบจะเปิดหน้าตั้งรหัสผ่านใหม่ให้ทันที
       </div>
 
       <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:14px;box-sizing:border-box">
@@ -807,8 +797,8 @@ body {
 
       <div id="forgot-otp-manual-container" style="display:none;background:var(--bg2, var(--surface2, #f8fafc));border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:14px">
         <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-align:center">กรอกรหัส OTP 6 หลัก</label>
-        <input type="text" id="forgot-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:10px;border:2px solid var(--accent);border-radius:var(--r);font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;background:var(--surface);color:var(--text);outline:none;margin-bottom:10px;box-sizing:border-box" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyAndResetPassword()">
-        <button type="button" onclick="verifyAndResetPassword()" id="btn-forgot-submit" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">💾 ยืนยันรหัส OTP และบันทึกรหัสผ่านใหม่</button>
+        <input type="text" id="forgot-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:10px;border:2px solid var(--accent);border-radius:var(--r);font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;background:var(--surface);color:var(--text);outline:none;margin-bottom:10px;box-sizing:border-box" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyForgotOtp()">
+        <button type="button" onclick="verifyForgotOtp()" id="btn-forgot-verify-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่</button>
       </div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:12px">
@@ -816,7 +806,30 @@ body {
         <button type="button" id="btn-forgot-resend" onclick="resendForgotPasswordOtp()" disabled style="background:transparent;border:none;color:var(--text3);cursor:not-allowed;font-size:12px;font-weight:600;padding:0">ส่งอีเมลอีกครั้ง</button>
       </div>
 
-      <button type="button" onclick="backToForgotStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขข้อมูล / ย้อนกลับ</button>
+      <button type="button" onclick="backToForgotStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขอีเมล / ย้อนกลับ</button>
+    </div>
+
+    <!-- STEP 3: ตั้งรหัสผ่านใหม่ (หลังจากยืนยันตัวตนสำเร็จแล้ว) -->
+    <div id="forgot-step-3" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:36px;margin-bottom:4px">🔐</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตั้งรหัสผ่านใหม่</div>
+        <div style="font-size:12px;color:var(--text2)">
+          สำหรับบัญชี: <strong id="forgot-user-target" style="color:var(--accent)"></strong>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-new-pass" placeholder="อย่างน้อย 6 ตัวอักษร" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-confirm-pass" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" onkeyup="if(event.key==='Enter') saveNewPassword()">
+      </div>
+
+      <button type="button" onclick="saveNewPassword()" id="btn-forgot-save-pass" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s">💾 บันทึกรหัสผ่านใหม่</button>
     </div>
 
   </div>
@@ -1989,7 +2002,7 @@ body {
 <script src="js/app-admin.js?v=20260921_google_v12"></script>
 <script src="js/app-settings.js?v=20260921_google_v12"></script>
 <script src="js/app-csv.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_otp_v3"></script>
+<script src="js/app-auth.js?v=20260924_otp_v4"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 

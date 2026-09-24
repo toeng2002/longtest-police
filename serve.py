@@ -41,3 +41,4 @@ if __name__ == '__main__':
             print(f"❌ เกิดข้อผิดพลาด: {e}\n")
     except KeyboardInterrupt:
         print("\n🛑 หยุดการทำงานของเซิร์ฟเวอร์เรียบร้อยแล้ว\n")
+
