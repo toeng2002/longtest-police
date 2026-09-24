@@ -64,7 +64,7 @@ async function doLogin(){
     // ใช้ ilike เพื่อรองรับกรณีคีย์บอร์ดมือถือพิมพ์ตัวใหญ่ตัวแรกอัตโนมัติ (เช่น Admin -> admin) หรือล็อกอินด้วยอีเมล
     let query = supa
       .from('users')
-      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url');
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes');
 
     if (u.includes('@')) {
       query = query.ilike('email', u);
@@ -129,13 +129,23 @@ async function completeLoginSuccess(data){
     email: data.email || '',
     permissions: userPerms,
     auth_id: data.auth_id || null,
-    avatar_url: userAvatar
+    avatar_url: userAvatar,
+    notes: data.notes || null
   };
   _loginUser=currentUser;
 
   // บันทึกแคชรูปโปรไฟล์สำรองใน localStorage
   if (currentUser.avatar_url && currentUser.id) {
     try { localStorage.setItem('police_avatar_' + currentUser.id, currentUser.avatar_url); } catch(e){}
+  }
+
+  // ซิงค์การตั้งค่ารูปลักษณ์ (Theme, Font, Wallpaper) จาก Cloud ข้ามอุปกรณ์
+  if (typeof loadUserPreferencesFromCloud === 'function') {
+    try {
+      loadUserPreferencesFromCloud(data.notes);
+    } catch(prefErr) {
+      console.warn('loadUserPreferencesFromCloud error:', prefErr);
+    }
   }
 
   // --- ระบบความปลอดภัย: จำกัด 1 ID เข้าใช้งานได้ 1 อุปกรณ์/IP ---
@@ -319,6 +329,10 @@ function doLogout(){
   sessionStorage.removeItem('police_current_session_token');
   if (typeof updateSecurityWatermark === 'function') {
     try { updateSecurityWatermark(); } catch (e) {}
+  }
+  // คืนค่าภาพพื้นหลังเมื่อออกจากระบบ เพื่อไม่ให้ภาพพื้นหลังของบัญชีนี้ค้างในหน้าจอเข้าสู่ระบบ
+  if (typeof applyCustomWallpaper === 'function') {
+    try { applyCustomWallpaper(null, '25'); } catch (e) {}
   }
   currentUser=null;
   _loginUser=null;
@@ -645,7 +659,7 @@ async function syncAndLoginOAuthUser(authUser) {
     // 1) ค้นหาด้วย auth_id ก่อน
     let { data: userRow, error: qErr } = await supa
       .from('users')
-      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
       .eq('auth_id', authUser.id)
       .maybeSingle();
 
@@ -698,7 +712,7 @@ async function syncAndLoginOAuthUser(authUser) {
     if (!userRow && authUser.email) {
       const { data: emailMatch } = await supa
         .from('users')
-        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
         .ilike('email', authUser.email)
         .maybeSingle();
 
@@ -711,7 +725,7 @@ async function syncAndLoginOAuthUser(authUser) {
       const targetId = authUser.user_metadata?.reset_user_id || pendingReset?.id;
       const { data: idMatch } = await supa
         .from('users')
-        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
         .eq('id', targetId)
         .maybeSingle();
 
@@ -831,7 +845,7 @@ async function syncAndLoginOAuthUser(authUser) {
       const { data: createdUser, error: insertErr } = await supa
         .from('users')
         .insert([newUserObj])
-        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
         .single();
 
       if (insertErr) {
@@ -1299,7 +1313,7 @@ async function requestRegisterOtp() {
       const { data: createdUser, error: insertErr } = await supa
         .from('users')
         .insert([newUserObj])
-        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+        .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
         .single();
 
       if (insertErr) throw insertErr;
@@ -1479,7 +1493,7 @@ async function verifyRegisterOtp() {
     const { data: createdUser, error: insertErr } = await supa
       .from('users')
       .insert([newUserObj])
-      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url')
+      .select('id, username, password, role, display_name, plan, status, subscription_until, phone, email, permissions, auth_id, avatar_url, notes')
       .single();
 
     if (insertErr) {

@@ -75,6 +75,7 @@ function setUserTheme(theme) {
   if (typeof updateSecurityWatermark === 'function') {
     try { updateSecurityWatermark(); } catch(e) {}
   }
+  syncUserPreferencesToCloud({ theme });
 }
 
 function updateThemeButtonsUI(activeTheme) {
@@ -97,6 +98,7 @@ function setUserFont(font) {
     document.body.setAttribute('data-font', font);
   }
   updateFontButtonsUI(font);
+  syncUserPreferencesToCloud({ font });
 }
 
 function updateFontButtonsUI(activeFont) {
@@ -120,6 +122,7 @@ function setUserFontSize(size) {
   localStorage.setItem('police_font_size', size);
   document.documentElement.setAttribute('data-font-size', size);
   updateFontSizeButtonsUI(size);
+  syncUserPreferencesToCloud({ fontSize: size });
 }
 
 function updateFontSizeButtonsUI(activeSize) {
@@ -193,10 +196,10 @@ function handleWallpaperUpload(input) {
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
-      // บีบอัดและปรับขนาดความละเอียดสูงสุด 1600px เพื่อประหยัดพื้นที่ localStorage
+      // บีบอัดและปรับขนาดความละเอียดสูงสุด 1440px เพื่อให้เหมาะกับการซิงค์ผ่านคลาวด์และโหลดรวดเร็ว
       let width = img.width;
       let height = img.height;
-      const maxDim = 1600;
+      const maxDim = 1440;
 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
@@ -214,14 +217,15 @@ function handleWallpaperUpload(input) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+      const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.72);
 
       try {
         localStorage.setItem('police_custom_bg_image', optimizedBase64);
         const opacity = localStorage.getItem('police_custom_bg_opacity') || '25';
         applyCustomWallpaper(optimizedBase64, opacity);
+        syncUserPreferencesToCloud({ wallpaper: optimizedBase64, wallpaperOpacity: opacity });
         if (typeof showToast === 'function') {
-          showToast('เปลี่ยนภาพพื้นหลังเรียบร้อยแล้ว', 'success');
+          showToast('เปลี่ยนภาพพื้นหลังเรียบร้อยแล้ว (ซิงค์ตามบัญชีแล้ว)', 'success');
         }
       } catch (err) {
         console.error('Storage full error:', err);
@@ -242,15 +246,125 @@ function changeWallpaperOpacity(val) {
   if (bgEl) {
     bgEl.style.opacity = (parseInt(val, 10) / 100);
   }
+  syncUserPreferencesToCloud({ wallpaperOpacity: val });
 }
 
 function removeUserWallpaper() {
   localStorage.removeItem('police_custom_bg_image');
   applyCustomWallpaper(null, '25');
+  syncUserPreferencesToCloud({ wallpaper: '', wallpaperOpacity: '25' });
   if (typeof showToast === 'function') {
     showToast('ลบภาพพื้นหลังและคืนค่าเริ่มต้นแล้ว');
   }
 }
+
+// ============================================================
+// ระบบซิงค์การตั้งค่าและภาพพื้นหลังขึ้น Cloud ตามบัญชีผู้ใช้ (Supabase users.notes)
+// ============================================================
+let _syncPrefsTimer = null;
+async function syncUserPreferencesToCloud(partialPrefs) {
+  if (typeof currentUser === 'undefined' || !currentUser || !currentUser.id) return;
+  if (_syncPrefsTimer) clearTimeout(_syncPrefsTimer);
+  _syncPrefsTimer = setTimeout(async () => {
+    try {
+      let currentCloudPrefs = {};
+      if (currentUser.notes) {
+        try {
+          if (typeof currentUser.notes === 'string' && currentUser.notes.trim().startsWith('{')) {
+            currentCloudPrefs = JSON.parse(currentUser.notes) || {};
+          } else if (typeof currentUser.notes === 'object' && currentUser.notes !== null) {
+            currentCloudPrefs = currentUser.notes;
+          }
+        } catch(e) {}
+      }
+
+      const mergedPrefs = {
+        ...currentCloudPrefs,
+        theme: localStorage.getItem('police_theme') || 'light',
+        font: localStorage.getItem('police_font') || 'sarabun',
+        fontSize: localStorage.getItem('police_font_size') || 'normal',
+        wallpaper: localStorage.getItem('police_custom_bg_image') || '',
+        wallpaperOpacity: localStorage.getItem('police_custom_bg_opacity') || '25',
+        ...(partialPrefs || {})
+      };
+
+      const notesPayload = JSON.stringify(mergedPrefs);
+      currentUser.notes = notesPayload;
+
+      if (typeof supa !== 'undefined' && supa) {
+        const { error } = await supa
+          .from('users')
+          .update({ notes: notesPayload })
+          .eq('id', currentUser.id);
+        if (error) {
+          console.warn('syncUserPreferencesToCloud warning:', error.message);
+        } else {
+          console.log('☁️ ซิงค์การตั้งค่าและภาพพื้นหลังขึ้น Cloud เรียบร้อย');
+        }
+      }
+    } catch (err) {
+      console.warn('syncUserPreferencesToCloud exception:', err);
+    }
+  }, 400);
+}
+
+function loadUserPreferencesFromCloud(notesData) {
+  if (!notesData) return;
+  try {
+    let prefs = null;
+    if (typeof notesData === 'string' && notesData.trim().startsWith('{')) {
+      prefs = JSON.parse(notesData);
+    } else if (typeof notesData === 'object' && notesData !== null) {
+      prefs = notesData;
+    }
+    if (!prefs) return;
+
+    // 1) ธีม
+    if (prefs.theme) {
+      localStorage.setItem('police_theme', prefs.theme);
+      document.documentElement.setAttribute('data-theme', prefs.theme);
+      if (document.body) document.body.setAttribute('data-theme', prefs.theme);
+      updateThemeButtonsUI(prefs.theme);
+    }
+
+    // 2) ฟอนต์
+    if (prefs.font) {
+      localStorage.setItem('police_font', prefs.font);
+      document.documentElement.setAttribute('data-font', prefs.font);
+      if (document.body) document.body.setAttribute('data-font', prefs.font);
+      updateFontButtonsUI(prefs.font);
+    }
+
+    // 3) ขนาดตัวอักษร
+    if (prefs.fontSize) {
+      localStorage.setItem('police_font_size', prefs.fontSize);
+      document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+      updateFontSizeButtonsUI(prefs.fontSize);
+    }
+
+    // 4) ภาพพื้นหลัง (Wallpaper)
+    const wallpaper = prefs.wallpaper || null;
+    const opacity = prefs.wallpaperOpacity || '25';
+    if (wallpaper) {
+      localStorage.setItem('police_custom_bg_image', wallpaper);
+      localStorage.setItem('police_custom_bg_opacity', opacity);
+      applyCustomWallpaper(wallpaper, opacity);
+    } else if (prefs.wallpaper === '') {
+      localStorage.removeItem('police_custom_bg_image');
+      applyCustomWallpaper(null, '25');
+    }
+
+    if (typeof updateSecurityWatermark === 'function') {
+      try { updateSecurityWatermark(); } catch(e){}
+    }
+    console.log('☁️ โหลดและปรับใช้การตั้งค่าจาก Cloud เรียบร้อย');
+  } catch (err) {
+    console.warn('loadUserPreferencesFromCloud error:', err);
+  }
+}
+
+window.syncUserPreferencesToCloud = syncUserPreferencesToCloud;
+window.loadUserPreferencesFromCloud = loadUserPreferencesFromCloud;
 
 
 // ============================================================
