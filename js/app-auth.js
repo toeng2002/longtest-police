@@ -841,7 +841,7 @@ let _regTimer = null;
 let _regCountdown = 60;
 let _devRegOtp = null;
 
-let _forgotTargetUser = null;
+let _forgotPendingData = null;
 let _forgotTimer = null;
 let _forgotCountdown = 60;
 let _devForgotOtp = null;
@@ -1284,10 +1284,6 @@ function toggleRegOtpInput() {
 // ------------------------------------------------------------
 // ลืมรหัสผ่าน (Forgot Password Flow)
 // ------------------------------------------------------------
-let _forgotPendingData = null;
-let _devForgotOtp = null;
-let _forgotTimer = null;
-let _forgotCountdown = 60;
 
 function openForgotPasswordModal() {
   const modal = document.getElementById('modal-forgot-pwd');
