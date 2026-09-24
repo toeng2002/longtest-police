@@ -74,7 +74,7 @@
       pointer-events: none;
       z-index: 9998;
       overflow: hidden;
-      opacity: 0.07;
+      opacity: 1;
     }
   `;
   document.head.appendChild(style);
@@ -252,10 +252,16 @@
     const userId = currentUser.id ? ` • ID:#${currentUser.id}` : '';
     const text = `${maskedUser}${maskedName}${userId}`;
 
-    // สร้างลวดลาย SVG ข้อความเอียง 25 องศา กระจายทั่วทั้งหน้าจอ
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240">
-      <text x="50%" y="50%" transform="rotate(-25 180 120)"
-        fill="#000000" font-family="'Sarabun', system-ui, sans-serif" font-size="14" font-weight="600"
+    // ตรวจสอบธีมปัจจุบัน เพื่อเลือกสีลายน้ำที่ตัดกับพื้นหลังชัดเจน
+    const currentTheme = document.documentElement.getAttribute('data-theme') || (document.body ? document.body.getAttribute('data-theme') : 'light');
+    const isDark = currentTheme === 'dark';
+    const watermarkColor = isDark ? '#FFFFFF' : '#000000';
+    const watermarkOpacity = isDark ? '0.24' : '0.18';
+
+    // สร้างลวดลาย SVG ข้อความเอียง 22 องศา ชัดเจนและกระจายทั่วหน้าจอ
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="340" height="210">
+      <text x="50%" y="50%" transform="rotate(-22 170 105)"
+        fill="${watermarkColor}" fill-opacity="${watermarkOpacity}" font-family="'Sarabun', system-ui, sans-serif" font-size="15" font-weight="600"
         text-anchor="middle" dominant-baseline="middle">${text}</text>
     </svg>`;
     const encoded = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);

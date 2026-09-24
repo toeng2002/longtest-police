@@ -15,7 +15,7 @@
 <script src="js/supabase.min.js"></script>
 <script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');}</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@300;400;600&family=Chakra+Petch:wght@300;400;600&family=Kanit:wght@300;400;600&family=Krub:wght@300;400;600&family=Mali:wght@400;600&family=Mitr:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&family=Prompt:wght@300;400;600&family=Sarabun:wght@400;600&family=Taviraj:wght@300;400;600&display=swap');
 /* ===== USER STYLES ===== */
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -32,6 +32,102 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Themes: Light, Sepia & Dark */
+:root[data-theme="light"], html[data-theme="light"], body[data-theme="light"] {
+  --bg:#F7F7F5 !important;
+  --surface:#FFFFFF !important;
+  --surface2:#F2F2EF !important;
+  --border:#E4E4E0 !important;
+  --border2:#D0D0CA !important;
+  --text:#1A1A18 !important;
+  --text2:#6B6B66 !important;
+  --text3:#9B9B96 !important;
+  --accent:#2563EB !important;
+  --accent-bg:#EFF6FF !important;
+  --accent-border:#BFDBFE !important;
+}
+:root[data-theme="sepia"], html[data-theme="sepia"], body[data-theme="sepia"] {
+  --bg:#F7EEDB !important;
+  --surface:#FFF9ED !important;
+  --surface2:#EFE4D0 !important;
+  --border:#DFD2BC !important;
+  --border2:#C8B9A0 !important;
+  --text:#3D2D1D !important;
+  --text2:#6B5B49 !important;
+  --text3:#9C8973 !important;
+  --accent:#B45309 !important;
+  --accent-bg:#FEF3C7 !important;
+  --accent-border:#FCD34D !important;
+  --success:#15803D !important;
+  --success-bg:#ECFDF5 !important;
+  --success-border:#A7F3D0 !important;
+  --danger:#B91C1C !important;
+  --danger-bg:#FEF2F2 !important;
+  --danger-border:#FECACA !important;
+}
+:root[data-theme="dark"], html[data-theme="dark"], body[data-theme="dark"] {
+  --bg:#0F172A !important;
+  --surface:#1E293B !important;
+  --surface2:#334155 !important;
+  --border:#334155 !important;
+  --border2:#475569 !important;
+  --text:#F8FAFC !important;
+  --text2:#94A3B8 !important;
+  --text3:#64748B !important;
+  --accent:#3B82F6 !important;
+  --accent-bg:#1E293B !important;
+  --accent-border:#2563EB !important;
+  --success:#10B981 !important;
+  --success-bg:#064E3B !important;
+  --success-border:#047857 !important;
+  --danger:#EF4444 !important;
+  --danger-bg:#7F1D1D !important;
+  --danger-border:#B91C1C !important;
+}
+
+body[data-theme="sepia"] { background: #F7EEDB !important; color: #3D2D1D !important; }
+body[data-theme="dark"] { background: #0F172A !important; color: #F8FAFC !important; }
+body[data-theme="light"] { background: #F7F7F5 !important; color: #1A1A18 !important; }
+
+/* Font Families (10 Fonts) */
+html[data-font="sarabun"], html[data-font="sarabun"] body { font-family: 'Sarabun', system-ui, sans-serif !important; }
+html[data-font="prompt"], html[data-font="prompt"] body { font-family: 'Prompt', system-ui, sans-serif !important; }
+html[data-font="kanit"], html[data-font="kanit"] body { font-family: 'Kanit', system-ui, sans-serif !important; }
+html[data-font="mitr"], html[data-font="mitr"] body { font-family: 'Mitr', system-ui, sans-serif !important; }
+html[data-font="chakra-petch"], html[data-font="chakra-petch"] body { font-family: 'Chakra Petch', system-ui, sans-serif !important; }
+html[data-font="bai-jamjuree"], html[data-font="bai-jamjuree"] body { font-family: 'Bai Jamjuree', system-ui, sans-serif !important; }
+html[data-font="noto-sans-thai"], html[data-font="noto-sans-thai"] body { font-family: 'Noto Sans Thai', system-ui, sans-serif !important; }
+html[data-font="krub"], html[data-font="krub"] body { font-family: 'Krub', system-ui, sans-serif !important; }
+html[data-font="taviraj"], html[data-font="taviraj"] body { font-family: 'Taviraj', serif !important; }
+html[data-font="mali"], html[data-font="mali"] body { font-family: 'Mali', cursive, sans-serif !important; }
+
+/* Font Sizes */
+[data-font-size="large"] { font-size: 16.5px; }
+[data-font-size="large"] .q-text { font-size: 17.5px !important; }
+[data-font-size="large"] .choice-btn { font-size: 14.5px !important; }
+[data-font-size="xlarge"] { font-size: 18px; }
+[data-font-size="xlarge"] .q-text { font-size: 20px !important; }
+[data-font-size="xlarge"] .choice-btn { font-size: 16.5px !important; }
+
+/* Custom Motivation Wallpaper Layer */
+#user-custom-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  transition: opacity .3s ease;
+  display: none;
+}
+
+/* Glassmorphism subtle blur on cards for readable text with custom wallpaper */
+.card, .unit-card, .level-card, .choice-btn, .score-card {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 html {
@@ -135,10 +231,11 @@ body {
 .ratio-bar-fill{height:4px;background:var(--accent);border-radius:2px}
 
 /* Quiz */
-.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.q-num{font-size:12px;color:var(--text2)}
-.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:16px;white-space:pre-line;word-break:break-word}
-.q-img{width:100%;border-radius:var(--radius);margin-bottom:14px;border:1px solid var(--border)}
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,0.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.q-num{font-size:12px;color:var(--text2);font-weight:600}
+.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:0;white-space:pre-line;word-break:break-word}
+.q-img{width:100%;border-radius:var(--radius);margin-top:14px;border:1px solid var(--border)}
 .choice-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--text);width:100%;text-align:left;transition:border-color .1s,background .1s;line-height:1.5;white-space:pre-line;word-break:break-word}
 .choice-btn:hover:not(:disabled){border-color:var(--border2);background:var(--surface2)}
 .choice-btn:disabled{cursor:default}
@@ -205,7 +302,7 @@ body {
 /* ===== ADMIN STYLES ===== */
 
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
+#admin-layout{
   --bg:#F5F5F3;--surface:#FFFFFF;--surface2:#F0F0EE;
   --border:#E2E2DE;--border2:#C8C8C4;
   --text:#1C1C1A;--text2:#6A6A66;--text3:#9A9A96;
@@ -216,7 +313,6 @@ body {
   --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-bd:#DDD6FE;
   --r:8px;--rl:12px;
 }
-body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:14px;color:var(--text);min-height:100vh}
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 
 /* --- Login --- */
@@ -414,11 +510,18 @@ textarea{resize:vertical;min-height:72px}
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username</label>
       <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:14px">
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Password</label>
       <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password" onkeyup="if(event.key==='Enter') doLogin()">
+      <div style="text-align:right;margin-top:6px">
+        <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:500;cursor:pointer">ลืมรหัสผ่าน?</a>
+      </div>
     </div>
-    <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer">เข้าสู่ระบบ</button>
+    <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:8px">เข้าสู่ระบบ</button>
+
+    <div style="text-align:center;margin:8px 0;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี?</div>
+
+    <button type="button" onclick="openRegisterModal()" id="btn-show-register" style="width:100%;background:var(--surface);color:var(--text);border:1.5px solid var(--border2);border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:500;cursor:pointer;transition:all 0.15s">✨ สมัครสมาชิกใหม่ (สร้างบัญชี)</button>
 
     <div style="display:flex;align-items:center;margin:18px 0;gap:10px">
       <div style="flex:1;height:1px;background:var(--border2)"></div>
@@ -435,8 +538,180 @@ textarea{resize:vertical;min-height:72px}
       </svg>
       <span id="btn-google-text">เข้าสู่ระบบด้วย Google</span>
     </button>
+  </div>
 
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="loginWithGoogle()">เข้าสู่ระบบด้วย Google เพื่อเริ่มต้นใช้งานทันที</span></div>
+  <!-- App Version badge มุมล่างขวา -->
+  <div id="login-app-version" style="position:fixed;bottom:calc(14px + var(--sab, 0px));right:calc(18px + var(--sar, 0px));font-size:11.5px;color:var(--text3);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:0.04em;pointer-events:none;user-select:none;opacity:0.75;z-index:99">
+    V-0.0.001.24092026
+  </div>
+</div>
+
+<!-- Modal: สมัครสมาชิกใหม่ (Register + Email Confirmation Link) -->
+<div id="modal-register" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>✨ สมัครสมาชิกใหม่</span>
+      </div>
+      <button type="button" onclick="closeRegisterModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Error message banner -->
+    <div id="reg-err" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- Info / Notice banner -->
+    <div id="reg-notice" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- STEP 1: กรอกข้อมูลส่วนตัวและรหัสผ่าน -->
+    <div id="reg-step-1">
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Username (สำหรับล็อกอิน) <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="reg-username" placeholder="ภาษาอังกฤษหรือตัวเลข (เช่น somchai01)" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ชื่อ - นามสกุล <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="reg-display-name" placeholder="เช่น สมชาย ใจดี" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">อีเมล (สำหรับรับลิงก์ยืนยันตัวตน) <span style="color:var(--danger)">*</span></label>
+        <input type="email" id="reg-email" placeholder="example@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none" autocomplete="email">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">เบอร์โทรศัพท์ (ไม่บังคับ)</label>
+        <input type="tel" id="reg-phone" placeholder="08xxxxxxxx" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่าน <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="reg-password" placeholder="อย่างน้อย 6 ตัว" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:var(--danger)">*</span></label>
+          <input type="password" id="reg-confirm-password" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
+        </div>
+      </div>
+
+      <button type="button" onclick="requestRegisterOtp()" id="btn-reg-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: ส่งลิงก์ยืนยันตัวตน</button>
+    </div>
+
+    <!-- STEP 2: รอคลิกลิงก์ในอีเมล / กรอก OTP -->
+    <div id="reg-step-2" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:40px;margin-bottom:6px">📬</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตรวจสอบกล่องข้อความอีเมล</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
+          ระบบได้ส่งลิงก์ยืนยันตัวตนไปยัง<br>
+          <strong id="reg-otp-email-target" style="color:var(--accent);font-size:13.5px"></strong>
+        </div>
+      </div>
+
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
+        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm your mail"</strong> ในข้อความ<br>
+        ระบบจะเปิดใช้งานบัญชีและเข้าสู่ระบบให้อัตโนมัติทันที
+      </div>
+
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:14px;box-sizing:border-box">
+        <span>📧 เปิดกล่องข้อความ Gmail</span>
+      </a>
+
+      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
+        <span id="reg-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="reg-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-reg-resend" onclick="resendRegisterOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งอีเมลอีกครั้ง</button>
+      </div>
+
+      <button type="button" onclick="backToRegStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขข้อมูล / ย้อนกลับ</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: ลืมรหัสผ่าน (Forgot Password + Email Confirmation Link) -->
+<div id="modal-forgot-pwd" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:400px;width:100%;max-height:92vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>🔑 รีเซ็ตรหัสผ่าน</span>
+      </div>
+      <button type="button" onclick="closeForgotPasswordModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Error message banner -->
+    <div id="forgot-err" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--danger);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- Info banner -->
+    <div id="forgot-notice" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:14px;line-height:1.4"></div>
+
+    <!-- STEP 1: ระบุเฉพาะอีเมล -->
+    <div id="forgot-step-1">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
+        กรอก <strong>อีเมล</strong> ของคุณที่ลงทะเบียนไว้ในระบบ เราจะส่งลิงก์ยืนยันตัวตนสำหรับตั้งรหัสผ่านใหม่ไปให้
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">อีเมลของคุณ <span style="color:var(--danger)">*</span></label>
+        <input type="email" id="forgot-identity" placeholder="example@email.com (หรือ Username)" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" autocomplete="email" onkeyup="if(event.key==='Enter') requestForgotPasswordOtp()">
+      </div>
+
+      <button type="button" onclick="requestForgotPasswordOtp()" id="btn-forgot-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล</button>
+    </div>
+
+    <!-- STEP 2: รอคลิกลิงก์ในอีเมล หรือ กรอก OTP 6 หลัก -->
+    <div id="forgot-step-2" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:40px;margin-bottom:6px">📬</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตรวจสอบกล่องข้อความอีเมล</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
+          เราได้ส่งลิงก์ยืนยันตัวตนไปยัง<br>
+          <strong id="forgot-otp-email-target" style="color:var(--accent);font-size:13.5px"></strong>
+        </div>
+      </div>
+
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
+        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm"</strong><br>
+        เพื่อยืนยันตัวตนแล้วระบบจะเปิดหน้าตั้งรหัสผ่านใหม่ให้ทันที
+      </div>
+
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:16px;box-sizing:border-box">
+        <span>📧 เปิดกล่องข้อความ Gmail</span>
+      </a>
+
+      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
+        <span id="forgot-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-forgot-resend" onclick="resendForgotPasswordOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งอีเมลอีกครั้ง</button>
+      </div>
+
+      <button type="button" onclick="backToForgotStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขอีเมล / ย้อนกลับ</button>
+    </div>
+
+    <!-- STEP 3: ตั้งรหัสผ่านใหม่ (หลังจากยืนยันตัวตนสำเร็จแล้ว) -->
+    <div id="forgot-step-3" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:36px;margin-bottom:4px">🔐</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตั้งรหัสผ่านใหม่</div>
+        <div style="font-size:12px;color:var(--text2)">
+          สำหรับบัญชี: <strong id="forgot-user-target" style="color:var(--accent)"></strong>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">รหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-new-pass" placeholder="อย่างน้อย 6 ตัวอักษร" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">ยืนยันรหัสผ่านใหม่ <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="forgot-confirm-pass" placeholder="พิมพ์ซ้ำอีกครั้ง" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" onkeyup="if(event.key==='Enter') saveNewPassword()">
+      </div>
+
+      <button type="button" onclick="saveNewPassword()" id="btn-forgot-save-pass" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s">💾 บันทึกรหัสผ่านใหม่</button>
+    </div>
+
   </div>
 </div>
 
@@ -464,12 +739,47 @@ textarea{resize:vertical;min-height:72px}
 
 <div id="user-layout" style="display:none">
   <!-- Topbar for user -->
-  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
-    <div style="font-size:14px;font-weight:600;color:var(--text)">ระบบข้อสอบตำรวจ</div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:5px 12px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500">⚙️ กลับหน้า Admin</button>
-      <span id="user-topbar-name" style="font-size:12px;color:var(--text2)"></span>
-      <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer">ออกจากระบบ</button>
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
+    <div style="font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px">
+      <span>ระบบข้อสอบตำรวจ</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="switch-to-admin" onclick="enterAdmin()" style="display:none;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500">⚙️ กลับหน้า Admin</button>
+      
+      <!-- User Profile Avatar & Dropdown -->
+      <div class="user-topbar-profile" style="position:relative;display:flex;align-items:center">
+        <button id="user-profile-btn" onclick="toggleUserDropdown(event)" style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:24px;padding:3px 10px 3px 3px;cursor:pointer;transition:all .15s;color:var(--text)" title="เมนูโปรไฟล์และการตั้งค่า">
+          <div id="user-avatar-img-wrap" style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#2563EB,#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
+            <span>U</span>
+          </div>
+          <span id="user-topbar-name" style="font-size:13px;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ผู้ใช้</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="user-dropdown-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:230px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:6px;z-index:9999">
+          <div style="padding:10px 12px;border-bottom:1px solid var(--border);margin-bottom:4px">
+            <div id="dropdown-user-fullname" style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ผู้ใช้</div>
+            <div id="dropdown-user-plan" style="font-size:11px;color:var(--accent);font-weight:500;margin-top:2px">สมาชิกทั่วไป</div>
+          </div>
+          <button type="button" onclick="openProfileModal();closeUserDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+            <span style="font-size:16px">👤</span>
+            <span>จัดการโปรไฟล์</span>
+          </button>
+          <button type="button" onclick="openSettingsModal();closeUserDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+            <span style="font-size:16px">🎨</span>
+            <span>ตั้งค่า</span>
+          </button>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <button type="button" onclick="doLogout();closeUserDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--danger);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--danger-bg)'" onmouseout="this.style.background='transparent'">
+            <span style="font-size:16px">🚪</span>
+            <span>ออกจากระบบ</span>
+          </button>
+          <div style="padding:6px 12px 2px;font-size:10.5px;color:var(--text3);text-align:center;font-family:ui-monospace,monospace;letter-spacing:0.03em;user-select:none;opacity:0.7">
+            V-0.0.001.24092026
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <!-- SCREEN: หน้าหลัก (เลือกหน่วย) -->
@@ -521,6 +831,10 @@ textarea{resize:vertical;min-height:72px}
         <div class="unit-desc">สายพยาบาล</div>
       </div>
     </div>
+  </div>
+
+  <div style="text-align:right;margin-top:24px;padding:8px 4px;font-size:11px;color:var(--text3);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:0.04em;user-select:none;opacity:0.75">
+    V-0.0.001.24092026
   </div>
 </div>
 
@@ -635,12 +949,14 @@ textarea{resize:vertical;min-height:72px}
   <div class="pbar-wrap">
     <div class="pbar-track"><div class="pbar-fill" id="pbar-fill"></div></div>
   </div>
-  <div class="q-meta">
-    <span class="q-num" id="q-num"></span>
-    <div style="display:flex;gap:5px" id="q-tags"></div>
+  <div class="q-card" id="q-card">
+    <div class="q-meta">
+      <span class="q-num" id="q-num"></span>
+      <div style="display:flex;gap:5px" id="q-tags"></div>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-img-wrap" style="display:none"><img class="q-img" id="q-img" src="" alt="ภาพประกอบโจทย์"></div>
   </div>
-  <div class="q-text" id="q-text"></div>
-  <div id="q-img-wrap" style="display:none"><img class="q-img" id="q-img" src="" alt="ภาพประกอบโจทย์"></div>
   <div id="q-choices"></div>
   <div class="feedback" id="q-feedback" style="display:none">
     <div class="feedback-title" id="fb-title"></div>
@@ -696,12 +1012,252 @@ textarea{resize:vertical;min-height:72px}
 
 <div id="admin-layout" style="display:none"></div>
 
+<!-- Modal: จัดการโปรไฟล์ (Profile Management) -->
+<div id="modal-user-profile" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>👤 จัดการข้อมูลโปรไฟล์</span>
+      </div>
+      <button type="button" onclick="closeProfileModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Avatar Upload Section -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;width:84px;height:84px;margin:0 auto 10px;border-radius:50%;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.12);border:3px solid var(--surface2)">
+        <div id="modal-profile-avatar-wrap" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;font-size:28px;font-weight:600">
+          <span>U</span>
+        </div>
+      </div>
+      <label for="profile-avatar-file" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;padding:5px 14px;cursor:pointer;font-weight:500;transition:all .15s">
+        <span>📷 เปลี่ยนรูปโปรไฟล์</span>
+      </label>
+      <input type="file" id="profile-avatar-file" accept="image/*" style="display:none" onchange="handleProfileAvatarUpload(this)">
+    </div>
+
+    <!-- User Information Form -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500">ชื่อ</label>
+        <input type="text" id="prof-firstname" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500">นามสกุล</label>
+        <input type="text" id="prof-lastname" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500">เบอร์โทรศัพท์</label>
+      <input type="tel" id="prof-phone" placeholder="08xxxxxxxx" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none">
+    </div>
+
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500">อีเมล (Email)</label>
+      <input type="email" id="prof-email" placeholder="example@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none">
+    </div>
+
+    <!-- Subscription & Expiry Card -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--text)">สถานะสมาชิก & วันหมดอายุ</span>
+        <span id="prof-plan-badge" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--accent-bg);color:var(--accent)">Free</span>
+      </div>
+      <div id="prof-expiry-text" style="font-size:13px;color:var(--text2);margin-bottom:10px">
+        วันหมดอายุ: ใช้งานได้ตลอดชีพ
+      </div>
+      <button type="button" onclick="openRenewModal()" style="width:100%;background:linear-gradient(135deg,#D97706,#B45309);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 4px rgba(217,119,6,0.2)">
+        <span>⚡ เติมเวลา / ต่ออายุสมาชิก</span>
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px">
+      <button type="button" onclick="closeProfileModal()" style="flex:1;background:transparent;border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;color:var(--text);cursor:pointer">ยกเลิก</button>
+      <button type="button" onclick="saveUserProfile()" id="btn-save-profile" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:500;cursor:pointer">💾 บันทึกข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: ตั้งค่าการแสดงผล (Settings) -->
+<div id="modal-user-settings" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>🎨 ตั้งค่าการแสดงผล</span>
+      </div>
+      <button type="button" onclick="closeSettingsModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <!-- Section 1: ธีมสีพื้นหลัง -->
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">สีพื้นหลัง / ธีม (Theme)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button type="button" class="theme-option-btn" data-theme="light" onclick="setUserTheme('light')" style="padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:#ffffff;color:#1a1a18;cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:4px">☀️</div>
+          <span>สว่าง (ปกติ)</span>
+        </button>
+        <button type="button" class="theme-option-btn" data-theme="sepia" onclick="setUserTheme('sepia')" style="padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:#F7EEDB;color:#3D2D1D;cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:4px">📖</div>
+          <span>ถนอมสายตา</span>
+        </button>
+        <button type="button" class="theme-option-btn" data-theme="dark" onclick="setUserTheme('dark')" style="padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:#0F172A;color:#F8FAFC;cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all .15s">
+          <div style="font-size:18px;margin-bottom:4px">🌙</div>
+          <span>โหมดมืด</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section 2: แบบฟอนต์ -->
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">แบบฟอนต์ (Font Family - 10 สไตล์)</label>
+      <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;max-height:220px;overflow-y:auto;padding-right:2px">
+        <button type="button" class="font-option-btn" data-font="sarabun" onclick="setUserFont('sarabun')" style="font-family:'Sarabun',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Sarabun
+        </button>
+        <button type="button" class="font-option-btn" data-font="prompt" onclick="setUserFont('prompt')" style="font-family:'Prompt',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Prompt
+        </button>
+        <button type="button" class="font-option-btn" data-font="kanit" onclick="setUserFont('kanit')" style="font-family:'Kanit',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Kanit
+        </button>
+        <button type="button" class="font-option-btn" data-font="mitr" onclick="setUserFont('mitr')" style="font-family:'Mitr',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Mitr
+        </button>
+        <button type="button" class="font-option-btn" data-font="chakra-petch" onclick="setUserFont('chakra-petch')" style="font-family:'Chakra Petch',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Chakra Petch
+        </button>
+        <button type="button" class="font-option-btn" data-font="bai-jamjuree" onclick="setUserFont('bai-jamjuree')" style="font-family:'Bai Jamjuree',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Bai Jamjuree
+        </button>
+        <button type="button" class="font-option-btn" data-font="noto-sans-thai" onclick="setUserFont('noto-sans-thai')" style="font-family:'Noto Sans Thai',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Noto Sans Thai
+        </button>
+        <button type="button" class="font-option-btn" data-font="krub" onclick="setUserFont('krub')" style="font-family:'Krub',sans-serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Krub
+        </button>
+        <button type="button" class="font-option-btn" data-font="taviraj" onclick="setUserFont('taviraj')" style="font-family:'Taviraj',serif;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Taviraj
+        </button>
+        <button type="button" class="font-option-btn" data-font="mali" onclick="setUserFont('mali')" style="font-family:'Mali',cursive;padding:9px 8px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;text-align:center">
+          Mali
+        </button>
+      </div>
+    </div>
+
+    <!-- Section 3: ขนาดตัวอักษร -->
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">ขนาดตัวอักษรข้อสอบ</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button type="button" class="fontsize-option-btn" data-size="normal" onclick="setUserFontSize('normal')" style="padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s">
+          ปกติ (100%)
+        </button>
+        <button type="button" class="fontsize-option-btn" data-size="large" onclick="setUserFontSize('large')" style="padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;font-weight:500;transition:all .15s">
+          ใหญ่ (115%)
+        </button>
+        <button type="button" class="fontsize-option-btn" data-size="xlarge" onclick="setUserFontSize('xlarge')" style="padding:9px 6px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-size:15px;font-weight:600;transition:all .15s">
+          ใหญ่พิเศษ (130%)
+        </button>
+      </div>
+    </div>
+
+    <!-- Section 4: เปลี่ยนภาพพื้นหลัง (Custom Motivation Wallpaper) -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">🖼️ เปลี่ยนภาพพื้นหลัง</label>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px">อัปโหลดภาพที่ชอบเพื่อสร้างกำลังใจในการทำข้อสอบ (บันทึกเฉพาะในอุปกรณ์นี้)</div>
+      
+      <!-- Preview & Upload Button -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div id="wallpaper-thumb-preview" style="width:52px;height:52px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+          <span style="font-size:20px;color:var(--text3)">🌄</span>
+        </div>
+        <div style="flex:1;display:flex;flex-wrap:wrap;gap:8px">
+          <label for="wallpaper-file-input" style="background:var(--accent);color:#fff;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+            <span>📁 เลือกรูปภาพ</span>
+          </label>
+          <input type="file" id="wallpaper-file-input" accept="image/*" style="display:none" onchange="handleWallpaperUpload(this)">
+          <button type="button" id="btn-remove-wallpaper" onclick="removeUserWallpaper()" style="display:none;background:transparent;border:1px solid var(--danger-border);color:var(--danger);border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer">
+            ✕ ลบภาพ
+          </button>
+        </div>
+      </div>
+
+      <!-- Opacity Slider -->
+      <div id="wallpaper-opacity-box" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text2)">ความชัดของภาพพื้นหลัง:</span>
+          <span id="wallpaper-opacity-val" style="font-size:11px;font-weight:600;color:var(--text)">25%</span>
+        </div>
+        <input type="range" id="wallpaper-opacity-slider" min="5" max="80" value="25" step="5" style="width:100%;cursor:pointer" oninput="changeWallpaperOpacity(this.value)">
+      </div>
+    </div>
+
+    <!-- Close button -->
+    <button type="button" onclick="closeSettingsModal()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer">
+      ตกลง / ปิดหน้าต่าง
+    </button>
+  </div>
+</div>
+
+<!-- Modal: เติมเวลา / ต่ออายุสมาชิก (Renew Subscription) -->
+<div id="modal-renew-subscription" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span>⚡ เติมเวลา / ต่ออายุสมาชิก</span>
+      </div>
+      <button onclick="closeRenewModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:4px">✕</button>
+    </div>
+
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+      เลือกแพ็กเกจที่ต้องการต่ออายุ เพื่อเข้าถึงคลังข้อสอบและทำข้อสอบได้ต่อเนื่องไม่มีสะดุด
+    </div>
+
+    <!-- Package List -->
+    <div style="display:grid;gap:10px;margin-bottom:18px">
+      <div style="background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">แพ็กเกจ 1 เดือน (30 วัน)</div>
+          <div style="font-size:12px;color:var(--text2)">ทำข้อสอบและดูเฉลยละเอียดได้ทุกหน่วย</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:700;color:var(--accent)">199 ฿</div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">แพ็กเกจ 3 เดือน (90 วัน) <span style="font-size:10px;background:#FEF3C7;color:#B45309;padding:2px 6px;border-radius:10px;font-weight:600">สุดคุ้ม</span></div>
+          <div style="font-size:12px;color:var(--text2)">ประหยัดกว่า เฉลี่ยเพียงเดือนละ 166 ฿</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">499 ฿</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment info & Contact -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">ช่องทางการชำระเงิน & แจ้งต่ออายุ:</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        <div>• <b>LINE Official:</b> @police-exam</div>
+        <div>• <b>พร้อมเพย์ / โอนเงิน:</b> ธนาคารกสิกรไทย (000-0-00000-0)</div>
+        <div style="margin-top:6px;color:var(--text3);font-size:11px">*ระบบชำระเงินอัตโนมัติ (Payment Gateway) กำลังจะเปิดให้บริการเร็วๆ นี้</div>
+      </div>
+    </div>
+
+    <button type="button" onclick="closeRenewModal()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:500;cursor:pointer">
+      รับทราบ / ปิดหน้าต่าง
+    </button>
+  </div>
+</div>
+
 <script src="js/bcrypt.min.js"></script>
 <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260921_google_v12"></script>
+<script src="js/app-auth.js?v=20260924_otp_v8"></script>
 <script src="js/app-quiz.js?v=20260921_google_v12"></script>
-<script src="js/anti-cheat.js?v=20260921_google_v12"></script>
+<script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
+<script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 
 <script>
 (function(){

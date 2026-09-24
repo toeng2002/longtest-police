@@ -2,7 +2,7 @@
 // Service Worker — ระบบจำลองข้อสอบตำรวจ PWA
 // ============================================================
 
-const CACHE_NAME = 'police-exam-v12';
+const CACHE_NAME = 'police-exam-v25';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -19,6 +19,7 @@ const PRECACHE_URLS = [
   './js/app-admin.js',
   './js/app-settings.js',
   './js/app-auth.js',
+  './js/app-profile-settings.js',
   './js/app-csv.js',
   './js/anti-cheat.js'
 ];
