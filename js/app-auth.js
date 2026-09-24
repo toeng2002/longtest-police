@@ -215,6 +215,10 @@ function enterUser(){
   const sw=document.getElementById('switch-to-admin');
   if(sw) sw.style.display=(currentUser?.role==='both' || currentUser?.role==='admin' || currentUser?.role==='superadmin')?'inline-flex':'none';
 
+  if (typeof updateUserAvatarUI === 'function') {
+    try { updateUserAvatarUI(); } catch (avErr) { console.warn('updateUserAvatarUI error:', avErr); }
+  }
+
   // ห่อไว้เพื่อไม่ให้ข้อผิดพลาดของ UI ทำให้การ login ถูกเข้าใจผิดว่าล้มเหลว
   try {
     goHome();
@@ -234,6 +238,10 @@ function enterAdmin(){
   if(an) an.textContent=name;
   const av=document.getElementById('admin-avatar');
   if(av) av.textContent=name.charAt(0).toUpperCase();
+
+  if (typeof updateUserAvatarUI === 'function') {
+    try { updateUserAvatarUI(); } catch (avErr) {}
+  }
 
   const isSuper = currentUser?.role === 'superadmin';
   const roleText = isSuper ? 'ผู้ดูแลระบบสูงสุด — superadmin' : 'ผู้ดูแลระบบ — admin';
