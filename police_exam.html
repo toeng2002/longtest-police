@@ -511,11 +511,11 @@ textarea{resize:vertical;min-height:72px}
       <input type="text" id="inp-user" placeholder="กรอก username" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
     <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-        <label style="font-size:12px;font-weight:500;color:var(--text2)">Password</label>
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px">Password</label>
+      <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password" onkeyup="if(event.key==='Enter') doLogin()">
+      <div style="text-align:right;margin-top:6px">
         <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:500;cursor:pointer">ลืมรหัสผ่าน?</a>
       </div>
-      <input type="password" id="inp-pass" placeholder="กรอก password" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;background:var(--surface);color:var(--text);outline:none" autocomplete="current-password" onkeyup="if(event.key==='Enter') doLogin()">
     </div>
     <button onclick="doLogin()" id="btn-login" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px">เข้าสู่ระบบ</button>
 
@@ -619,18 +619,6 @@ textarea{resize:vertical;min-height:72px}
         <span>📧 เปิดกล่องข้อความ Gmail</span>
       </a>
 
-      <!-- ตัวเลือกเสริมสำหรับกรอก OTP 6 หลัก -->
-      <div style="text-align:center;margin-bottom:14px">
-        <span style="font-size:12px;color:var(--text2)">ได้รับรหัส OTP 6 หลักแทนลิงก์? </span>
-        <a href="javascript:void(0)" onclick="toggleRegOtpInput()" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:underline">คลิกกรอกรหัสด้วยตนเอง</a>
-      </div>
-
-      <div id="reg-otp-manual-container" style="display:none;background:var(--bg2, var(--surface2, #f8fafc));border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:14px">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-align:center">กรอกรหัสตัวเลข 6 หลัก</label>
-        <input type="text" id="reg-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:10px;border:2px solid var(--accent);border-radius:var(--r);font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;background:var(--surface);color:var(--text);outline:none;margin-bottom:10px;box-sizing:border-box" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyRegisterOtp()">
-        <button type="button" onclick="verifyRegisterOtp()" id="btn-reg-verify" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">✅ ยืนยันรหัส OTP และสร้างบัญชี</button>
-      </div>
-
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:12px">
         <span id="reg-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="reg-countdown-num">60</strong> วิ</span>
         <button type="button" id="btn-reg-resend" onclick="resendRegisterOtp()" disabled style="background:transparent;border:none;color:var(--text3);cursor:not-allowed;font-size:12px;font-weight:600;padding:0">ส่งอีเมลอีกครั้ง</button>
@@ -692,18 +680,6 @@ textarea{resize:vertical;min-height:72px}
       <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:14px;box-sizing:border-box">
         <span>📧 เปิดกล่องข้อความ Gmail</span>
       </a>
-
-      <!-- ตัวเลือกเสริมสำหรับกรอก OTP 6 หลัก -->
-      <div style="text-align:center;margin-bottom:14px">
-        <span style="font-size:12px;color:var(--text2)">ได้รับรหัส OTP 6 หลักแทนลิงก์? </span>
-        <a href="javascript:void(0)" onclick="toggleForgotOtpInput()" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:underline">คลิกกรอกรหัสด้วยตนเอง</a>
-      </div>
-
-      <div id="forgot-otp-manual-container" style="display:none;background:var(--bg2, var(--surface2, #f8fafc));border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:14px">
-        <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-align:center">กรอกรหัส OTP 6 หลัก</label>
-        <input type="text" id="forgot-otp-code" maxlength="6" placeholder="000000" style="width:100%;padding:10px;border:2px solid var(--accent);border-radius:var(--r);font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;background:var(--surface);color:var(--text);outline:none;margin-bottom:10px;box-sizing:border-box" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyForgotOtp()">
-        <button type="button" onclick="verifyForgotOtp()" id="btn-forgot-verify-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่</button>
-      </div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:12px">
         <span id="forgot-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
@@ -1278,7 +1254,7 @@ textarea{resize:vertical;min-height:72px}
 <script src="js/bcrypt.min.js"></script>
 <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_otp_v4"></script>
+<script src="js/app-auth.js?v=20260924_otp_v5"></script>
 <script src="js/app-quiz.js?v=20260921_google_v12"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>

@@ -1092,15 +1092,8 @@ async function requestRegisterOtp() {
     const otpInput = document.getElementById('reg-otp-code');
     if (otpInput) otpInput.value = '';
 
-    const manualContainer = document.getElementById('reg-otp-manual-container');
-
     if (isRateLimited) {
-      _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showRegNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong> (หรือคลิกลิงก์ในอีเมลหากได้รับ)`);
-      console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${em} คือ: ${_devRegOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
-      if (manualContainer) manualContainer.style.display = 'block';
-    } else {
-      if (manualContainer) manualContainer.style.display = 'none';
+      showRegNotice(`⚠️ การส่งอีเมลผ่าน Supabase ถึงโควตาจำกัดชั่วคราว (3-4 ฉบับ/ชม.)<br>หากยังไม่ได้รับอีเมล กรุณารอสักครู่แล้วกดส่งใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
     }
 
     startRegCountdown();
@@ -1469,14 +1462,8 @@ async function requestForgotPasswordOtp() {
     if (targetEmailEl) targetEmailEl.textContent = maskEmail(user.email);
     const otpInp = document.getElementById('forgot-otp-code'); if (otpInp) otpInp.value = '';
 
-    const manualContainer = document.getElementById('forgot-otp-manual-container');
     if (isRateLimited) {
-      _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      showForgotNotice(`⚠️ ส่งอีเมลผ่าน Supabase ติดโควตาทดสอบ (3-4 ฉบับ/ชม.)<br>⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong> (หรือคลิกลิงก์ในอีเมลหากได้รับ)`);
-      console.info(`%c[DEV OTP] รหัส OTP ทดสอบสำหรับ ${user.email} คือ: ${_devForgotOtp}`, 'color:#2563eb;font-weight:bold;font-size:14px');
-      if (manualContainer) manualContainer.style.display = 'block';
-    } else {
-      if (manualContainer) manualContainer.style.display = 'none';
+      showForgotNotice(`⚠️ การส่งอีเมลผ่าน Supabase ถึงโควตาจำกัดชั่วคราว (3-4 ฉบับ/ชม.)<br>หากยังไม่ได้รับอีเมล กรุณารอสักครู่แล้วกดส่งใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
     }
 
     startForgotCountdown();
