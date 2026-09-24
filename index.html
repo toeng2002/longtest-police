@@ -712,31 +712,39 @@ body {
     </div>
 
     <!-- STEP 2: รอคลิกลิงก์ในอีเมล / กรอก OTP -->
+    <!-- STEP 2: กรอกรหัส OTP 6 หลัก -->
     <div id="reg-step-2" style="display:none">
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:40px;margin-bottom:6px">📬</div>
         <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตรวจสอบกล่องข้อความอีเมล</div>
         <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
-          ระบบได้ส่งลิงก์ยืนยันตัวตนไปยัง<br>
+          ระบบได้ส่งรหัส OTP 6 หลักไปยัง<br>
           <strong id="reg-otp-email-target" style="color:var(--accent);font-size:13.5px"></strong>
         </div>
       </div>
 
-      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
-        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm your mail"</strong> ในข้อความ<br>
-        ระบบจะเปิดใช้งานบัญชีและเข้าสู่ระบบให้อัตโนมัติทันที
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--accent-border);color:var(--text2);font-size:12px">
-          ⚠️ <b>ไม่พบอีเมล?</b> หากหาไม่เจอในกล่องข้อความหลัก ลองตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b>
-        </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center">
+        <label for="reg-otp-code" style="display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:8px">
+          🔑 กรอกรหัส OTP 6 หลักที่ได้รับในอีเมล
+        </label>
+        <input type="text" id="reg-otp-code" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="• • • • • •" autocomplete="one-time-code" style="width:100%;letter-spacing:10px;font-size:26px;font-weight:700;text-align:center;padding:10px;border:2px solid var(--accent);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;margin-bottom:12px" onkeyup="if(event.key==='Enter') verifyRegisterOtp()">
+        <button type="button" onclick="verifyRegisterOtp()" id="btn-reg-verify" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s">
+          ✅ ยืนยันรหัส OTP และสร้างบัญชี
+        </button>
       </div>
 
-      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:14px;box-sizing:border-box">
+      <div style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:14px;line-height:1.5">
+        ⚠️ <b>ไม่พบอีเมล?</b> กรุณาตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b><br>
+        หรือกด "เปิดกล่องข้อความ Gmail" เพื่อดูรหัส
+      </div>
+
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:transparent;border:1px solid var(--border2);color:var(--text);text-decoration:none;border-radius:var(--r);padding:8px 12px;font-size:12.5px;font-weight:500;margin-bottom:12px;box-sizing:border-box">
         <span>📧 เปิดกล่องข้อความ Gmail (เปิดแท็บใหม่ ↗)</span>
       </a>
 
       <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
-        <span id="reg-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="reg-countdown-num">60</strong> วิ</span>
-        <button type="button" id="btn-reg-resend" onclick="resendRegisterOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งอีเมลอีกครั้ง</button>
+        <span id="reg-timer-text" style="color:var(--text2)">ส่งรหัสใหม่อีกครั้งใน: <strong id="reg-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-reg-resend" onclick="resendRegisterOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งรหัสอีกครั้ง</button>
       </div>
 
       <button type="button" onclick="backToRegStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขข้อมูล / ย้อนกลับ</button>
@@ -765,7 +773,7 @@ body {
     <!-- STEP 1: ระบุเฉพาะอีเมล -->
     <div id="forgot-step-1">
       <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
-        กรอก <strong>อีเมล</strong> ของคุณที่ลงทะเบียนไว้ในระบบ เราจะส่งลิงก์ยืนยันตัวตนสำหรับตั้งรหัสผ่านใหม่ไปให้
+        กรอก <strong>อีเมล</strong> ของคุณที่ลงทะเบียนไว้ในระบบ เราจะส่งรหัส OTP 6 หลักสำหรับตั้งรหัสผ่านใหม่ไปให้
       </div>
 
       <div style="margin-bottom:18px">
@@ -773,42 +781,42 @@ body {
         <input type="email" id="forgot-identity" placeholder="example@email.com (หรือ Username)" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box" autocomplete="email" onkeyup="if(event.key==='Enter') requestForgotPasswordOtp()">
       </div>
 
-      <button type="button" onclick="requestForgotPasswordOtp()" id="btn-forgot-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล</button>
+      <button type="button" onclick="requestForgotPasswordOtp()" id="btn-forgot-request-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.15s">📩 ถัดไป: ส่งรหัส OTP ทางอีเมล</button>
     </div>
 
-    <!-- STEP 2: รอคลิกลิงก์ในอีเมล หรือ กรอก OTP 6 หลัก -->
+    <!-- STEP 2: กรอกรหัส OTP 6 หลัก -->
     <div id="forgot-step-2" style="display:none">
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:40px;margin-bottom:6px">📬</div>
         <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">ตรวจสอบกล่องข้อความอีเมล</div>
         <div style="font-size:12.5px;color:var(--text2);line-height:1.5">
-          เราได้ส่งลิงก์ยืนยันตัวตนไปยัง<br>
+          ระบบได้ส่งรหัส OTP 6 หลักไปยัง<br>
           <strong id="forgot-otp-email-target" style="color:var(--accent);font-size:13.5px"></strong>
         </div>
       </div>
 
-      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--text);line-height:1.5;text-align:center">
-        💡 <strong>ขั้นตอนง่ายๆ:</strong> เปิดอีเมลแล้วคลิกลิงก์ <strong>"Log In" หรือ "Confirm"</strong> เพื่อตั้งรหัสผ่านใหม่<br>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--accent-border);color:var(--text2);font-size:12px">
-          ⚠️ <b>ไม่พบอีเมล?</b> หากหาไม่เจอในกล่องข้อความหลัก กรุณาตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b>
-        </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center">
+        <label for="forgot-otp-code" style="display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:8px">
+          🔑 กรอกรหัส OTP 6 หลักที่ได้รับในอีเมล
+        </label>
+        <input type="text" id="forgot-otp-code" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="• • • • • •" autocomplete="one-time-code" style="width:100%;letter-spacing:10px;font-size:26px;font-weight:700;text-align:center;padding:10px;border:2px solid var(--accent);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;margin-bottom:12px" onkeyup="if(event.key==='Enter') verifyForgotOtp()">
+        <button type="button" onclick="verifyForgotOtp()" id="btn-forgot-verify-otp" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s">
+          ✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่
+        </button>
       </div>
 
-      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);color:#fff;text-decoration:none;border-radius:var(--r);padding:11px;font-size:13.5px;font-weight:600;margin-bottom:6px;box-sizing:border-box">
+      <div style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:14px;line-height:1.5">
+        ⚠️ <b>ไม่พบอีเมล?</b> กรุณาตรวจสอบใน <b>กล่องอีเมลขยะ (Spam / Junk)</b><br>
+        หรือกด "เปิดกล่องข้อความ Gmail" เพื่อดูรหัส
+      </div>
+
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:transparent;border:1px solid var(--border2);color:var(--text);text-decoration:none;border-radius:var(--r);padding:8px 12px;font-size:12.5px;font-weight:500;margin-bottom:12px;box-sizing:border-box">
         <span>📧 เปิดกล่องข้อความ Gmail (เปิดแท็บใหม่ ↗)</span>
       </a>
-      <a href="https://mail.google.com" target="_self" style="font-size:12px;color:var(--accent);text-align:center;text-decoration:none;display:block;margin-bottom:12px">
-        หรือคลิกที่นี่เพื่อเปิด Gmail ในหน้านี้ (ไม่เปิดแท็บใหม่)
-      </a>
-
-      <div style="font-size:11.5px;color:var(--text3);text-align:center;margin-bottom:14px;line-height:1.4">
-        📱 หรือเปิดแอปอีเมลในมือถือของคุณเพื่อคลิกลิงก์ได้เช่นกัน<br>
-        (เมื่อคลิกลิงก์แล้ว หน้านี้จะอัปเดตให้อัตโนมัติ)
-      </div>
 
       <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:12.5px;text-align:center;min-height:24px">
-        <span id="forgot-timer-text" style="color:var(--text2)">ส่งใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
-        <button type="button" id="btn-forgot-resend" onclick="resendForgotPasswordOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งอีเมลอีกครั้ง</button>
+        <span id="forgot-timer-text" style="color:var(--text2)">ส่งรหัสใหม่อีกครั้งใน: <strong id="forgot-countdown-num">60</strong> วิ</span>
+        <button type="button" id="btn-forgot-resend" onclick="resendForgotPasswordOtp()" disabled style="display:none;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;padding:4px 8px">ส่งรหัสอีกครั้ง</button>
       </div>
 
       <button type="button" onclick="backToForgotStep1()" style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--text);cursor:pointer">← แก้ไขอีเมล / ย้อนกลับ</button>
@@ -2007,7 +2015,7 @@ body {
 <script src="js/app-admin.js?v=20260921_google_v12"></script>
 <script src="js/app-settings.js?v=20260921_google_v12"></script>
 <script src="js/app-csv.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_ratelimit_v1"></script>
+<script src="js/app-auth.js?v=20260924_gas_otp_v1"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 

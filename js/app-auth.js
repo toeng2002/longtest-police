@@ -1049,6 +1049,49 @@ let _forgotTimer = null;
 let _forgotCountdown = 60;
 let _devForgotOtp = null;
 
+// ============================================================
+// ระบบส่งอีเมล OTP ผ่าน Google Apps Script (ส่งจาก Gmail ส่วนตัว ฟรี 100%)
+// สามารถระบุ Web App URL ได้ที่นี่ หรือบันทึกลง localStorage('police_gas_otp_url')
+// ============================================================
+let GAS_OTP_ENDPOINT = localStorage.getItem('police_gas_otp_url') || '';
+
+async function sendOtpEmailViaGAS(toEmail, otpCode, username, flow) {
+  const gasUrl = localStorage.getItem('police_gas_otp_url') || GAS_OTP_ENDPOINT;
+  if (!gasUrl || gasUrl.trim() === '' || gasUrl.includes('_placeholder')) {
+    console.warn('⚠️ Google Apps Script URL ยังไม่ได้ตั้งค่า (อยู่ในโหมดทดสอบ)');
+    return { success: false, reason: 'no_endpoint' };
+  }
+  try {
+    await fetch(gasUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        to: toEmail,
+        otp: otpCode,
+        username: username || 'ผู้ใช้งาน',
+        appName: 'ระบบจำลองข้อสอบตำรวจ',
+        flow: flow || 'reset_password'
+      })
+    });
+    return { success: true };
+  } catch (err) {
+    console.error('sendOtpEmailViaGAS error:', err);
+    return { success: false, error: err };
+  }
+}
+
+// ช่วยให้แอดมินตั้งค่า Web App URL ได้ง่ายๆ ผ่าน Console: setGasOtpUrl('https://...')
+window.setGasOtpUrl = function(url) {
+  if (!url) return;
+  localStorage.setItem('police_gas_otp_url', url.trim());
+  GAS_OTP_ENDPOINT = url.trim();
+  console.log('✅ บันทึก Google Apps Script Web App URL เรียบร้อย:', url.trim());
+  if (typeof showToast === 'function') showToast('✅ บันทึก Google Apps Script URL เรียบร้อย', 'success');
+};
+
 function hashPassword(plain) {
   const bcryptLib = (typeof dcodeIO !== 'undefined' && dcodeIO.bcrypt)
     ? dcodeIO.bcrypt
@@ -1257,58 +1300,27 @@ async function requestRegisterOtp() {
     }
 
     // ============================================================
-    // ถ้าเปิดการยืนยันอีเมล (REQUIRE_EMAIL_CONFIRMATION === true) -> ส่งลิงก์ยืนยัน
+    // ถ้าเปิดการยืนยันอีเมล (REQUIRE_EMAIL_CONFIRMATION === true) -> ส่งรหัส OTP 6 หลัก
     // ============================================================
     // 4. บันทึกข้อมูลรอยืนยันลง localStorage (แฮชรหัสผ่านเรียบร้อย)
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    _devRegOtp = generatedOtp;
+
     _regPendingData = {
       username: u,
       displayName: d || u,
       email: em,
       phone: ph,
-      password: hashedPassword
+      password: hashedPassword,
+      otp: generatedOtp,
+      otpExpiry: Date.now() + (10 * 60 * 1000) // 10 minutes
     };
     try {
       localStorage.setItem('police_pending_register', JSON.stringify(_regPendingData));
     } catch(stErr) {}
 
-    // 5. ส่ง Email Verification Link / OTP ผ่าน Supabase Auth
-    let isRateLimited = false;
-    let rateLimitMsg = '';
-    _devRegOtp = null;
-    const redirectUrl = window.location.origin + window.location.pathname + '?flow=register';
-
-    try {
-      const { error: otpErr } = await supa.auth.signInWithOtp({
-        email: em,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: redirectUrl,
-          data: {
-            pending_username: u,
-            pending_display_name: d || u,
-            pending_phone: ph,
-            pending_password: hashedPassword
-          }
-        }
-      });
-
-      if (otpErr) {
-        console.warn('signInWithOtp warning:', otpErr);
-        if (otpErr.status === 429 || (otpErr.message && /rate limit|security|60 seconds/i.test(otpErr.message))) {
-          isRateLimited = true;
-          rateLimitMsg = otpErr.message || '';
-        } else {
-          throw otpErr;
-        }
-      }
-    } catch (sendErr) {
-      if (sendErr.status === 429 || (sendErr.message && /rate limit|security|60 seconds/i.test(sendErr.message))) {
-        isRateLimited = true;
-        rateLimitMsg = sendErr.message || '';
-      } else {
-        throw sendErr;
-      }
-    }
+    // 5. ส่ง Email OTP ผ่าน Google Apps Script (หรือโหมดทดสอบ)
+    const gasRes = await sendOtpEmailViaGAS(em, generatedOtp, u, 'register');
 
     // สลับไป Step 2
     const step1 = document.getElementById('reg-step-1'); if (step1) step1.style.display = 'none';
@@ -1316,22 +1328,22 @@ async function requestRegisterOtp() {
     const emailTarget = document.getElementById('reg-otp-email-target');
     if (emailTarget) emailTarget.textContent = em;
     const otpInput = document.getElementById('reg-otp-code');
-    if (otpInput) otpInput.value = '';
+    if (otpInput) {
+      otpInput.value = '';
+      setTimeout(() => otpInput.focus(), 100);
+    }
 
-    if (isRateLimited) {
-      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
-      if (isCooldown) {
-        showRegNotice(`⏳ เพื่อความปลอดภัย กรุณารอสักครู่ (ประมาณ 60 วินาที) ก่อนกดขอส่งอีเมลใหม่<br>หากได้รับอีเมลก่อนหน้านี้แล้ว สามารถคลิกลิงก์ยืนยันในอีเมลได้ทันที หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
-      } else {
-        showRegNotice(`⚠️ มีการส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
-      }
+    if (gasRes && gasRes.success) {
+      showRegNotice(`✅ ส่งรหัส OTP 6 หลักไปยัง <b>${maskEmail(em)}</b> แล้ว กรุณานำรหัสมากรอกด้านล่าง`);
+    } else {
+      showRegNotice(`⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:20px;color:var(--accent);letter-spacing:2px">${generatedOtp}</strong><br><small style="color:var(--text2)">*เมื่อติดตั้ง Google Apps Script แล้ว รหัสจะถูกส่งเข้า Gmail อัตโนมัติ</small>`);
     }
 
     startRegCountdown();
 
   } catch (e) {
     console.error('requestRegisterOtp error:', e);
-    showRegError('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่งลิงก์ยืนยันได้ กรุณาลองใหม่'));
+    showRegError('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่งรหัสยืนยันได้ กรุณาลองใหม่'));
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -1382,61 +1394,24 @@ async function resendRegisterOtp() {
   }
 
   try {
-    let isRateLimited = false;
-    let rateLimitMsg = '';
-    _devRegOtp = null;
-    const redirectUrl = window.location.origin + window.location.pathname + '?flow=register';
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    _devRegOtp = generatedOtp;
+    _regPendingData.otp = generatedOtp;
+    _regPendingData.otpExpiry = Date.now() + (10 * 60 * 1000);
 
-    try {
-      const { error } = await supa.auth.signInWithOtp({
-        email: _regPendingData.email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: redirectUrl,
-          data: {
-            pending_username: _regPendingData.username,
-            pending_display_name: _regPendingData.displayName,
-            pending_phone: _regPendingData.phone,
-            pending_password: _regPendingData.password
-          }
-        }
-      });
-      if (error) {
-        if (error.status === 429 || (error.message && /rate limit|security|60 seconds/i.test(error.message))) {
-          isRateLimited = true;
-          rateLimitMsg = error.message || '';
-        } else {
-          throw error;
-        }
-      }
-    } catch(err) {
-      if (err.status === 429 || (err.message && /rate limit|security|60 seconds/i.test(err.message))) {
-        isRateLimited = true;
-        rateLimitMsg = err.message || '';
-      } else {
-        throw err;
-      }
-    }
+    const gasRes = await sendOtpEmailViaGAS(_regPendingData.email, generatedOtp, _regPendingData.username, 'register');
 
-    const manualContainer = document.getElementById('reg-otp-manual-container');
-    if (isRateLimited) {
-      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
-      _devRegOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      if (isCooldown) {
-        showRegNotice(`⏳ กรุณารอสักครู่ก่อนขอส่งใหม่อีกครั้ง (ระบบความปลอดภัยจำกัด 60 วินาที/ครั้ง)<br>⚙️ <b>[โหมดทดสอบ]</b> หากต้องการทดสอบทันที ใช้รหัส OTP นี้: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
-      } else {
-        showRegNotice(`⚠️ มีการส่งอีเมลบ่อยเกินขีดจำกัดชั่วคราว<br>⚙️ <b>[โหมดทดสอบ]</b> สามารถใช้รหัส OTP นี้ได้: <strong style="font-size:16px;color:var(--accent)">${_devRegOtp}</strong>`);
-      }
-      if (manualContainer) manualContainer.style.display = 'block';
+    if (gasRes && gasRes.success) {
+      showRegNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง <b>${maskEmail(_regPendingData.email)}</b> แล้ว`);
     } else {
-      showRegNotice(`✅ ส่งลิงก์ยืนยันตัวตนใหม่ไปยัง ${_regPendingData.email} แล้ว`);
+      showRegNotice(`⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:20px;color:var(--accent);letter-spacing:2px">${generatedOtp}</strong>`);
     }
 
     startRegCountdown();
   } catch (e) {
     showRegError('ส่งใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
   } finally {
-    if (btnResend) btnResend.textContent = 'ส่งอีเมลอีกครั้ง';
+    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
   }
 }
 
@@ -1456,34 +1431,21 @@ async function verifyRegisterOtp() {
     return;
   }
 
+  if (_regPendingData.otpExpiry && Date.now() > _regPendingData.otpExpiry) {
+    showRegError('รหัส OTP หมดอายุแล้ว (เกิน 10 นาที) กรุณากดส่งรหัสใหม่อีกครั้ง');
+    return;
+  }
+
+  const validOtp = _regPendingData.otp || _devRegOtp;
+  if (validOtp && code !== validOtp) {
+    showRegError('รหัส OTP ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+    return;
+  }
+
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'กำลังยืนยัน...';
   }
-
-  try {
-    let authUser = null;
-    // ตรวจสอบรหัส OTP
-    if (_devRegOtp) {
-      if (code !== _devRegOtp) {
-        showRegError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP และสร้างบัญชี'; }
-        return;
-      }
-    } else {
-      const { data: verifyData, error: verifyErr } = await supa.auth.verifyOtp({
-        email: _regPendingData.email,
-        token: code,
-        type: 'email'
-      });
-
-      if (verifyErr) {
-        showRegError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP และสร้างบัญชี'; }
-        return;
-      }
-      authUser = verifyData.user;
-    }
 
     // แฮชรหัสผ่านมีอยู่ใน _regPendingData.password เรียบร้อยแล้ว
     const newUserObj = {
@@ -1705,52 +1667,31 @@ async function requestForgotPasswordOtp() {
       }));
     } catch(stErr) {}
 
-    if (btn) btn.textContent = 'กำลังส่งลิงก์ยืนยัน...';
+    if (btn) btn.textContent = 'กำลังส่งรหัส OTP...';
 
-    let isRateLimited = false;
-    let rateLimitMsg = '';
-    _devForgotOtp = null;
-    const redirectUrl = window.location.origin + window.location.pathname + '?flow=reset_password';
+    // สร้างรหัส OTP 6 หลัก
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    _devForgotOtp = generatedOtp;
+    _forgotPendingData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      otp: generatedOtp,
+      otpExpiry: Date.now() + (10 * 60 * 1000), // 10 minutes
+      verified: false
+    };
 
     try {
-      const { error: resetErr } = await supa.auth.resetPasswordForEmail(user.email, {
-        redirectTo: redirectUrl
-      });
-      if (resetErr) {
-        console.warn('resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
-        if (resetErr.status === 429 || (resetErr.message && /rate limit|security|60 seconds/i.test(resetErr.message))) {
-          isRateLimited = true;
-          rateLimitMsg = resetErr.message || '';
-        } else {
-          const { error: otpErr } = await supa.auth.signInWithOtp({
-            email: user.email,
-            options: {
-              shouldCreateUser: false,
-              emailRedirectTo: redirectUrl,
-              data: {
-                pending_reset_flow: true,
-                reset_user_id: user.id
-              }
-            }
-          });
-          if (otpErr) {
-            if (otpErr.status === 429 || (otpErr.message && /rate limit|security|60 seconds/i.test(otpErr.message))) {
-              isRateLimited = true;
-              rateLimitMsg = otpErr.message || '';
-            } else {
-              throw otpErr;
-            }
-          }
-        }
-      }
-    } catch(sendErr) {
-      if (sendErr.status === 429 || (sendErr.message && /rate limit|security|60 seconds/i.test(sendErr.message))) {
-        isRateLimited = true;
-        rateLimitMsg = sendErr.message || '';
-      } else {
-        throw sendErr;
-      }
-    }
+      localStorage.setItem('police_pending_reset', JSON.stringify({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        flow: 'reset_password'
+      }));
+    } catch(stErr) {}
+
+    // ส่งอีเมล OTP ผ่าน Google Apps Script (ส่งออกจาก Gmail ส่วนตัว ฟรี 100%)
+    const gasRes = await sendOtpEmailViaGAS(user.email, generatedOtp, user.username, 'reset_password');
 
     // สลับไป Step 2
     const step1 = document.getElementById('forgot-step-1'); if (step1) step1.style.display = 'none';
@@ -1758,26 +1699,27 @@ async function requestForgotPasswordOtp() {
     const step3 = document.getElementById('forgot-step-3'); if (step3) step3.style.display = 'none';
     const targetEmailEl = document.getElementById('forgot-otp-email-target');
     if (targetEmailEl) targetEmailEl.textContent = maskEmail(user.email);
-    const otpInp = document.getElementById('forgot-otp-code'); if (otpInp) otpInp.value = '';
+    const otpInp = document.getElementById('forgot-otp-code');
+    if (otpInp) {
+      otpInp.value = '';
+      setTimeout(() => otpInp.focus(), 100);
+    }
 
-    if (isRateLimited) {
-      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
-      if (isCooldown) {
-        showForgotNotice(`⏳ เพื่อความปลอดภัย กรุณารอสักครู่ (ประมาณ 60 วินาที) ก่อนกดขอส่งอีเมลใหม่<br>หากได้รับอีเมลก่อนหน้านี้แล้ว สามารถคลิกลิงก์รีเซ็ตรหัสผ่านในอีเมลได้ทันที หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
-      } else {
-        showForgotNotice(`⚠️ มีการส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง หรือตรวจสอบในกล่องอีเมลขยะ (Spam)`);
-      }
+    if (gasRes && gasRes.success) {
+      showForgotNotice(`✅ ส่งรหัส OTP 6 หลักไปยัง <b>${maskEmail(user.email)}</b> แล้ว กรุณานำรหัสมากรอกด้านล่าง`);
+    } else {
+      showForgotNotice(`⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP คือ: <strong style="font-size:20px;color:var(--accent);letter-spacing:2px">${generatedOtp}</strong><br><small style="color:var(--text2)">*เมื่อติดตั้ง Google Apps Script แล้ว รหัสจะถูกส่งเข้า Gmail อัตโนมัติ</small>`);
     }
 
     startForgotCountdown();
 
   } catch(e) {
     console.error('requestForgotPasswordOtp error:', e);
-    showForgotError('ส่งลิงก์ยืนยันไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง'));
+    showForgotError('ส่งรหัส OTP ไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่อีกครั้ง'));
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = REQUIRE_EMAIL_CONFIRMATION ? '📩 ถัดไป: ส่งลิงก์ยืนยันทางอีเมล' : '🔑 ถัดไป: ตั้งรหัสผ่านใหม่';
+      btn.textContent = REQUIRE_EMAIL_CONFIRMATION ? '📩 ถัดไป: ส่งรหัส OTP ทางอีเมล' : '🔑 ถัดไป: ตั้งรหัสผ่านใหม่';
     }
   }
 }
@@ -1824,70 +1766,24 @@ async function resendForgotPasswordOtp() {
   }
 
   try {
-    let isRateLimited = false;
-    let rateLimitMsg = '';
-    _devForgotOtp = null;
-    const redirectUrl = window.location.origin + window.location.pathname + '?flow=reset_password';
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    _devForgotOtp = generatedOtp;
+    _forgotPendingData.otp = generatedOtp;
+    _forgotPendingData.otpExpiry = Date.now() + (10 * 60 * 1000);
 
-    try {
-      const { error: resetErr } = await supa.auth.resetPasswordForEmail(_forgotPendingData.email, {
-        redirectTo: redirectUrl
-      });
-      if (resetErr) {
-        console.warn('resend resetPasswordForEmail fallback to signInWithOtp:', resetErr.message);
-        if (resetErr.status === 429 || (resetErr.message && /rate limit|security|60 seconds/i.test(resetErr.message))) {
-          isRateLimited = true;
-          rateLimitMsg = resetErr.message || '';
-        } else {
-          const { error } = await supa.auth.signInWithOtp({
-            email: _forgotPendingData.email,
-            options: {
-              shouldCreateUser: false,
-              emailRedirectTo: redirectUrl,
-              data: {
-                pending_reset_flow: true,
-                reset_user_id: _forgotPendingData.id
-              }
-            }
-          });
-          if (error) {
-            if (error.status === 429 || (error.message && /rate limit|security|60 seconds/i.test(error.message))) {
-              isRateLimited = true;
-              rateLimitMsg = error.message || '';
-            } else {
-              throw error;
-            }
-          }
-        }
-      }
-    } catch(err) {
-      if (err.status === 429 || (err.message && /rate limit|security|60 seconds/i.test(err.message))) {
-        isRateLimited = true;
-        rateLimitMsg = err.message || '';
-      } else {
-        throw err;
-      }
-    }
+    const gasRes = await sendOtpEmailViaGAS(_forgotPendingData.email, generatedOtp, _forgotPendingData.username, 'reset_password');
 
-    const manualContainer = document.getElementById('forgot-otp-manual-container');
-    if (isRateLimited) {
-      const isCooldown = /60\s*seconds|once\s*every|security/i.test(rateLimitMsg);
-      _devForgotOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      if (isCooldown) {
-        showForgotNotice(`⏳ กรุณารอสักครู่ก่อนขอส่งใหม่อีกครั้ง (ระบบความปลอดภัยจำกัด 60 วินาที/ครั้ง)<br>⚙️ <b>[โหมดทดสอบ]</b> หากต้องการทดสอบทันที ใช้รหัส OTP นี้: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
-      } else {
-        showForgotNotice(`⚠️ มีการส่งอีเมลบ่อยเกินขีดจำกัดชั่วคราว<br>⚙️ <b>[โหมดทดสอบ]</b> สามารถใช้รหัส OTP นี้ได้: <strong style="font-size:16px;color:var(--accent)">${_devForgotOtp}</strong>`);
-      }
-      if (manualContainer) manualContainer.style.display = 'block';
+    if (gasRes && gasRes.success) {
+      showForgotNotice(`✅ ส่งรหัส OTP ใหม่ไปยัง <b>${maskEmail(_forgotPendingData.email)}</b> แล้ว`);
     } else {
-      showForgotNotice(`✅ ส่งลิงก์ยืนยันใหม่ไปยัง ${maskEmail(_forgotPendingData.email)} แล้ว`);
+      showForgotNotice(`⚙️ <b>[โหมดทดสอบ]</b> รหัส OTP ใหม่คือ: <strong style="font-size:20px;color:var(--accent);letter-spacing:2px">${generatedOtp}</strong>`);
     }
 
     startForgotCountdown();
   } catch(e) {
     showForgotError('ส่งใหม่อีกครั้งไม่สำเร็จ: ' + (e.message || ''));
   } finally {
-    if (btnResend) btnResend.textContent = 'ส่งอีเมลอีกครั้ง';
+    if (btnResend) btnResend.textContent = 'ส่งรหัสอีกครั้ง';
   }
 }
 
@@ -1929,7 +1825,7 @@ function openForgotStep3(userData, isCrossTabSync) {
   const noticeEl = document.getElementById('forgot-notice');
   if (noticeEl) {
     noticeEl.style.display = 'block';
-    noticeEl.innerHTML = '✅ ยืนยันตัวตนสำเร็จแล้ว! กรุณากำหนดรหัสผ่านใหม่ของคุณด้านล่าง';
+    noticeEl.innerHTML = '✅ ยืนยันรหัส OTP สำเร็จแล้ว! กรุณากำหนดรหัสผ่านใหม่ของคุณด้านล่าง';
   }
 
   modal.style.display = 'flex';
@@ -1938,7 +1834,7 @@ function openForgotStep3(userData, isCrossTabSync) {
 
 async function verifyForgotOtp() {
   const code = (document.getElementById('forgot-otp-code')?.value || '').trim();
-  const btn = document.getElementById('btn-forgot-verify-otp') || document.getElementById('btn-forgot-submit');
+  const btn = document.getElementById('btn-forgot-verify-otp');
   const errEl = document.getElementById('forgot-err');
   if (errEl) errEl.style.display = 'none';
 
@@ -1952,46 +1848,26 @@ async function verifyForgotOtp() {
     return;
   }
 
+  if (_forgotPendingData.otpExpiry && Date.now() > _forgotPendingData.otpExpiry) {
+    showForgotError('รหัส OTP หมดอายุแล้ว (เกิน 10 นาที) กรุณากดส่งรหัสใหม่อีกครั้ง');
+    return;
+  }
+
+  const validOtp = _forgotPendingData.otp || _devForgotOtp;
+  if (validOtp && code !== validOtp) {
+    showForgotError('รหัส OTP ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+    return;
+  }
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'กำลังตรวจสอบรหัส OTP...';
+    btn.textContent = 'กำลังยืนยัน...';
   }
 
-  try {
-    if (_devForgotOtp) {
-      if (code !== _devForgotOtp) {
-        showForgotError('รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่');
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่'; }
-        return;
-      }
-    } else {
-      const { data: verifyData, error: verifyErr } = await supa.auth.verifyOtp({
-        email: _forgotPendingData.email,
-        token: code,
-        type: 'email'
-      });
-
-      if (verifyErr) {
-        showForgotError('รหัส OTP ไม่ถูกต้องหรือหมดอายุ: ' + (verifyErr.message || 'กรุณาลองใหม่'));
-        if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่'; }
-        return;
-      }
-    }
-
-    // ยืนยัน OTP ผ่านแล้ว -> เปิดหน้า Step 3 ให้ตั้งรหัสผ่านใหม่ทันที!
-    if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
-    _forgotPendingData.verified = true;
-    openForgotStep3(_forgotPendingData);
-
-  } catch(e) {
-    console.error('verifyForgotOtp error:', e);
-    showForgotError('ตรวจสอบรหัสไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ ยืนยันรหัส OTP เพื่อตั้งรหัสผ่านใหม่';
-    }
-  }
+  // ยืนยัน OTP ผ่านแล้ว -> เปิดหน้า Step 3 ให้ตั้งรหัสผ่านใหม่ทันทีในแท็บเดิม!
+  if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
+  _forgotPendingData.verified = true;
+  openForgotStep3(_forgotPendingData);
 }
 
 async function saveNewPassword() {
