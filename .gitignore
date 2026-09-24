@@ -3,3 +3,5 @@ _cdp*/
 *.log
 .DS_Store
 client_secret*.json
+__pycache__/
+*.pyc
