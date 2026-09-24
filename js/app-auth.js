@@ -1053,10 +1053,10 @@ let _devForgotOtp = null;
 // ระบบส่งอีเมล OTP ผ่าน Google Apps Script (ส่งจาก Gmail ส่วนตัว ฟรี 100%)
 // สามารถระบุ Web App URL ได้ที่นี่ หรือบันทึกลง localStorage('police_gas_otp_url')
 // ============================================================
-let GAS_OTP_ENDPOINT = localStorage.getItem('police_gas_otp_url') || '';
+let GAS_OTP_ENDPOINT = (localStorage.getItem('police_gas_otp_url') || '').trim() || 'https://script.google.com/macros/s/AKfycbzzp8HdhUVM_TT4jXS-Kc2bSP9i6XNOldvKZfeIEz1wNEk6nlgngJQhSDkEpp56B1hFPA/exec';
 
 async function sendOtpEmailViaGAS(toEmail, otpCode, username, flow) {
-  const gasUrl = localStorage.getItem('police_gas_otp_url') || GAS_OTP_ENDPOINT;
+  const gasUrl = (localStorage.getItem('police_gas_otp_url') || '').trim() || GAS_OTP_ENDPOINT;
   if (!gasUrl || gasUrl.trim() === '' || gasUrl.includes('_placeholder')) {
     console.warn('⚠️ Google Apps Script URL ยังไม่ได้ตั้งค่า (อยู่ในโหมดทดสอบ)');
     return { success: false, reason: 'no_endpoint' };
