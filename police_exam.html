@@ -12,6 +12,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ข้อสอบตำรวจ">
+<script>
+// ตรวจจับ URL hash และ query string สำหรับ Password Recovery / Reset Flow ก่อนที่ Supabase client จะเคลียร์ทิ้ง
+(function(){
+  try {
+    var h = window.location.hash || '';
+    var s = window.location.search || '';
+    if (h.indexOf('type=recovery') !== -1 || s.indexOf('type=recovery') !== -1 || h.indexOf('flow=reset_password') !== -1 || s.indexOf('flow=reset_password') !== -1) {
+      window._isPasswordRecoveryFlow = true;
+      try { sessionStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
+      try { localStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
+    }
+  } catch(e) {}
+})();
+</script>
 <script src="js/supabase.min.js"></script>
 <script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');}</script>
 <style>
@@ -1254,7 +1268,7 @@ textarea{resize:vertical;min-height:72px}
 <script src="js/bcrypt.min.js"></script>
 <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_otp_v8"></script>
+<script src="js/app-auth.js?v=20260924_otp_v10"></script>
 <script src="js/app-quiz.js?v=20260921_google_v12"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>

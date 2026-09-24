@@ -5,3 +5,5 @@ _cdp*/
 client_secret*.json
 __pycache__/
 *.pyc
+ps_email.txt
+

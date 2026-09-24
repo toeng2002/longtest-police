@@ -2,7 +2,7 @@
 // Service Worker — ระบบจำลองข้อสอบตำรวจ PWA
 // ============================================================
 
-const CACHE_NAME = 'police-exam-v25';
+const CACHE_NAME = 'police-exam-v26';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   // ไม่แคชคำขอไปยัง Supabase API หรือ OAuth Callback URL เพื่อให้ล็อกอินสดใหม่เสมอ
-  if (url.hostname.includes('supabase.co') || url.searchParams.has('code') || url.searchParams.has('error')) {
+  if (url.hostname.includes('supabase.co') || url.searchParams.has('code') || url.searchParams.has('error') || url.searchParams.has('flow')) {
     return;
   }
 
