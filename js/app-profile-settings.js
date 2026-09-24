@@ -33,33 +33,48 @@ function initProfileAndSettings() {
 
 function applyUserPreferences(pref) {
   const root = document.documentElement;
+  const body = document.body;
 
   // 1) ธีม
   if (pref.theme) {
     root.setAttribute('data-theme', pref.theme);
+    if (body) body.setAttribute('data-theme', pref.theme);
     updateThemeButtonsUI(pref.theme);
   }
 
   // 2) แบบฟอนต์
   if (pref.font) {
     root.setAttribute('data-font', pref.font);
+    if (body) body.setAttribute('data-font', pref.font);
     updateFontButtonsUI(pref.font);
   }
 
   // 3) ขนาดตัวอักษร
   if (pref.fontSize) {
     root.setAttribute('data-font-size', pref.fontSize);
+    if (body) body.setAttribute('data-font-size', pref.fontSize);
     updateFontSizeButtonsUI(pref.fontSize);
   }
 
   // 4) ภาพพื้นหลัง (Wallpaper)
   applyCustomWallpaper(pref.customBg, pref.customBgOpacity);
+
+  // 5) อัปเดตลายน้ำตามธีม
+  if (typeof updateSecurityWatermark === 'function') {
+    try { updateSecurityWatermark(); } catch(e) {}
+  }
 }
 
 function setUserTheme(theme) {
   localStorage.setItem('police_theme', theme);
   document.documentElement.setAttribute('data-theme', theme);
+  if (document.body) {
+    document.body.setAttribute('data-theme', theme);
+  }
   updateThemeButtonsUI(theme);
+  if (typeof updateSecurityWatermark === 'function') {
+    try { updateSecurityWatermark(); } catch(e) {}
+  }
 }
 
 function updateThemeButtonsUI(activeTheme) {

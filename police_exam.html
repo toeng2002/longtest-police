@@ -34,23 +34,62 @@
   --sar: env(safe-area-inset-right, 0px);
 }
 
-/* Themes: Sepia & Dark */
-[data-theme="sepia"] {
-  --bg:#F7EEDB;--surface:#FFF9ED;--surface2:#EFE4D0;
-  --border:#DFD2BC;--border2:#C8B9A0;
-  --text:#3D2D1D;--text2:#6B5B49;--text3:#9C8973;
-  --accent:#B45309;--accent-bg:#FEF3C7;--accent-border:#FCD34D;
-  --success:#15803D;--success-bg:#ECFDF5;--success-border:#A7F3D0;
-  --danger:#B91C1C;--danger-bg:#FEF2F2;--danger-border:#FECACA;
+/* Themes: Light, Sepia & Dark */
+:root[data-theme="light"], html[data-theme="light"], body[data-theme="light"] {
+  --bg:#F7F7F5 !important;
+  --surface:#FFFFFF !important;
+  --surface2:#F2F2EF !important;
+  --border:#E4E4E0 !important;
+  --border2:#D0D0CA !important;
+  --text:#1A1A18 !important;
+  --text2:#6B6B66 !important;
+  --text3:#9B9B96 !important;
+  --accent:#2563EB !important;
+  --accent-bg:#EFF6FF !important;
+  --accent-border:#BFDBFE !important;
 }
-[data-theme="dark"] {
-  --bg:#0F172A;--surface:#1E293B;--surface2:#334155;
-  --border:#334155;--border2:#475569;
-  --text:#F8FAFC;--text2:#94A3B8;--text3:#64748B;
-  --accent:#3B82F6;--accent-bg:#1E293B;--accent-border:#2563EB;
-  --success:#10B981;--success-bg:#064E3B;--success-border:#047857;
-  --danger:#EF4444;--danger-bg:#7F1D1D;--danger-border:#B91C1C;
+:root[data-theme="sepia"], html[data-theme="sepia"], body[data-theme="sepia"] {
+  --bg:#F7EEDB !important;
+  --surface:#FFF9ED !important;
+  --surface2:#EFE4D0 !important;
+  --border:#DFD2BC !important;
+  --border2:#C8B9A0 !important;
+  --text:#3D2D1D !important;
+  --text2:#6B5B49 !important;
+  --text3:#9C8973 !important;
+  --accent:#B45309 !important;
+  --accent-bg:#FEF3C7 !important;
+  --accent-border:#FCD34D !important;
+  --success:#15803D !important;
+  --success-bg:#ECFDF5 !important;
+  --success-border:#A7F3D0 !important;
+  --danger:#B91C1C !important;
+  --danger-bg:#FEF2F2 !important;
+  --danger-border:#FECACA !important;
 }
+:root[data-theme="dark"], html[data-theme="dark"], body[data-theme="dark"] {
+  --bg:#0F172A !important;
+  --surface:#1E293B !important;
+  --surface2:#334155 !important;
+  --border:#334155 !important;
+  --border2:#475569 !important;
+  --text:#F8FAFC !important;
+  --text2:#94A3B8 !important;
+  --text3:#64748B !important;
+  --accent:#3B82F6 !important;
+  --accent-bg:#1E293B !important;
+  --accent-border:#2563EB !important;
+  --success:#10B981 !important;
+  --success-bg:#064E3B !important;
+  --success-border:#047857 !important;
+  --danger:#EF4444 !important;
+  --danger-bg:#7F1D1D !important;
+  --danger-border:#B91C1C !important;
+}
+
+body[data-theme="sepia"] { background: #F7EEDB !important; color: #3D2D1D !important; }
+body[data-theme="dark"] { background: #0F172A !important; color: #F8FAFC !important; }
+body[data-theme="light"] { background: #F7F7F5 !important; color: #1A1A18 !important; }
 
 /* Font Families */
 html[data-font="prompt"], html[data-font="prompt"] body { font-family: 'Prompt', system-ui, sans-serif !important; }
@@ -185,10 +224,11 @@ body {
 .ratio-bar-fill{height:4px;background:var(--accent);border-radius:2px}
 
 /* Quiz */
-.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.q-num{font-size:12px;color:var(--text2)}
-.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:16px;white-space:pre-line;word-break:break-word}
-.q-img{width:100%;border-radius:var(--radius);margin-bottom:14px;border:1px solid var(--border)}
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,0.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.q-num{font-size:12px;color:var(--text2);font-weight:600}
+.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:0;white-space:pre-line;word-break:break-word}
+.q-img{width:100%;border-radius:var(--radius);margin-top:14px;border:1px solid var(--border)}
 .choice-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--text);width:100%;text-align:left;transition:border-color .1s,background .1s;line-height:1.5;white-space:pre-line;word-break:break-word}
 .choice-btn:hover:not(:disabled){border-color:var(--border2);background:var(--surface2)}
 .choice-btn:disabled{cursor:default}
@@ -255,7 +295,7 @@ body {
 /* ===== ADMIN STYLES ===== */
 
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
+#admin-layout{
   --bg:#F5F5F3;--surface:#FFFFFF;--surface2:#F0F0EE;
   --border:#E2E2DE;--border2:#C8C8C4;
   --text:#1C1C1A;--text2:#6A6A66;--text3:#9A9A96;
@@ -266,7 +306,6 @@ body {
   --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-bd:#DDD6FE;
   --r:8px;--rl:12px;
 }
-body{background:var(--bg);font-family:'Sarabun',system-ui,sans-serif;font-size:14px;color:var(--text);min-height:100vh}
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 
 /* --- Login --- */
@@ -717,12 +756,14 @@ textarea{resize:vertical;min-height:72px}
   <div class="pbar-wrap">
     <div class="pbar-track"><div class="pbar-fill" id="pbar-fill"></div></div>
   </div>
-  <div class="q-meta">
-    <span class="q-num" id="q-num"></span>
-    <div style="display:flex;gap:5px" id="q-tags"></div>
+  <div class="q-card" id="q-card">
+    <div class="q-meta">
+      <span class="q-num" id="q-num"></span>
+      <div style="display:flex;gap:5px" id="q-tags"></div>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-img-wrap" style="display:none"><img class="q-img" id="q-img" src="" alt="ภาพประกอบโจทย์"></div>
   </div>
-  <div class="q-text" id="q-text"></div>
-  <div id="q-img-wrap" style="display:none"><img class="q-img" id="q-img" src="" alt="ภาพประกอบโจทย์"></div>
   <div id="q-choices"></div>
   <div class="feedback" id="q-feedback" style="display:none">
     <div class="feedback-title" id="fb-title"></div>
@@ -999,10 +1040,10 @@ textarea{resize:vertical;min-height:72px}
 <script src="js/bcrypt.min.js"></script>
 <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260921_google_v12"></script>
+<script src="js/app-auth.js?v=20260924_pic_v2"></script>
 <script src="js/app-quiz.js?v=20260921_google_v12"></script>
-<script src="js/app-profile-settings.js?v=20260924_pic_v1"></script>
-<script src="js/anti-cheat.js?v=20260921_google_v12"></script>
+<script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
+<script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 
 <script>
 (function(){
