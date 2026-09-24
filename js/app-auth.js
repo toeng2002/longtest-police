@@ -98,6 +98,10 @@ async function doLogin(){
 // ฟังก์ชันบันทึก Session และเริ่มต้นสถานะผู้ใช้ (ใช้ร่วมกันทั้ง Username/Password และ Google OAuth)
 async function completeLoginSuccess(data){
   if (!data) return;
+  if (window._isResetModalOpen || window._isPasswordResetActive || sessionStorage.getItem('police_reset_modal_open') === 'true') {
+    console.warn('Blocked completeLoginSuccess: Reset password in progress');
+    return;
+  }
 
   const defaultAdminPerms = ['dashboard', 'questions', 'add_question', 'import_csv', 'settings', 'manage_users', 'test_exam'];
   let userPerms = data.permissions;
@@ -564,8 +568,64 @@ async function loginWithGoogle() {
   }
 }
 
+function isRecoverySession(session, authUser) {
+  if (window._isPasswordRecoveryFlow || window._isPasswordResetActive || window._isResetModalOpen) return true;
+  if (sessionStorage.getItem('police_is_password_recovery') === 'true' || 
+      localStorage.getItem('police_is_password_recovery') === 'true' ||
+      sessionStorage.getItem('police_reset_modal_open') === 'true') return true;
+
+  // 1) เช็คจาก JWT token payload amr claims
+  if (session && session.access_token) {
+    try {
+      const parts = session.access_token.split('.');
+      if (parts.length >= 2) {
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonStr = decodeURIComponent(atob(b64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const payload = JSON.parse(jsonStr);
+        if (payload && payload.amr && Array.isArray(payload.amr)) {
+          const hasRec = payload.amr.some(item => {
+            if (typeof item === 'string') return item === 'recovery';
+            if (item && typeof item === 'object') return item.method === 'recovery';
+            return false;
+          });
+          if (hasRec) return true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 2) เช็คจาก authUser.amr
+  if (authUser && authUser.amr && Array.isArray(authUser.amr)) {
+    const hasRec = authUser.amr.some(item => {
+      if (typeof item === 'string') return item === 'recovery';
+      if (item && typeof item === 'object') return item.method === 'recovery';
+      return false;
+    });
+    if (hasRec) return true;
+  }
+
+  // 3) เช็คจาก authUser app_metadata / user_metadata
+  if (authUser && (authUser.user_metadata?.pending_reset_flow || authUser.app_metadata?.provider === 'recovery')) {
+    return true;
+  }
+
+  return false;
+}
+
 async function syncAndLoginOAuthUser(authUser) {
   if (!authUser) return;
+
+  // หากหน้าต่างตั้งรหัสผ่านใหม่ (Step 3) กำลังเปิดแสดงอยู่แล้ว ให้หยุดทันทีเพื่อไม่ให้เกิดการล็อกอินทับ
+  if ((window._isResetModalOpen || sessionStorage.getItem('police_reset_modal_open') === 'true') &&
+      document.getElementById('modal-forgot-pwd')?.style.display === 'flex' &&
+      document.getElementById('forgot-step-3')?.style.display === 'block') {
+    console.log('Reset password modal is already visible, suppressing duplicate syncAndLoginOAuthUser');
+    hideOAuthLoading();
+    _isOAuthProcessing = false;
+    return;
+  }
   try {
     showOAuthLoading('กำลังซิงค์ข้อมูลบัญชีผู้ใช้...');
 
@@ -589,21 +649,35 @@ async function syncAndLoginOAuthUser(authUser) {
     let pendingReset = null;
     try { pendingReset = resetRaw ? JSON.parse(resetRaw) : null; } catch(e){}
 
+    // ดึง session ล่าสุดมาตรวจสอบ AMR claims
+    let currentSession = null;
+    try {
+      const { data: sessData } = await supa.auth.getSession();
+      currentSession = sessData?.session || null;
+    } catch(sErr){}
+
+    const isAmrRecovery = isRecoverySession(currentSession, authUser);
+
     // ตรวจจับ Reset Flow จากทุกช่องทาง:
     // 1) Flag จาก early sniffer ใน <head> หรือ initGoogleAuth (event === 'PASSWORD_RECOVERY')
-    // 2) sessionStorage ที่ดักจับไว้ก่อน Supabase SDK เคลียร์ hash ทิ้ง
-    // 3) localStorage ที่ดักจับไว้ก่อน Supabase SDK เคลียร์ hash ทิ้ง
-    // 4) URL hash มี type=recovery หรือ flow=reset_password
-    // 5) URL search มี type=recovery หรือ flow=reset_password
-    // 6) localStorage มี police_pending_reset
-    // 7) authUser user_metadata มี pending_reset_flow
+    // 2) AMR claim ใน JWT token มี method: 'recovery'
+    // 3) sessionStorage ที่ดักจับไว้ก่อน Supabase SDK เคลียร์ hash ทิ้ง
+    // 4) localStorage ที่ดักจับไว้ก่อน Supabase SDK เคลียร์ hash ทิ้ง
+    // 5) URL hash มี type=recovery หรือ flow=reset_password
+    // 6) URL search มี type=recovery หรือ flow=reset_password
+    // 7) localStorage มี police_pending_reset
+    // 8) authUser user_metadata มี pending_reset_flow
     const isResetFlow = Boolean(
       window._isPasswordRecoveryFlow ||
+      window._isPasswordResetActive ||
+      window._isResetModalOpen ||
+      isAmrRecovery ||
       sessionStorage.getItem('police_is_password_recovery') === 'true' ||
       localStorage.getItem('police_is_password_recovery') === 'true' ||
+      sessionStorage.getItem('police_reset_modal_open') === 'true' ||
       (window.location.hash && (window.location.hash.includes('type=recovery') || window.location.hash.includes('flow=reset_password'))) ||
       (window.location.search && (window.location.search.includes('type=recovery') || window.location.search.includes('flow=reset_password'))) ||
-      (pendingReset && pendingReset.flow === 'reset_password') ||
+      (pendingReset && (pendingReset.flow === 'reset_password' || pendingReset.id)) ||
       authUser.user_metadata?.pending_reset_flow
     );
 
@@ -648,7 +722,10 @@ async function syncAndLoginOAuthUser(authUser) {
 
     // ถ้าเป็นการรีเซ็ตรหัสผ่าน -> เปิดหน้า Step 3 ให้ตั้งรหัสผ่านใหม่ทันที (ห้ามล็อกอินเด็ดขาด!)
     if (isResetFlow) {
+      window._isResetModalOpen = true;
+      window._isPasswordResetActive = true;
       window._isPasswordRecoveryFlow = false;
+      try { sessionStorage.setItem('police_reset_modal_open', 'true'); } catch(e){}
       try { sessionStorage.removeItem('police_is_password_recovery'); } catch(e){}
       try { localStorage.removeItem('police_is_password_recovery'); } catch(e){}
       try { localStorage.removeItem('police_pending_reset'); } catch(e){}
@@ -842,15 +919,27 @@ async function initGoogleAuth() {
     // 1) ลงทะเบียน listener ดักฟังเหตุการณ์การเปลี่ยนสถานะ Auth ก่อนเสมอ
     supa.auth.onAuthStateChange(async (event, session) => {
       console.log('Supabase Auth Event:', event, session ? session.user?.email : 'no-session');
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || (session && isRecoverySession(session, session.user))) {
         window._isPasswordRecoveryFlow = true;
+        window._isPasswordResetActive = true;
+        window._isResetModalOpen = true;
         try { sessionStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
         try { localStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
+        try { sessionStorage.setItem('police_reset_modal_open', 'true'); } catch(e){}
+      }
+      if ((window._isPasswordResetActive || window._isResetModalOpen || sessionStorage.getItem('police_reset_modal_open') === 'true') && 
+          document.getElementById('modal-forgot-pwd')?.style.display === 'flex' &&
+          document.getElementById('forgot-step-3')?.style.display === 'block') {
+        return;
       }
       const isRecovery = Boolean(
         window._isPasswordRecoveryFlow ||
+        window._isPasswordResetActive ||
+        window._isResetModalOpen ||
         sessionStorage.getItem('police_is_password_recovery') === 'true' ||
-        localStorage.getItem('police_is_password_recovery') === 'true'
+        localStorage.getItem('police_is_password_recovery') === 'true' ||
+        sessionStorage.getItem('police_reset_modal_open') === 'true' ||
+        (session && isRecoverySession(session, session.user))
       );
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') && session && session.user) {
         if (!currentUser || currentUser.auth_id !== session.user.id || isRecovery) {
@@ -863,7 +952,13 @@ async function initGoogleAuth() {
       }
     });
 
-    // 2) ตรวจสอบ getSession() ซ้ำ
+    // 2) ตรวจสอบ getSession() ซ้ำ (ถ้ากำลังอยู่ในโหมด Reset Password หรือกำลังประมวลผลอยู่ ให้ข้ามไปเลย)
+    if (window._isPasswordResetActive || window._isResetModalOpen || sessionStorage.getItem('police_reset_modal_open') === 'true') {
+      hideOAuthLoading();
+      _isOAuthProcessing = false;
+      return;
+    }
+
     const { data: { session }, error } = await supa.auth.getSession();
     if (error) {
       console.warn('supa.auth.getSession error:', error);
@@ -872,17 +967,33 @@ async function initGoogleAuth() {
       return;
     }
 
-    const isRecoverySession = Boolean(
+    if (window._isPasswordResetActive || window._isResetModalOpen || sessionStorage.getItem('police_reset_modal_open') === 'true') {
+      hideOAuthLoading();
+      _isOAuthProcessing = false;
+      return;
+    }
+
+    const isRecoverySessionFlag = Boolean(
       window._isPasswordRecoveryFlow ||
+      window._isPasswordResetActive ||
+      window._isResetModalOpen ||
       sessionStorage.getItem('police_is_password_recovery') === 'true' ||
-      localStorage.getItem('police_is_password_recovery') === 'true'
+      localStorage.getItem('police_is_password_recovery') === 'true' ||
+      sessionStorage.getItem('police_reset_modal_open') === 'true' ||
+      (session && isRecoverySession(session, session?.user))
     );
+
     if (session && session.user) {
-      if (!currentUser || currentUser.auth_id !== session.user.id || isRecoverySession) {
+      if (!_isOAuthProcessing && (!currentUser || currentUser.auth_id !== session.user.id || isRecoverySessionFlag)) {
+        if (isRecoverySessionFlag) {
+          window._isResetModalOpen = true;
+          window._isPasswordResetActive = true;
+          try { sessionStorage.setItem('police_reset_modal_open', 'true'); } catch(e){}
+        }
         _isOAuthProcessing = true;
         await syncAndLoginOAuthUser(session.user);
       }
-    } else if (!hasOAuthParams && !isRecoverySession) {
+    } else if (!hasOAuthParams && !isRecoverySessionFlag) {
       hideOAuthLoading();
       _isOAuthProcessing = false;
     }
@@ -1460,12 +1571,19 @@ function openForgotPasswordModal() {
 }
 
 function closeForgotPasswordModal() {
+  window._isResetModalOpen = false;
+  window._isPasswordResetActive = false;
+  window._isPasswordRecoveryFlow = false;
+  try { sessionStorage.removeItem('police_reset_modal_open'); } catch(e){}
+  try { sessionStorage.removeItem('police_is_password_recovery'); } catch(e){}
+  try { localStorage.removeItem('police_is_password_recovery'); } catch(e){}
+  try { localStorage.removeItem('police_pending_reset'); } catch(e){}
+
   const modal = document.getElementById('modal-forgot-pwd');
   if (modal) modal.style.display = 'none';
   if (_forgotTimer) { clearInterval(_forgotTimer); _forgotTimer = null; }
   _forgotPendingData = null;
   _devForgotOtp = null;
-  // หมายเหตุ: ไม่ลบ police_pending_reset ที่นี่ เพื่อให้ผู้ใช้สามารถคลิกลิงก์จากอีเมลได้แม้จะปิด Modal ไปแล้ว
 }
 
 function backToForgotStep1() {
@@ -1738,6 +1856,14 @@ async function resendForgotPasswordOtp() {
 }
 
 function openForgotStep3(userData) {
+  window._isResetModalOpen = true;
+  window._isPasswordResetActive = true;
+  window._isPasswordRecoveryFlow = false;
+  try { sessionStorage.setItem('police_reset_modal_open', 'true'); } catch(e){}
+  _isOAuthProcessing = false;
+  hideOAuthLoading();
+  currentUser = null;
+
   if (userData) {
     _forgotPendingData = {
       id: userData.id,

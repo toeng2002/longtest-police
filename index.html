@@ -20,8 +20,10 @@
     var s = window.location.search || '';
     if (h.indexOf('type=recovery') !== -1 || s.indexOf('type=recovery') !== -1 || h.indexOf('flow=reset_password') !== -1 || s.indexOf('flow=reset_password') !== -1) {
       window._isPasswordRecoveryFlow = true;
+      window._isResetModalOpen = true;
       try { sessionStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
       try { localStorage.setItem('police_is_password_recovery', 'true'); } catch(e){}
+      try { sessionStorage.setItem('police_reset_modal_open', 'true'); } catch(e){}
     }
   } catch(e) {}
 })();
@@ -1992,7 +1994,7 @@ body {
 <script src="js/app-admin.js?v=20260921_google_v12"></script>
 <script src="js/app-settings.js?v=20260921_google_v12"></script>
 <script src="js/app-csv.js?v=20260921_google_v12"></script>
-<script src="js/app-auth.js?v=20260924_otp_v10"></script>
+<script src="js/app-auth.js?v=20260924_reset_v12"></script>
 <script src="js/app-profile-settings.js?v=20260924_pic_v2"></script>
 <script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
 
