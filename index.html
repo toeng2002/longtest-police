@@ -654,6 +654,12 @@ body {
       </svg>
       <span id="btn-google-text">เข้าสู่ระบบด้วย Google</span>
     </button>
+
+    <!-- PWA Install Button -->
+    <button type="button" class="btn-pwa-install" onclick="triggerPWAInstall()" style="display:none;width:100%;background:var(--accent-bg);color:var(--accent);border:1.5px dashed var(--accent-border);border-radius:var(--r);padding:10px 14px;font-size:13.5px;font-weight:600;margin-top:14px;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all 0.15s">
+      <span style="font-size:16px">📲</span>
+      <span>ติดตั้งแอปลงในมือถือ (PWA)</span>
+    </button>
   </div>
 
   <!-- App Version badge มุมล่างขวา -->
@@ -2140,15 +2146,33 @@ window.addEventListener('beforeinstallprompt', function(e) {
   document.querySelectorAll('.btn-pwa-install').forEach(function(b){ b.style.display='inline-flex'; });
 });
 
+function checkPWAInstallState() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone) {
+    document.querySelectorAll('.btn-pwa-install').forEach(function(b){ b.style.display='inline-flex'; });
+  } else {
+    document.querySelectorAll('.btn-pwa-install').forEach(function(b){ b.style.display='none'; });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkPWAInstallState);
+} else {
+  checkPWAInstallState();
+}
+
 function triggerPWAInstall() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(function(choice) {
       if (choice.outcome === 'accepted') {
         console.log('User installed PWA');
+        document.querySelectorAll('.btn-pwa-install').forEach(function(b){ b.style.display='none'; });
       }
       deferredPrompt = null;
     });
+  } else {
+    alert('คำแนะนำสำหรับ Android / Chrome เวอร์ชั่นใหม่:\n\n1. หากมีแอปข้อสอบเดิมอยู่บนหน้าจอ ให้แตะค้างแล้วเลือก "ถอนการติดตั้ง" หรือ "ลบ" ออกก่อนครับ\n2. แตะปุ่ม 3 จุด (⋮) ด้านขวาบนของ Chrome\n3. เลือก "ติดตั้งแอป" (หรือแตะ "แชร์" ➔ "เพิ่มไปยังหน้าจอหลัก")\n4. หรือแตะที่ไอคอน ⬇️ ในแถบพิมพ์ URL ด้านบนเพื่อติดตั้งได้ทันทีครับ');
   }
 }
 </script>
