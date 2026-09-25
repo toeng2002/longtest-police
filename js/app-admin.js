@@ -202,9 +202,6 @@ function applyAdminPermissions(){
   setDisp('nav-audit-logs', isSuper);
   setDisp('sep-system', canSettings || isSuper);
 
-  setDisp('nav-test-exam', canTestExam);
-  setDisp('sep-exam', canTestExam);
-  setDisp('admin-switch-user', canTestExam);
   setDisp('topbar-btn-test-exam', canTestExam, 'inline-flex');
 }
 
@@ -324,10 +321,8 @@ function goPage(id,navEl){
   if(id==='settings' && typeof initSettingsPage==='function') initSettingsPage();
   // เปิดหน้า Audit Log → โหลดข้อมูล
   if(id==='audit-logs' && typeof loadAuditLogsPage==='function') loadAuditLogsPage();
-  // show switch-to-user if role=both, admin หรือ superadmin (และได้รับสิทธิ์ test_exam)
+  // show test exam button if role=both, admin หรือ superadmin (และได้รับสิทธิ์ test_exam)
   const canTest = isSuper || (typeof hasPermission === 'function' && hasPermission('test_exam'));
-  const sw=document.getElementById('admin-switch-user');
-  if(sw) sw.style.display=canTest?'flex':'none';
   const topSw=document.getElementById('topbar-btn-test-exam');
   if(topSw) topSw.style.display=canTest?'inline-flex':'none';
   // เปิด Dashboard → โหลดสถิติใหม่ทุกครั้ง (ไม่งั้นตัวเลขจะค้างอยู่ของเก่า)

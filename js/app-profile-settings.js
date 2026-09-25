@@ -482,7 +482,10 @@ function closeUserDropdown() {
 }
 
 function toggleAdminDropdown(event) {
-  if (event) event.stopPropagation();
+  if (event) {
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+  }
   const menu = document.getElementById('admin-dropdown-menu');
   if (!menu) return;
   if (menu.style.display === 'block') {
