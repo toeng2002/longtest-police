@@ -2064,6 +2064,50 @@ body {
       </div>
     </div>
 
+    <!-- Modal: แนะนำการติดตั้งสำหรับ iOS (iPhone / iPad) -->
+    <div id="modal-ios-install-guide" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:400px;width:100%;padding:22px;box-shadow:0 20px 40px rgba(0,0,0,0.25);position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+            <span style="font-size:22px">🍎</span>
+            <span>วิธีติดตั้งบน iPhone / iPad</span>
+          </div>
+          <button type="button" onclick="closeIOSInstallModal()" style="background:var(--surface2);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.5;margin-bottom:14px">
+          บนอุปกรณ์ iOS ติดตั้งง่าย ๆ ผ่าน Safari เพียง 3 ขั้นตอนครับ:
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface2);padding:10px 12px;border-radius:10px;border:1px solid var(--border)">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</div>
+            <div style="font-size:12.5px;color:var(--text);line-height:1.4">
+              แตะปุ่ม <b>แชร์ (Share)</b> <span style="font-size:15px;display:inline-block;vertical-align:middle;margin:0 2px">⎋</span> หรือไอคอน <b>[↑]</b> ที่แถบด้านล่างของ Safari
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface2);padding:10px 12px;border-radius:10px;border:1px solid var(--border)">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</div>
+            <div style="font-size:12.5px;color:var(--text);line-height:1.4">
+              เลื่อนลงมาแล้วแตะที่ <b>"เพิ่มไปยังหน้าจอโฮม"</b> <span style="font-weight:600;color:var(--accent)">(Add to Home Screen ➕)</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface2);padding:10px 12px;border-radius:10px;border:1px solid var(--border)">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">3</div>
+            <div style="font-size:12.5px;color:var(--text);line-height:1.4">
+              แตะปุ่ม <b>"เพิ่ม" (Add)</b> ที่มุมบนขวา เพื่อเสร็จสิ้น
+            </div>
+          </div>
+        </div>
+
+        <button type="button" onclick="closeIOSInstallModal()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer">
+          เข้าใจแล้ว / ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+
     <script src="js/bcrypt.min.js"></script>
     <script>if(typeof dcodeIO==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"><\/script>');}</script>
 <script src="js/exam-db.js?v=20260921_google_v12"></script>
@@ -2161,7 +2205,25 @@ if (document.readyState === 'loading') {
   checkPWAInstallState();
 }
 
+function openIOSInstallModal() {
+  const m = document.getElementById('modal-ios-install-guide');
+  if (m) m.style.display = 'flex';
+}
+
+function closeIOSInstallModal() {
+  const m = document.getElementById('modal-ios-install-guide');
+  if (m) m.style.display = 'none';
+}
+
 function triggerPWAInstall() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    openIOSInstallModal();
+    return;
+  }
+
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(function(choice) {
