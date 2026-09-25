@@ -19,13 +19,21 @@ function initProfileAndSettings() {
 
   applyUserPreferences({ theme, font, fontSize, customBg, customBgOpacity });
 
-  // ดักจับคลิกนอก Dropdown เพื่อปิดอัตโนมัติ
+  // ดักจับคลิกนอก Dropdown เพื่อปิดอัตโนมัติ (User & Admin)
   document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('user-dropdown-menu');
-    const profileBtn = document.getElementById('user-profile-btn');
-    if (dropdown && dropdown.style.display !== 'none') {
-      if (profileBtn && !profileBtn.contains(e.target) && !dropdown.contains(e.target)) {
+    const userDropdown = document.getElementById('user-dropdown-menu');
+    const userProfileBtn = document.getElementById('user-profile-btn');
+    if (userDropdown && userDropdown.style.display !== 'none') {
+      if (userProfileBtn && !userProfileBtn.contains(e.target) && !userDropdown.contains(e.target)) {
         closeUserDropdown();
+      }
+    }
+
+    const adminDropdown = document.getElementById('admin-dropdown-menu');
+    const adminProfileBtn = document.getElementById('admin-profile-btn');
+    if (adminDropdown && adminDropdown.style.display !== 'none') {
+      if (adminProfileBtn && !adminProfileBtn.contains(e.target) && !adminDropdown.contains(e.target)) {
+        closeAdminDropdown();
       }
     }
   });
@@ -428,10 +436,32 @@ function updateUserAvatarUI() {
   const adminAv = document.getElementById('admin-avatar');
   if (adminAv) {
     if (avatarUrl) {
-      adminAv.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      adminAv.innerHTML = `<img src="${avatarUrl}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">`;
     } else {
-      adminAv.textContent = initials;
+      adminAv.innerHTML = `<span>${initials}</span>`;
     }
+  }
+
+  // 5) Admin Topbar Username & Dropdown Header (Admin)
+  const adminName = document.getElementById('admin-username');
+  if (adminName) {
+    adminName.textContent = name;
+  }
+  const adminDropName = document.getElementById('dropdown-admin-fullname');
+  if (adminDropName) {
+    adminDropName.textContent = name;
+  }
+  const adminDropRole = document.getElementById('dropdown-admin-role');
+  if (adminDropRole) {
+    const isSuper = currentUser.role === 'superadmin';
+    adminDropRole.textContent = isSuper ? '🛡️ ผู้ดูแลระบบสูงสุด (Superadmin)' : '🛡️ ผู้ดูแลระบบ (Admin)';
+  }
+  const adminBadge = document.getElementById('admin-role-badge');
+  if (adminBadge) {
+    const isSuper = currentUser.role === 'superadmin';
+    adminBadge.textContent = isSuper ? 'SUPER ADMIN' : 'ADMIN';
+    adminBadge.style.background = isSuper ? '#fee2e2' : '#e2e8f0';
+    adminBadge.style.color = isSuper ? '#dc2626' : '#475569';
   }
 }
 
@@ -448,6 +478,22 @@ function toggleUserDropdown(event) {
 
 function closeUserDropdown() {
   const menu = document.getElementById('user-dropdown-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+function toggleAdminDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('admin-dropdown-menu');
+  if (!menu) return;
+  if (menu.style.display === 'block') {
+    menu.style.display = 'none';
+  } else {
+    menu.style.display = 'block';
+  }
+}
+
+function closeAdminDropdown() {
+  const menu = document.getElementById('admin-dropdown-menu');
   if (menu) menu.style.display = 'none';
 }
 
@@ -726,3 +772,16 @@ if (document.readyState === 'loading') {
 } else {
   initProfileAndSettings();
 }
+
+// Window Exports
+window.openProfileModal = openProfileModal;
+window.closeProfileModal = closeProfileModal;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.openRenewModal = openRenewModal;
+window.closeRenewModal = closeRenewModal;
+window.updateUserAvatarUI = updateUserAvatarUI;
+window.toggleUserDropdown = toggleUserDropdown;
+window.closeUserDropdown = closeUserDropdown;
+window.toggleAdminDropdown = toggleAdminDropdown;
+window.closeAdminDropdown = closeAdminDropdown;

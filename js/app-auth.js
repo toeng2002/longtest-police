@@ -334,6 +334,12 @@ function doLogout(){
   if (typeof applyCustomWallpaper === 'function') {
     try { applyCustomWallpaper(null, '25'); } catch (e) {}
   }
+  if (typeof closeUserDropdown === 'function') {
+    try { closeUserDropdown(); } catch (e) {}
+  }
+  if (typeof closeAdminDropdown === 'function') {
+    try { closeAdminDropdown(); } catch (e) {}
+  }
   currentUser=null;
   _loginUser=null;
 

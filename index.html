@@ -577,7 +577,11 @@ body {
     box-sizing:border-box;
     overflow:hidden;
   }
-  .topbar-right span{display:none!important}
+  .topbar-right > span{display:none!important}
+  .topbar-right .admin-topbar-name{display:none!important}
+  .topbar-right .admin-topbar-caret{display:none!important}
+  #admin-profile-btn{padding:2px!important;border-radius:50%!important}
+  #admin-dropdown-menu span{display:inline!important}
   .topbar-right .btn{padding:5px 8px;font-size:12px}
   .desktop-hide{display:none!important}
   .page{
@@ -1171,9 +1175,17 @@ body {
         นำเข้า CSV
       </div>
       <div class="nav-sep" id="sep-system">ระบบ</div>
+      <div class="nav-item" id="nav-admin-profile" onclick="openProfileModal();if(typeof closeAdminSidebar==='function')closeAdminSidebar();">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        จัดการโปรไฟล์
+      </div>
+      <div class="nav-item" id="nav-admin-appearance" onclick="openSettingsModal();if(typeof closeAdminSidebar==='function')closeAdminSidebar();">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2m10-10h-2M4 10H2m15.364-6.364l-1.414 1.414M6.05 17.95l-1.414 1.414m12.728 0l-1.414-1.414M6.05 6.05L4.636 4.636"/></svg>
+        ธีม & ภาพพื้นหลัง
+      </div>
       <div class="nav-item" id="nav-settings" onclick="goPage('settings',this)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.09 4.6h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 9v.09a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        ตั้งค่า
+        ตั้งค่าระบบ
       </div>
       <div class="nav-item" id="nav-audit-logs" onclick="goPage('audit-logs',this)" style="display:none">
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -1211,7 +1223,42 @@ body {
           ทดสอบทำข้อสอบ
         </button>
         <span id="admin-role-badge" style="font-size:11px;padding:2px 6px;border-radius:4px;background:#e2e8f0;color:#475569;font-weight:600">ADMIN</span>
-        <span id="admin-username" style="font-size:12px;color:var(--text2)">admin</span><div class="avatar" id="admin-avatar">AD</div>
+
+        <!-- Admin Profile Button & Dropdown -->
+        <div class="admin-topbar-profile" style="position:relative;display:flex;align-items:center">
+          <button id="admin-profile-btn" type="button" onclick="toggleAdminDropdown(event)" style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:24px;padding:3px 10px 3px 3px;cursor:pointer;transition:all .15s;color:var(--text)" title="เมนูโปรไฟล์และการตั้งค่า">
+            <div id="admin-avatar-wrap" style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
+              <div class="avatar" id="admin-avatar" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;background:transparent;color:#fff">AD</div>
+            </div>
+            <span class="admin-topbar-name" id="admin-username" style="font-size:13px;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">admin</span>
+            <svg class="admin-topbar-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <!-- Admin Dropdown Menu -->
+          <div id="admin-dropdown-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:230px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:6px;z-index:9999">
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);margin-bottom:4px">
+              <div id="dropdown-admin-fullname" style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Admin</div>
+              <div id="dropdown-admin-role" style="font-size:11px;color:var(--accent);font-weight:600;margin-top:2px">🛡️ ผู้ดูแลระบบ (Admin)</div>
+            </div>
+            <button type="button" onclick="openProfileModal();closeAdminDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:16px">👤</span>
+              <span>จัดการโปรไฟล์</span>
+            </button>
+            <button type="button" onclick="openSettingsModal();closeAdminDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:16px">🎨</span>
+              <span>ตั้งค่ารูปลักษณ์</span>
+            </button>
+            <button type="button" onclick="enterUser();closeAdminDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--accent);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:16px">📝</span>
+              <span>ทดสอบทำข้อสอบ</span>
+            </button>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <button type="button" onclick="doLogout();closeAdminDropdown();" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:none;border-radius:8px;font-size:13px;color:var(--danger);cursor:pointer;text-align:left;transition:background .15s" onmouseover="this.style.background='var(--danger-bg)'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:16px">🚪</span>
+              <span>ออกจากระบบ</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2018,9 +2065,9 @@ body {
 <script src="js/app-admin.js?v=20260921_google_v12"></script>
 <script src="js/app-settings.js?v=20260921_google_v12"></script>
 <script src="js/app-csv.js?v=20260921_google_v12"></script>
-<script src="js/app-profile-settings.js?v=20260924_cloud_prefs_v1"></script>
-<script src="js/app-auth.js?v=20260924_cloud_prefs_v1"></script>
-<script src="js/anti-cheat.js?v=20260924_pic_v2"></script>
+<script src="js/app-profile-settings.js?v=20260924_admin_prof_v1"></script>
+<script src="js/app-auth.js?v=20260924_admin_prof_v1"></script>
+<script src="js/anti-cheat.js?v=20260924_admin_prof_v1"></script>
 
 <script>
 /* ============================================================
